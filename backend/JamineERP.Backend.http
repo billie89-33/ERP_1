@@ -1,0 +1,6 @@
+@JamineERP.Backend_HostAddress = http://localhost:5243
+
+GET {{JamineERP.Backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
