@@ -61,7 +61,7 @@ export class ProductFormComponent implements OnInit {
 
   loadCategories() {
     // For now, call direct API or mock
-    this.http.get<any[]>('http://localhost:5000/api/categories').subscribe(
+    this.http.get<any[]>('http://localhost:5243/api/categories').subscribe(
       res => this.categories = res,
       err => {
         // Fallback mock if category table is empty or api fails

@@ -6,7 +6,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 })
 export class ProductService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/products';
+  private apiUrl = 'http://localhost:5243/api/products';
 
   getProducts(page: number = 1, limit: number = 10, search: string = '') {
     let params = new HttpParams()

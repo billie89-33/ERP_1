@@ -9,7 +9,7 @@ import { throwError } from 'rxjs';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5000/api/auth'; // Hardcode for now, can move to env later
+  private apiUrl = 'http://localhost:5243/api/auth'; // Hardcode for now, can move to env later
 
   // Using Angular Signal to store current user globally
   currentUser = signal<{id: number, username: string, role: string} | null>(null);
