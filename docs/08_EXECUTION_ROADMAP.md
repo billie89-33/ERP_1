@@ -23,10 +23,10 @@
     *   ลองกดยิง API ดึงข้อมูลสินค้าว่ามีของเก่าจาก Mongo ติดมาถูกต้องหรือไม่
 
 ## 🎨 Phase 3: Setup Frontend (สร้างหน้าบ้าน)
-*   **[ ] Step 9:** ติดตั้ง Angular CLI v18 (`npm install -g @angular/cli@18`) และสร้างโปรเจกต์ด้วย `ng new`
-*   **[ ] Step 10:** ติดตั้งเครื่องมือตกแต่ง UI (เช่น Tailwind CSS หรือ Angular Material)
-*   **[ ] Step 11:** สร้างไฟล์ Routing เตรียมโครงร่างหน้าจอต่างๆ ตาม Sitemap ที่ออกแบบไว้
-*   **[ ] Step 12:** สร้าง HttpInterceptor เพื่อคอยดักเอา JWT แปะส่งไปให้ C# อัตโนมัติ
+*   **[x] Step 9:** ติดตั้ง Angular CLI v18 (`npm install -g @angular/cli@18`) และสร้างโปรเจกต์ด้วย `ng new`
+*   **[x] Step 10:** ติดตั้งเครื่องมือตกแต่ง UI (เช่น Tailwind CSS หรือ Angular Material)
+*   **[x] Step 11:** สร้างไฟล์ Routing เตรียมโครงร่างหน้าจอต่างๆ ตาม Sitemap ที่ออกแบบไว้
+*   **[x] Step 12:** สร้าง HttpInterceptor เพื่อคอยดักเอา JWT แปะส่งไปให้ C# อัตโนมัติ
 
 ## 🖱️ Phase 4: UI Development (ประกอบร่างหน้าเว็บ)
 *   **[ ] Step 13:** ทำหน้า Login และ Layout หลักสำหรับหลังบ้านพนักงาน (Admin Sidebar)
