@@ -33,9 +33,9 @@ export const routes: Routes = [
       // { path: 'dashboard', component: DashboardComponent },
       
       // 📦 Product & Inventory
-      // { path: 'products', component: ProductListComponent },
-      // { path: 'products/create', component: ProductFormComponent },
-      // { path: 'products/edit/:id', component: ProductFormComponent },
+      { path: 'products', loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent) },
+      { path: 'products/create', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
+      { path: 'products/edit/:id', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       // { path: 'categories', component: CategoryListComponent },
       
       // 🤝 Sales & CRM
