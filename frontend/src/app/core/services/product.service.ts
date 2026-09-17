@@ -35,4 +35,10 @@ export class ProductService {
   deleteProduct(id: string) {
     return this.http.delete<any>(`${this.apiUrl}/${id}`);
   }
+
+  uploadProductImage(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(`${this.apiUrl}/${id}/image`, formData);
+  }
 }

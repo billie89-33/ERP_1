@@ -13,6 +13,7 @@
   <table class="min-w-full divide-y divide-slate-200">
     <thead class="bg-slate-50">
       <tr>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Image</th>
         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">SKU</th>
         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product Name</th>
         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
@@ -23,6 +24,14 @@
     </thead>
     <tbody class="bg-white divide-y divide-slate-200">
       <tr *ngFor="let product of products" class="hover:bg-slate-50">
+        <td class="px-6 py-4 whitespace-nowrap">
+          <div class="h-10 w-10 flex-shrink-0 bg-slate-100 rounded border border-slate-200 flex items-center justify-center overflow-hidden">
+            <img *ngIf="product.imageUrl" [src]="product.imageUrl" alt="" class="h-10 w-10 object-cover rounded">
+            <svg *ngIf="!product.imageUrl" class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{ product.sku }}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700">{{ product.name }}</td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ product.categoryName }}</td>
@@ -42,7 +51,7 @@
       </tr>
       
       <tr *ngIf="products.length === 0">
-        <td colspan="6" class="px-6 py-8 text-center text-slate-500">
+        <td colspan="7" class="px-6 py-8 text-center text-slate-500">
           No products found.
         </td>
       </tr>

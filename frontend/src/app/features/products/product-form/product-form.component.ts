@@ -19,6 +19,8 @@ export class ProductFormComponent implements OnInit {
   categories: any[] = [];
   specificationsText = '{\n  "RAM": "16GB",\n  "Storage": "512GB SSD"\n}';
   specError = '';
+  imageUrl: string | null = null;
+  isUploadingImage = false;
   
   private fb = inject(FormBuilder);
   private productService = inject(ProductService);
@@ -52,10 +54,30 @@ export class ProductFormComponent implements OnInit {
           stockQuantity: product.stockQuantity,
           categoryId: product.categoryId
         });
+        this.imageUrl = product.imageUrl || null;
         if (product.specifications) {
           this.specificationsText = JSON.stringify(product.specifications, null, 2);
         }
       });
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file: File = event.target.files[0];
+    if (file && this.productId) {
+      this.isUploadingImage = true;
+      this.productService.uploadProductImage(this.productId, file).subscribe({
+        next: (res) => {
+          this.imageUrl = res.imageUrl;
+          this.isUploadingImage = false;
+        },
+        error: (err) => {
+          alert('Failed to upload image: ' + (err.error?.message || err.message));
+          this.isUploadingImage = false;
+        }
+      });
+    } else if (file && !this.productId) {
+      alert('Please save the product first before uploading an image.');
     }
   }
 
