@@ -37,23 +37,36 @@ public class ProductsController : ControllerBase
         var total = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(total / (double)limit);
 
-        var products = await query
+        var rawProducts = await query
             .OrderByDescending(p => p.Id)
             .Skip((page - 1) * limit)
             .Take(limit)
-            .Select(p => new ProductDto
+            .Select(p => new
             {
-                Id = p.Id,
-                Sku = p.Sku,
-                Name = p.Name,
-                Price = p.Price,
-                Cost = p.Cost,
-                StockQuantity = p.StockQuantity,
-                CategoryId = p.CategoryId,
+                p.Id,
+                p.Sku,
+                p.Name,
+                p.Price,
+                p.Cost,
+                p.StockQuantity,
+                p.CategoryId,
                 CategoryName = p.Category != null ? p.Category.Name : "N/A",
-                Specifications = p.Specifications != null ? JsonDocument.Parse(p.Specifications.RootElement.GetRawText()).RootElement : null
+                SpecificationsRaw = p.Specifications != null ? p.Specifications.RootElement.GetRawText() : null
             })
             .ToListAsync();
+
+        var products = rawProducts.Select(p => new ProductDto
+        {
+            Id = p.Id,
+            Sku = p.Sku,
+            Name = p.Name,
+            Price = p.Price,
+            Cost = p.Cost,
+            StockQuantity = p.StockQuantity,
+            CategoryId = p.CategoryId,
+            CategoryName = p.CategoryName,
+            Specifications = p.SpecificationsRaw != null ? JsonDocument.Parse(p.SpecificationsRaw).RootElement : null
+        }).ToList();
 
         return Ok(new
         {
