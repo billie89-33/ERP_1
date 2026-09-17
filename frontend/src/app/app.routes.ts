@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
 import { StorefrontLayoutComponent } from './layout/storefront-layout/storefront-layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // 🔐 Auth Module
@@ -27,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminLayoutComponent,
-    // canActivate: [authGuard], // TODO: ใส่ Route Guard
+    canActivate: [authGuard], // ใช้ Route Guard ป้องกัน
     children: [
       // { path: 'dashboard', component: DashboardComponent },
       

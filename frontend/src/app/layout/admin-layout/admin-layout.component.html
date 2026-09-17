@@ -1,1 +1,49 @@
-<p>admin-layout works!</p>
+<div class="flex h-screen bg-slate-100">
+  <!-- Sidebar -->
+  <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex">
+    <div class="h-16 flex items-center justify-center border-b border-slate-700">
+      <h1 class="text-xl font-bold tracking-wider uppercase">Jamine ERP</h1>
+    </div>
+    
+    <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+      <a routerLink="/admin/dashboard" routerLinkActive="bg-blue-600 text-white" class="text-slate-300 hover:bg-slate-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+        <svg class="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Dashboard
+      </a>
+      
+      <a routerLink="/admin/products" routerLinkActive="bg-blue-600 text-white" class="text-slate-300 hover:bg-slate-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+        <svg class="mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+        Products
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 flex flex-col overflow-hidden">
+    <!-- Header -->
+    <header class="h-16 bg-white shadow-sm flex items-center justify-between px-6 border-b border-slate-200">
+      <div class="flex items-center">
+        <h2 class="text-xl font-semibold text-slate-800">Admin Portal</h2>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-slate-600">
+          Welcome, <strong>{{ authService.currentUser()?.username }}</strong> 
+          <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded ml-2">{{ authService.currentUser()?.role }}</span>
+        </span>
+        <button (click)="logout()" class="text-sm font-medium text-red-600 hover:text-red-800 transition-colors">
+          Logout
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Content (Router Outlet) -->
+    <div class="flex-1 overflow-auto bg-slate-50 p-6">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
