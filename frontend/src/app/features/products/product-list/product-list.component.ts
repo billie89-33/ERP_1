@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 
+import { ProductDto } from '../../../core/models/product.model';
+
 @Component({
   selector: 'app-product-list',
   standalone: true,
@@ -11,7 +13,7 @@ import { ProductService } from '../../../core/services/product.service';
   styleUrl: './product-list.component.scss'
 })
 export class ProductListComponent implements OnInit {
-  products: any[] = [];
+  products: ProductDto[] = [];
   page = 1;
   limit = 10;
   total = 0;
@@ -25,15 +27,16 @@ export class ProductListComponent implements OnInit {
   }
 
   loadProducts() {
-    this.productService.getProducts(this.page, this.limit, this.search).subscribe(res => {
+    this.productService.getProducts({ page: this.page, limit: this.limit, searchQuery: this.search }).subscribe(res => {
       this.products = res.data;
       this.total = res.total;
       this.totalPages = res.totalPages;
     });
   }
 
-  onSearch(event: any) {
-    this.search = event.target.value;
+  onSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.search = target.value;
     this.page = 1;
     this.loadProducts();
   }

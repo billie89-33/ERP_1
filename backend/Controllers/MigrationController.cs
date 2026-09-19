@@ -74,11 +74,26 @@ public class MigrationController : ControllerBase
                     decimal price = ExtractDecimal(doc, new[] { "price", "retailPrice", "sellPrice" });
                     decimal cost = ExtractDecimal(doc, new[] { "cost", "buyPrice", "capital" });
                     
-                    // 4. ดึง Stock
+                    // 4. Stock
                     int stock = (int)ExtractDecimal(doc, new[] { "stock", "stockQuantity", "qty", "quantity" });
 
-                    // 5. ดึงเศษข้อมูลอื่นๆ มายัดลง Specifications
-                    doc.Remove("_id"); // ลบ Primary key ของ Mongo ออก
+                    // 5. Image (nested object)
+                    string? imageUrl = null;
+                    string? publicId = null;
+                    if (doc.Contains("image") && doc["image"].IsBsonDocument)
+                    {
+                        var imgDoc = doc["image"].AsBsonDocument;
+                        if (imgDoc.Contains("url") && !imgDoc["url"].IsBsonNull) imageUrl = imgDoc["url"].AsString;
+                        if (imgDoc.Contains("publicId") && !imgDoc["publicId"].IsBsonNull) publicId = imgDoc["publicId"].AsString;
+                        doc.Remove("image"); // Remove so it doesn't duplicate into Specifications
+                    }
+                    else
+                    {
+                        imageUrl = ExtractString(doc, new[] { "imageUrl", "image", "photo" });
+                    }
+
+                    // 6. Remaining specs
+                    doc.Remove("_id"); 
                     doc.Remove("sku");
                     doc.Remove("name");
                     doc.Remove("price");
@@ -94,6 +109,8 @@ public class MigrationController : ControllerBase
                         Price = price,
                         Cost = cost,
                         StockQuantity = stock,
+                        ImageUrl = imageUrl,
+                        CloudinaryPublicId = publicId,
                         CategoryId = defaultCategory.Id,
                         Specifications = JsonDocument.Parse(specsJson)
                     };
@@ -112,6 +129,33 @@ public class MigrationController : ControllerBase
         {
             return StatusCode(500, new { message = "Migration failed.", error = ex.Message, stackTrace = ex.StackTrace });
         }
+    }
+
+    [HttpPost("fix-images")]
+    public async Task<IActionResult> FixImages()
+    {
+        var products = await _context.Products.Where(p => p.ImageUrl == null).ToListAsync();
+        int fixedCount = 0;
+        foreach (var p in products)
+        {
+            if (p.Specifications != null)
+            {
+                if (p.Specifications.RootElement.TryGetProperty("image", out var imageObj) && imageObj.ValueKind == JsonValueKind.Object)
+                {
+                    if (imageObj.TryGetProperty("url", out var urlProp) && urlProp.ValueKind == JsonValueKind.String)
+                    {
+                        p.ImageUrl = urlProp.GetString();
+                        fixedCount++;
+                    }
+                    if (imageObj.TryGetProperty("publicId", out var pidProp) && pidProp.ValueKind == JsonValueKind.String)
+                    {
+                        p.CloudinaryPublicId = pidProp.GetString();
+                    }
+                }
+            }
+        }
+        await _context.SaveChangesAsync();
+        return Ok(new { message = $"Successfully fixed images for {fixedCount} products." });
     }
 
     // --- Helper Methods สำหรับทำ Data Cleansing (ดัก Type ตีกัน) ---

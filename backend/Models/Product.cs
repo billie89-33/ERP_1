@@ -13,6 +13,10 @@ public class Product : BaseEntity
     public int StockQuantity { get; set; }
     
     public JsonDocument? Specifications { get; set; }
+    
+    public string? ImageUrl { get; set; }
+    public string? CloudinaryPublicId { get; set; }
+
 
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;

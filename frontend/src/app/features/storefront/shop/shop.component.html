@@ -1,0 +1,201 @@
+<div class="flex flex-col md:flex-row gap-8 relative">
+
+  <!-- Mobile Filter Toggle Button (Sticky Bottom) -->
+  <div class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+    <button (click)="toggleMobileFilter()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full shadow-2xl shadow-indigo-900/50 flex items-center gap-2 font-bold transition-transform active:scale-95">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+      Filters
+    </button>
+  </div>
+
+  <!-- Mobile Off-Canvas Overlay -->
+  <div *ngIf="isMobileFilterOpen()" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 md:hidden transition-opacity" (click)="toggleMobileFilter()"></div>
+
+  <!-- Sidebar (Desktop + Mobile Drawer) -->
+  <aside 
+    class="w-72 bg-slate-800/80 backdrop-blur-md md:bg-transparent md:backdrop-blur-none border-r border-slate-700 md:border-none p-6 md:p-0 flex-shrink-0
+           fixed md:sticky top-0 md:top-24 left-0 h-full md:h-[calc(100vh-8rem)] z-50 md:z-0 overflow-y-auto transform transition-transform duration-300 shadow-2xl md:shadow-none"
+    [ngClass]="isMobileFilterOpen() ? 'translate-x-0' : '-translate-x-full md:translate-x-0'">
+    
+    <div class="flex items-center justify-between md:hidden mb-6">
+      <h2 class="text-xl font-bold text-white">Filters</h2>
+      <button (click)="toggleMobileFilter()" class="text-slate-400 hover:text-white p-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider">Smart Filters</h3>
+      <button (click)="clearFilters()" class="text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-400/10 px-3 py-1 rounded-full transition-colors">RESET</button>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="mb-8">
+      <h4 class="text-white font-semibold mb-3">Categories</h4>
+      <div class="space-y-1">
+        <button (click)="selectCategoryByName(null)" 
+          class="w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+          [ngClass]="filterState().categoryName === null ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'">
+          All Products
+        </button>
+        <button *ngFor="let cat of categories()" (click)="selectCategoryByName(cat.name)" 
+          class="w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all"
+          [ngClass]="filterState().categoryName === cat.name ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white'">
+          {{ cat.name }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Brands Filter -->
+    <div class="mb-8" *ngIf="filterOptions().brands.length > 0">
+      <h4 class="text-white font-semibold mb-3">Brands</h4>
+      <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+        <label *ngFor="let brand of filterOptions().brands" class="flex items-center gap-3 cursor-pointer group">
+          <div class="relative flex items-center justify-center">
+            <input type="checkbox" class="sr-only peer" 
+                   [checked]="filterState().brands.includes(brand)" 
+                   (change)="toggleBrand(brand)">
+            <div class="w-5 h-5 border-2 border-slate-500 rounded bg-slate-800 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-all group-hover:border-indigo-400 flex items-center justify-center">
+              <svg *ngIf="filterState().brands.includes(brand)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+          </div>
+          <span class="text-sm text-slate-300 group-hover:text-white transition-colors uppercase">{{ brand }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Dynamic Specs Filter -->
+    <div class="space-y-6" *ngIf="specKeys().length > 0">
+      <div *ngFor="let key of specKeys()">
+        <h4 class="text-white font-semibold mb-3 uppercase text-xs tracking-wider">{{ key }}</h4>
+        <div class="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+          <label *ngFor="let val of filterOptions().availableSpecs[key]" class="flex items-center gap-3 cursor-pointer group">
+            <div class="relative flex items-center justify-center">
+              <input type="checkbox" class="sr-only peer" 
+                     [checked]="filterState().selectedSpecs[key] && filterState().selectedSpecs[key].includes(val)" 
+                     (change)="toggleSpec(key, val)">
+              <div class="w-5 h-5 border-2 border-slate-500 rounded bg-slate-800 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 transition-all group-hover:border-indigo-400 flex items-center justify-center">
+                <svg *ngIf="filterState().selectedSpecs[key] && filterState().selectedSpecs[key].includes(val)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+              </div>
+            </div>
+            <span class="text-sm text-slate-300 group-hover:text-white transition-colors line-clamp-1">{{ val }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty Space for Mobile Scrolling -->
+    <div class="h-24 md:hidden"></div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 w-full pb-20 md:pb-0">
+    <!-- Header & Search -->
+    <div class="bg-slate-800 p-4 rounded-2xl shadow-lg mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center border border-slate-700">
+      <div class="w-full sm:w-1/2 relative">
+        <input type="text" [ngModel]="filterState().searchQuery" (ngModelChange)="onSearchChange($event)"
+          placeholder="Search components..." 
+          class="w-full bg-slate-900 border border-slate-600 text-white rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+        <div class="absolute right-3 top-2.5 text-slate-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+      
+      <div class="text-slate-400 text-sm">
+        Showing <span class="text-white font-bold">{{ totalProducts() }}</span> Results
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="flex justify-center items-center py-32">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading() && products().length === 0" class="text-center py-32 bg-slate-800 rounded-2xl border border-slate-700">
+      <svg class="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <h2 class="text-2xl font-bold text-white mb-2">No components found</h2>
+      <p class="text-slate-400">Try adjusting your filters or search query.</p>
+      <button (click)="clearFilters()" class="mt-6 bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-6 rounded-lg font-medium transition-colors">Clear All Filters</button>
+    </div>
+
+    <!-- Product Grid -->
+    <div *ngIf="!isLoading() && products().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      
+      <div *ngFor="let product of products()" class="bg-slate-800 rounded-2xl overflow-hidden shadow-lg border border-slate-700 hover:border-indigo-500/50 transition-all group flex flex-col hover:-translate-y-1">
+        <!-- Image -->
+        <div class="h-48 bg-white relative p-4 flex items-center justify-center">
+          <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500">
+          <div *ngIf="!product.imageUrl" class="text-slate-300">
+            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          </div>
+          
+          <div *ngIf="product.stockQuantity <= 0" class="absolute top-3 right-3 bg-rose-500/90 text-white text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded">Out of Stock</div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-5 flex-1 flex flex-col relative">
+          <div class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mb-2">{{ product.categoryName }}</div>
+          <h3 class="text-sm font-bold text-white mb-3 line-clamp-2 leading-snug" [title]="product.name">
+            <a [routerLink]="['/product', product.id]" class="hover:text-indigo-400 transition-colors before:absolute before:inset-0">{{ product.name }}</a>
+          </h3>
+          
+          <!-- Specs preview -->
+          <div class="mb-4 mt-auto">
+            <ul class="text-xs text-slate-400 space-y-1.5">
+              <li *ngFor="let spec of getSpecPreview(product.specifications)" class="truncate">
+                <span class="text-slate-600 font-bold mr-1">&bull;</span> {{ spec }}
+              </li>
+            </ul>
+          </div>
+
+          <div class="pt-4 border-t border-slate-700/50 flex items-end justify-between z-10 relative">
+            <div class="text-lg font-black text-white">฿{{ product.price | number:'1.0-0' }}</div>
+            
+            <button [disabled]="product.stockQuantity <= 0" (click)="addToCart(product)"
+              class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95" title="Add to Cart">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="totalPages() > 1 && !isLoading()" class="mt-12 flex justify-center pb-8">
+      <nav class="flex items-center gap-2">
+        <button (click)="changePage(filterState().page - 1)" [disabled]="filterState().page === 1" 
+          class="p-2 px-4 rounded-xl bg-slate-800 text-white font-medium hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700 transition-colors">
+          &laquo; Prev
+        </button>
+        
+        <div class="flex items-center justify-center min-w-[100px] text-sm text-slate-400 font-medium mx-2">
+          Page <span class="text-white mx-1">{{ filterState().page }}</span> of <span class="text-white ml-1">{{ totalPages() }}</span>
+        </div>
+        
+        <button (click)="changePage(filterState().page + 1)" [disabled]="filterState().page === totalPages()" 
+          class="p-2 px-4 rounded-xl bg-slate-800 text-white font-medium hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700 transition-colors">
+          Next &raquo;
+        </button>
+      </nav>
+    </div>
+  </main>
+</div>
+
+<style>
+/* Custom Scrollbar for filter overflow areas */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+</style>

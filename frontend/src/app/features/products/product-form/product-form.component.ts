@@ -17,8 +17,13 @@ export class ProductFormComponent implements OnInit {
   isEditMode = false;
   productId: string | null = null;
   categories: any[] = [];
-  specificationsText = '{\n  "RAM": "16GB",\n  "Storage": "512GB SSD"\n}';
-  specError = '';
+  
+  // Dynamic Specs Array instead of raw text
+  dynamicSpecs: { key: string, value: string }[] = [
+    { key: 'RAM', value: '16GB DDR5' }, // Default Example
+    { key: 'Storage', value: '1TB SSD' }
+  ];
+  
   imageUrl: string | null = null;
   isUploadingImage = false;
   
@@ -55,17 +60,40 @@ export class ProductFormComponent implements OnInit {
           categoryId: product.categoryId
         });
         this.imageUrl = product.imageUrl || null;
-        if (product.specifications) {
-          this.specificationsText = JSON.stringify(product.specifications, null, 2);
+        
+        // Parse JSON object back into dynamic array
+        if (product.specifications && typeof product.specifications === 'object') {
+          this.dynamicSpecs = [];
+          for (const [key, value] of Object.entries(product.specifications)) {
+            this.dynamicSpecs.push({ key, value: String(value) });
+          }
+        } else {
+            this.dynamicSpecs = []; // Empty if no specs
         }
       });
     }
   }
 
+  // --- Dynamic Specs Helpers ---
+  addSpecRow() {
+    this.dynamicSpecs.push({ key: '', value: '' });
+  }
+
+  removeSpecRow(index: number) {
+    this.dynamicSpecs.splice(index, 1);
+  }
+  // -----------------------------
+
+  cloudinaryPublicId: string | null = null;
+
   onFileSelected(event: any) {
     const file: File = event.target.files[0];
-    if (file && this.productId) {
-      this.isUploadingImage = true;
+    if (!file) return;
+
+    this.isUploadingImage = true;
+
+    if (this.productId) {
+      // Edit Mode
       this.productService.uploadProductImage(this.productId, file).subscribe({
         next: (res) => {
           this.imageUrl = res.imageUrl;
@@ -76,8 +104,22 @@ export class ProductFormComponent implements OnInit {
           this.isUploadingImage = false;
         }
       });
-    } else if (file && !this.productId) {
-      alert('Please save the product first before uploading an image.');
+    } else {
+      // Create Mode (Upload temp image)
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      this.http.post<any>('http://localhost:5243/api/products/upload-temp-image', formData).subscribe({
+        next: (res) => {
+          this.imageUrl = res.imageUrl;
+          this.cloudinaryPublicId = res.publicId;
+          this.isUploadingImage = false;
+        },
+        error: (err) => {
+          alert('Failed to upload image: ' + (err.error?.message || err.message));
+          this.isUploadingImage = false;
+        }
+      });
     }
   }
 
@@ -98,21 +140,19 @@ export class ProductFormComponent implements OnInit {
   onSubmit() {
     if (this.productForm.invalid) return;
 
-    let specsObj = null;
-    this.specError = '';
-    
-    if (this.specificationsText.trim()) {
-      try {
-        specsObj = JSON.parse(this.specificationsText);
-      } catch (e) {
-        this.specError = 'Invalid JSON format in specifications. Please fix before submitting.';
-        return;
+    // Convert Dynamic Array back to JSON Object for backend
+    const specsObj: any = {};
+    for (const spec of this.dynamicSpecs) {
+      if (spec.key.trim() !== '') {
+        specsObj[spec.key.trim()] = spec.value.trim();
       }
     }
 
     const payload = {
       ...this.productForm.value,
-      specifications: specsObj
+      specifications: Object.keys(specsObj).length > 0 ? specsObj : null,
+      imageUrl: this.imageUrl,
+      cloudinaryPublicId: this.cloudinaryPublicId
     };
 
     if (this.isEditMode && this.productId) {

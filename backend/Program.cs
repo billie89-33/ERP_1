@@ -11,7 +11,14 @@ Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
+builder.Services.Configure<JamineERP.Backend.Services.CloudinarySettings>(options => 
+{
+    options.CloudName = Environment.GetEnvironmentVariable("Cloudinary__CloudName") ?? builder.Configuration["CloudinarySettings:CloudName"] ?? "";
+    options.ApiKey = Environment.GetEnvironmentVariable("Cloudinary__ApiKey") ?? builder.Configuration["CloudinarySettings:ApiKey"] ?? "";
+    options.ApiSecret = Environment.GetEnvironmentVariable("Cloudinary__ApiSecret") ?? builder.Configuration["CloudinarySettings:ApiSecret"] ?? "";
+});
+builder.Services.AddScoped<JamineERP.Backend.Services.IPhotoService, JamineERP.Backend.Services.PhotoService>();
 
 // 1. Database Configuration (PostgreSQL)
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 

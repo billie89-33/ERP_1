@@ -11,6 +11,7 @@ public class ProductDto
     public decimal Cost { get; set; }
     public int StockQuantity { get; set; }
     public JsonElement? Specifications { get; set; }
+    public string? ImageUrl { get; set; }
     public Guid CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
 }
@@ -24,6 +25,8 @@ public class CreateProductDto
     public int StockQuantity { get; set; }
     public JsonElement? Specifications { get; set; }
     public Guid CategoryId { get; set; }
+    public string? ImageUrl { get; set; }
+    public string? CloudinaryPublicId { get; set; }
 }
 
 public class UpdateProductDto : CreateProductDto

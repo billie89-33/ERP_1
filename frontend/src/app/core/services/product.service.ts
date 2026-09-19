@@ -1,5 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { ProductDto, PaginatedResponse, FilterOptionsDto, CategoryDto, FilterState } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
@@ -7,33 +9,57 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 export class ProductService {
   private http = inject(HttpClient);
   private apiUrl = 'http://localhost:5243/api/products';
+  private catUrl = 'http://localhost:5243/api/categories';
 
-  getProducts(page: number = 1, limit: number = 10, search: string = '') {
+  getProducts(state: Partial<FilterState>): Observable<PaginatedResponse<ProductDto>> {
     let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
+      .set('page', (state.page || 1).toString())
+      .set('limit', (state.limit || 12).toString());
       
-    if (search) {
-      params = params.set('search', search);
+    if (state.searchQuery) params = params.set('search', state.searchQuery);
+    if (state.categoryName && state.categoryName !== 'All') params = params.set('categoryName', state.categoryName);
+    if (state.minPrice !== null && state.minPrice !== undefined) params = params.set('minPrice', state.minPrice.toString());
+    if (state.maxPrice !== null && state.maxPrice !== undefined) params = params.set('maxPrice', state.maxPrice.toString());
+    
+    if (state.brands && state.brands.length > 0) {
+      state.brands.forEach(brand => {
+        params = params.append('brands', brand);
+      });
+    }
+
+    if (state.selectedSpecs && Object.keys(state.selectedSpecs).length > 0) {
+      params = params.set('specs', JSON.stringify(state.selectedSpecs));
     }
     
-    return this.http.get<any>(this.apiUrl, { params });
+    return this.http.get<PaginatedResponse<ProductDto>>(this.apiUrl, { params });
   }
 
-  getProduct(id: string) {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  getFilterOptions(categoryName?: string | null): Observable<FilterOptionsDto> {
+    let params = new HttpParams();
+    if (categoryName && categoryName !== 'All') {
+      params = params.set('categoryName', categoryName);
+    }
+    return this.http.get<FilterOptionsDto>(`${this.apiUrl}/filters`, { params });
   }
 
-  createProduct(data: any) {
-    return this.http.post<any>(this.apiUrl, data);
+  getCategories(): Observable<CategoryDto[]> {
+    return this.http.get<CategoryDto[]>(this.catUrl);
   }
 
-  updateProduct(id: string, data: any) {
-    return this.http.put<any>(`${this.apiUrl}/${id}`, data);
+  getProduct(id: string): Observable<ProductDto> {
+    return this.http.get<ProductDto>(`${this.apiUrl}/${id}`);
+  }
+
+  createProduct(data: Partial<ProductDto>) {
+    return this.http.post<ProductDto>(this.apiUrl, data);
+  }
+
+  updateProduct(id: string, data: Partial<ProductDto>) {
+    return this.http.put<ProductDto>(`${this.apiUrl}/${id}`, data);
   }
 
   deleteProduct(id: string) {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   uploadProductImage(id: string, file: File) {

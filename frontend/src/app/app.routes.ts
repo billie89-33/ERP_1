@@ -3,6 +3,7 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { StorefrontLayoutComponent } from './layout/storefront-layout/storefront-layout.component';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
   // 🔐 Auth Module
@@ -16,11 +17,10 @@ export const routes: Routes = [
     path: '',
     component: StorefrontLayoutComponent,
     children: [
-      // { path: '', component: HomeComponent },
-      // { path: 'shop', component: ShopComponent },
-      // { path: 'product/:id', component: ProductDetailComponent },
-      // { path: 'cart', component: CartComponent },
-      // { path: 'checkout', component: CheckoutComponent },
+      { path: '', loadComponent: () => import('./features/storefront/home/home.component').then(m => m.HomeComponent) },
+      { path: 'shop', loadComponent: () => import('./features/storefront/shop/shop.component').then(m => m.ShopComponent) },
+      { path: 'product/:id', loadComponent: () => import('./features/storefront/product-detail/product-detail.component').then(m => m.ProductDetailComponent) },
+      { path: 'cart', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) }
     ]
   },
 
@@ -36,16 +36,22 @@ export const routes: Routes = [
       { path: 'products', loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent) },
       { path: 'products/create', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       { path: 'products/edit/:id', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
-      // { path: 'categories', component: CategoryListComponent },
       
       // 🤝 Sales & CRM
-      // { path: 'customers', component: CustomerListComponent },
-      // { path: 'quotations', component: QuotationListComponent },
-      // { path: 'sales-orders', component: SalesOrderListComponent },
+      { 
+        path: 'sales-orders', 
+        loadComponent: () => import('./features/sales/sales-order-list/sales-order-list.component').then(m => m.SalesOrderListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
       
       // 🛒 Purchasing
-      // { path: 'suppliers', component: SupplierListComponent },
-      // { path: 'purchase-orders', component: PurchaseOrderListComponent },
+      { 
+        path: 'purchase-orders', 
+        loadComponent: () => import('./features/purchasing/purchase-order-list/purchase-order-list.component').then(m => m.PurchaseOrderListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
     ]
   },
   
