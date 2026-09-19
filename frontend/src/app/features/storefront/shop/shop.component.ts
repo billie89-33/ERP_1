@@ -42,8 +42,30 @@ export class ShopComponent implements OnInit {
     limit: 12
   });
 
+  // Allowed Filters Configuration to prevent sidebar clutter
+  private allowedSpecsConfig: { [category: string]: string[] } = {
+    'Notebook': ['processors', 'memory', 'storage', 'video graphics', 'display', 'screen size', 'operating system'],
+    'Graphics Card': ['gpu series', 'gpu model', 'memory size'],
+    'Monitor': ['resolution', 'refresh rate', 'panel type', 'screen size'],
+    'Mouse': ['interface', 'sensor technology', 'color']
+  };
+
   // Computed Values
-  specKeys = computed(() => Object.keys(this.filterOptions().availableSpecs));
+  specKeys = computed(() => {
+    const allKeys = Object.keys(this.filterOptions().availableSpecs);
+    const catName = this.filterState().categoryName;
+    
+    if (!catName) return [];
+
+    const allowed = this.allowedSpecsConfig[catName];
+    if (!allowed) {
+      // If we don't have a specific config for this category, just return a limited default (or nothing)
+      return allKeys.filter(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'brand');
+    }
+
+    // Filter and return only the keys that are in the allowed list (case-insensitive)
+    return allKeys.filter(key => allowed.includes(key.toLowerCase()));
+  });
   hasActiveFilters = computed(() => {
     const s = this.filterState();
     return !!s.categoryName || s.brands.length > 0 || Object.keys(s.selectedSpecs).length > 0;
