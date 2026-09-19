@@ -44,6 +44,10 @@ export class ShopComponent implements OnInit {
 
   // Computed Values
   specKeys = computed(() => Object.keys(this.filterOptions().availableSpecs));
+  hasActiveFilters = computed(() => {
+    const s = this.filterState();
+    return !!s.categoryName || s.brands.length > 0 || Object.keys(s.selectedSpecs).length > 0;
+  });
 
   constructor() {
     // Reactive: Whenever filterState changes, fetch products

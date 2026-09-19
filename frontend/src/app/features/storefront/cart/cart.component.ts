@@ -25,6 +25,6 @@ export class CartComponent {
   }
 
   checkout() {
-    alert('Checkout feature coming soon in Phase 5!');
+    alert('ระบบชำระเงิน (Checkout) จะเปิดใช้งานเร็วๆ นี้ใน Phase ต่อไปครับ!');
   }
 }
