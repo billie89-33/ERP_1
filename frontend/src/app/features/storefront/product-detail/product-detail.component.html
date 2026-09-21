@@ -33,8 +33,8 @@
         <p class="font-medium text-lg">ไม่มีรูปภาพสินค้า</p>
       </div>
 
-      <div *ngIf="product()?.stockQuantity === 0" class="absolute top-6 left-6 bg-rose-500 text-white font-black uppercase tracking-widest text-xs px-4 py-2 rounded-lg shadow-lg">
-        สินค้าหมด
+      <div *ngIf="product()?.availableQuantity === 0" class="absolute top-6 left-6 bg-rose-500 text-white font-black uppercase tracking-widest text-xs px-4 py-2 rounded-lg shadow-lg">
+        สินค้าหมดชั่วคราว
       </div>
     </div>
 
@@ -65,9 +65,9 @@
           </div>
           
           <div class="mb-8 flex items-center gap-2">
-            <div class="w-2.5 h-2.5 rounded-full" [ngClass]="(product()?.stockQuantity || 0) > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></div>
-            <span *ngIf="(product()?.stockQuantity || 0) > 0" class="text-emerald-400 font-medium text-sm">มีสินค้าพร้อมส่ง {{ product()?.stockQuantity }} ชิ้น</span>
-            <span *ngIf="product()?.stockQuantity === 0" class="text-rose-400 font-medium text-sm">สินค้าหมดชั่วคราว</span>
+            <div class="w-2.5 h-2.5 rounded-full" [ngClass]="(product()?.availableQuantity || 0) > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></div>
+            <span *ngIf="(product()?.availableQuantity || 0) > 0" class="text-emerald-400 font-medium text-sm">มีสินค้าพร้อมส่ง {{ product()?.availableQuantity }} ชิ้น</span>
+            <span *ngIf="product()?.availableQuantity === 0" class="text-rose-400 font-medium text-sm">สินค้าหมดชั่วคราว</span>
           </div>
 
           <!-- Add to Cart Action -->
@@ -75,10 +75,10 @@
             <div class="flex items-center bg-slate-900 rounded-xl border border-slate-700 overflow-hidden h-14">
               <button (click)="decreaseQty()" [disabled]="quantity() <= 1" class="px-5 h-full text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold text-xl">-</button>
               <div class="w-14 text-center text-white font-bold text-lg select-none">{{ quantity() }}</div>
-              <button (click)="increaseQty()" [disabled]="quantity() >= (product()?.stockQuantity || 0)" class="px-5 h-full text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold text-xl">+</button>
+              <button (click)="increaseQty()" [disabled]="quantity() >= (product()?.availableQuantity || 0)" class="px-5 h-full text-slate-300 hover:bg-slate-700 hover:text-white disabled:opacity-30 disabled:hover:bg-transparent transition-colors font-bold text-xl">+</button>
             </div>
             
-            <button (click)="addToCart()" [disabled]="product()?.stockQuantity === 0" 
+            <button (click)="addToCart()" [disabled]="product()?.availableQuantity === 0" 
               class="flex-1 h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:bg-slate-700 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed disabled:text-slate-500 flex justify-center items-center gap-3">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
               <span>เพิ่มลงตะกร้า</span>

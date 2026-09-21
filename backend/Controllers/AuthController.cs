@@ -16,11 +16,13 @@ public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IWebHostEnvironment _env;
 
-    public AuthController(AppDbContext context, IConfiguration configuration)
+    public AuthController(AppDbContext context, IConfiguration configuration, IWebHostEnvironment env)
     {
         _context = context;
         _configuration = configuration;
+        _env = env;
     }
 
     [HttpPost("register")]
@@ -55,17 +57,56 @@ public class AuthController : ControllerBase
 
         var token = GenerateJwtToken(user);
 
-        // Optional: Set token in a HttpOnly Cookie
+        // JWT Cookie (7 days)
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = true, // Set to false if not using HTTPS locally
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddHours(2)
+            Secure = !_env.IsDevelopment(), // false on local HTTP, true on prod HTTPS
+            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(7)
         };
         Response.Cookies.Append("jwt", token, cookieOptions);
 
         return Ok(new { token, user = new { user.Id, user.Username, user.Role } });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("jwt", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_env.IsDevelopment(),
+            SameSite = _env.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None
+        });
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    [HttpGet("me")]
+    public IActionResult GetCurrentUser()
+    {
+        // Read from JWT Claims
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+        if (userId == null) return Unauthorized();
+
+        return Ok(new { Id = userId, Username = username, Role = role });
+    }
+
+    [HttpGet("reset-admin")]
+    public async Task<IActionResult> ResetAdmin()
+    {
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Username == "admin");
+        if (admin != null)
+        {
+            admin.PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123");
+            await _context.SaveChangesAsync();
+            return Ok("Password reset to 'password123'");
+        }
+        return NotFound("admin not found");
     }
 
     private string GenerateJwtToken(User user)
@@ -91,7 +132,7 @@ public class AuthController : ControllerBase
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
+            expires: DateTime.UtcNow.AddDays(7),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

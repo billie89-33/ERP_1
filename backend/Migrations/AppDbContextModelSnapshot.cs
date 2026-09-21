@@ -73,6 +73,142 @@ namespace JamineERP.Backend.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsIssue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GiNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("IssueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IssuedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SalesOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GiNumber")
+                        .IsUnique();
+
+                    b.HasIndex("IssuedByUserId");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.ToTable("GoodsIssues");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsIssueItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GoodsIssueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IssuedQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoodsIssueId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("GoodsIssueItems");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("GrNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("PurchaseOrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ReceiptDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ReceivedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GrNumber")
+                        .IsUnique();
+
+                    b.HasIndex("PurchaseOrderId");
+
+                    b.HasIndex("ReceivedByUserId");
+
+                    b.ToTable("GoodsReceipts");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsReceiptItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GoodsReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GoodsReceiptId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("GoodsReceiptItems");
+                });
+
             modelBuilder.Entity("JamineERP.Backend.Models.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -98,8 +234,14 @@ namespace JamineERP.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("OnHandQuantity")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
+
+                    b.Property<int>("ReservedQuantity")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Sku")
                         .IsRequired()
@@ -107,9 +249,6 @@ namespace JamineERP.Backend.Migrations
 
                     b.Property<JsonDocument>("Specifications")
                         .HasColumnType("jsonb");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -387,6 +526,82 @@ namespace JamineERP.Backend.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsIssue", b =>
+                {
+                    b.HasOne("JamineERP.Backend.Models.User", "IssuedByUser")
+                        .WithMany()
+                        .HasForeignKey("IssuedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JamineERP.Backend.Models.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("IssuedByUser");
+
+                    b.Navigation("SalesOrder");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsIssueItem", b =>
+                {
+                    b.HasOne("JamineERP.Backend.Models.GoodsIssue", "GoodsIssue")
+                        .WithMany("GoodsIssueItems")
+                        .HasForeignKey("GoodsIssueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JamineERP.Backend.Models.Product", "Product")
+                        .WithMany("GoodsIssueItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GoodsIssue");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsReceipt", b =>
+                {
+                    b.HasOne("JamineERP.Backend.Models.PurchaseOrder", "PurchaseOrder")
+                        .WithMany()
+                        .HasForeignKey("PurchaseOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JamineERP.Backend.Models.User", "ReceivedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReceivedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PurchaseOrder");
+
+                    b.Navigation("ReceivedByUser");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsReceiptItem", b =>
+                {
+                    b.HasOne("JamineERP.Backend.Models.GoodsReceipt", "GoodsReceipt")
+                        .WithMany("GoodsReceiptItems")
+                        .HasForeignKey("GoodsReceiptId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("JamineERP.Backend.Models.Product", "Product")
+                        .WithMany("GoodsReceiptItems")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GoodsReceipt");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("JamineERP.Backend.Models.Product", b =>
                 {
                     b.HasOne("JamineERP.Backend.Models.Category", "Category")
@@ -516,8 +731,22 @@ namespace JamineERP.Backend.Migrations
                     b.Navigation("SalesOrders");
                 });
 
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsIssue", b =>
+                {
+                    b.Navigation("GoodsIssueItems");
+                });
+
+            modelBuilder.Entity("JamineERP.Backend.Models.GoodsReceipt", b =>
+                {
+                    b.Navigation("GoodsReceiptItems");
+                });
+
             modelBuilder.Entity("JamineERP.Backend.Models.Product", b =>
                 {
+                    b.Navigation("GoodsIssueItems");
+
+                    b.Navigation("GoodsReceiptItems");
+
                     b.Navigation("PurchaseOrderItems");
 
                     b.Navigation("QuotationItems");

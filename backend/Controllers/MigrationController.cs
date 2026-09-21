@@ -108,7 +108,8 @@ public class MigrationController : ControllerBase
                         Name = name,
                         Price = price,
                         Cost = cost,
-                        StockQuantity = stock,
+                        OnHandQuantity = stock,
+                        ReservedQuantity = 0,
                         ImageUrl = imageUrl,
                         CloudinaryPublicId = publicId,
                         CategoryId = defaultCategory.Id,
@@ -188,5 +189,151 @@ public class MigrationController : ControllerBase
             }
         }
         return 0m;
+    }
+
+    [HttpPost("seed-erp-data")]
+    public async Task<IActionResult> SeedErpData()
+    {
+        try
+        {
+            // 1. Ensure User
+            var adminUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == "Admin");
+            if (adminUser == null)
+            {
+                adminUser = new User { Username = "admin", PasswordHash = "dummy", Role = "Admin" };
+                _context.Users.Add(adminUser);
+                await _context.SaveChangesAsync();
+            }
+
+            // 2. Ensure Supplier
+            var supplier = await _context.Suppliers.FirstOrDefaultAsync();
+            if (supplier == null)
+            {
+                supplier = new Supplier { CompanyName = "Tech Supply Co., Ltd.", ContactName = "Mr. John", Phone = "0123456789" };
+                _context.Suppliers.Add(supplier);
+            }
+
+            // 3. Ensure Customer
+            var customer = await _context.Customers.FirstOrDefaultAsync();
+            if (customer == null)
+            {
+                customer = new Customer { CompanyName = "Retail Shop A", TaxId = "1234567890123", Address = "Bangkok", CreditTermDays = 30, CreditLimit = 50000 };
+                _context.Customers.Add(customer);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // 4. Get some products
+            var products = await _context.Products.Take(3).ToListAsync();
+            if (products.Count == 0)
+            {
+                var category = new Category { Name = "General" };
+                _context.Categories.Add(category);
+                
+                products.Add(new Product { Sku = "DUMMY-1", Name = "Dummy Product 1", Price = 1000, Cost = 800, Category = category });
+                products.Add(new Product { Sku = "DUMMY-2", Name = "Dummy Product 2", Price = 2000, Cost = 1500, Category = category });
+                _context.Products.AddRange(products);
+                await _context.SaveChangesAsync();
+            }
+
+            // 5. Create Dummy PO (Pending)
+            var po1 = new PurchaseOrder
+            {
+                PoNumber = "PO" + DateTime.UtcNow.ToString("yyyyMMdd") + "-001",
+                OrderDate = DateTime.UtcNow.AddDays(-2),
+                Status = "Pending",
+                SupplierId = supplier.Id,
+                CreatedByUserId = adminUser.Id,
+                TotalAmount = products[0].Cost * 50
+            };
+            po1.PurchaseOrderItems.Add(new PurchaseOrderItem { ProductId = products[0].Id, Quantity = 50, UnitCost = products[0].Cost });
+            _context.PurchaseOrders.Add(po1);
+
+            // 6. Create Dummy PO (Received) + Goods Receipt
+            var po2 = new PurchaseOrder
+            {
+                PoNumber = "PO" + DateTime.UtcNow.ToString("yyyyMMdd") + "-002",
+                OrderDate = DateTime.UtcNow.AddDays(-5),
+                Status = "Received",
+                SupplierId = supplier.Id,
+                CreatedByUserId = adminUser.Id,
+                TotalAmount = products.Sum(p => p.Cost * 10)
+            };
+            foreach (var p in products)
+            {
+                po2.PurchaseOrderItems.Add(new PurchaseOrderItem { ProductId = p.Id, Quantity = 10, UnitCost = p.Cost });
+                p.OnHandQuantity += 10; // increase stock
+            }
+            _context.PurchaseOrders.Add(po2);
+
+            var gr = new GoodsReceipt
+            {
+                GrNumber = "GR" + DateTime.UtcNow.ToString("yyyyMMdd") + "-001",
+                ReceiptDate = DateTime.UtcNow.AddDays(-3),
+                Status = "Completed",
+                PurchaseOrder = po2,
+                ReceivedByUserId = adminUser.Id
+            };
+            foreach (var item in po2.PurchaseOrderItems)
+            {
+                gr.GoodsReceiptItems.Add(new GoodsReceiptItem { ProductId = item.ProductId, ReceivedQuantity = item.Quantity });
+            }
+            _context.GoodsReceipts.Add(gr);
+
+            // 7. Create Dummy SO (Pending)
+            var so1 = new SalesOrder
+            {
+                OrderNumber = "SO" + DateTime.UtcNow.ToString("yyyyMMdd") + "-001",
+                OrderDate = DateTime.UtcNow.AddDays(-1),
+                Status = "Pending",
+                CustomerId = customer.Id,
+                CreatedByUserId = adminUser.Id,
+                TotalAmount = products[0].Price * 2
+            };
+            so1.SalesOrderItems.Add(new SalesOrderItem { ProductId = products[0].Id, Quantity = 2, UnitPrice = products[0].Price });
+            products[0].ReservedQuantity += 2; // reserve stock
+            _context.SalesOrders.Add(so1);
+
+            // 8. Create Dummy SO (Shipped) + Goods Issue
+            var so2 = new SalesOrder
+            {
+                OrderNumber = "SO" + DateTime.UtcNow.ToString("yyyyMMdd") + "-002",
+                OrderDate = DateTime.UtcNow.AddDays(-4),
+                Status = "Shipped",
+                CustomerId = customer.Id,
+                CreatedByUserId = adminUser.Id,
+                TotalAmount = products.Sum(p => p.Price * 1)
+            };
+            foreach (var p in products)
+            {
+                so2.SalesOrderItems.Add(new SalesOrderItem { ProductId = p.Id, Quantity = 1, UnitPrice = p.Price });
+                // We don't increase ReservedQuantity because it's already shipped and deducted from OnHand
+                p.OnHandQuantity -= 1;
+                // If it was reserved previously, it would have been added and then removed. So net change is OnHand -= 1.
+            }
+            _context.SalesOrders.Add(so2);
+
+            var gi = new GoodsIssue
+            {
+                GiNumber = "GI" + DateTime.UtcNow.ToString("yyyyMMdd") + "-001",
+                IssueDate = DateTime.UtcNow.AddDays(-2),
+                Status = "Shipped",
+                SalesOrder = so2,
+                IssuedByUserId = adminUser.Id
+            };
+            foreach (var item in so2.SalesOrderItems)
+            {
+                gi.GoodsIssueItems.Add(new GoodsIssueItem { ProductId = item.ProductId, IssuedQuantity = item.Quantity });
+            }
+            _context.GoodsIssues.Add(gi);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "ERP Dummy Data Seeded Successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to seed data.", error = ex.Message });
+        }
     }
 }

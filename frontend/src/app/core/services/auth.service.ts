@@ -1,23 +1,20 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, map, tap } from 'rxjs/operators';
-import { throwError } from 'rxjs';
-
+import { throwError, Observable, of } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5243/api/auth'; // Hardcode for now, can move to env later
+  private apiUrl = 'http://localhost:5243/api/auth';
 
-  // Using Angular Signal to store current user globally
-  currentUser = signal<{id: number, username: string, role: string} | null>(null);
+  currentUser = signal<{id: string, username: string, role: string} | null>(null);
 
   login(credentials: any) {
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
       tap(res => {
-        // Save user info in Signal and LocalStorage (just for UI state, token is in HttpOnly Cookie)
         this.currentUser.set(res.user);
         localStorage.setItem('user', JSON.stringify(res.user));
       }),
@@ -28,9 +25,31 @@ export class AuthService {
   }
 
   logout() {
-    this.currentUser.set(null);
-    localStorage.removeItem('user');
-    // We should ideally call a /logout API to clear the cookie, but for now we'll just clear local state
+    return this.http.post(`${this.apiUrl}/logout`, {}).pipe(
+      tap(() => {
+        this.currentUser.set(null);
+        localStorage.removeItem('user');
+      }),
+      catchError(() => {
+        this.currentUser.set(null);
+        localStorage.removeItem('user');
+        return of(null);
+      })
+    ).subscribe();
+  }
+
+  checkSession(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/me`).pipe(
+      tap(user => {
+        this.currentUser.set(user);
+        localStorage.setItem('user', JSON.stringify(user));
+      }),
+      catchError(() => {
+        this.currentUser.set(null);
+        localStorage.removeItem('user');
+        return of(null);
+      })
+    );
   }
 
   loadUserFromStorage() {
@@ -39,7 +58,7 @@ export class AuthService {
       try {
         this.currentUser.set(JSON.parse(userStr));
       } catch (e) {
-        this.logout();
+        this.currentUser.set(null);
       }
     }
   }

@@ -9,7 +9,11 @@ public class ProductDto
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public decimal Cost { get; set; }
-    public int StockQuantity { get; set; }
+    
+    public int OnHandQuantity { get; set; }
+    public int ReservedQuantity { get; set; }
+    public int AvailableQuantity { get; set; }
+
     public JsonElement? Specifications { get; set; }
     public string? ImageUrl { get; set; }
     public Guid CategoryId { get; set; }
@@ -22,7 +26,6 @@ public class CreateProductDto
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public decimal Cost { get; set; }
-    public int StockQuantity { get; set; }
     public JsonElement? Specifications { get; set; }
     public Guid CategoryId { get; set; }
     public string? ImageUrl { get; set; }
@@ -31,11 +34,6 @@ public class CreateProductDto
 
 public class UpdateProductDto : CreateProductDto
 {
-}
-
-public class PatchProductStockDto
-{
-    public int StockQuantity { get; set; }
 }
 
 public class PatchProductPriceDto

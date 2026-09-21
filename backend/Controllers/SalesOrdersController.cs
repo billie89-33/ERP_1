@@ -23,6 +23,22 @@ public class SalesOrdersController : ControllerBase
     }
 
     // GET: api/SalesOrders
+    [AllowAnonymous]
+    [HttpGet("debug-count")]
+    public async Task<IActionResult> DebugCount()
+    {
+        var count = await _context.SalesOrders.CountAsync();
+        return Ok(new { Count = count });
+    }
+
+    [HttpGet("debug-user")]
+    public IActionResult DebugUser()
+    {
+        var roles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+        var allClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+        return Ok(new { Roles = roles, AllClaims = allClaims, IdentityName = User.Identity?.Name, IsAuthenticated = User.Identity?.IsAuthenticated });
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetSalesOrders()
     {
@@ -43,6 +59,32 @@ public class SalesOrdersController : ControllerBase
             .ToListAsync();
             
         return Ok(sos);
+    }
+
+    // GET: api/SalesOrders/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetSalesOrder(Guid id)
+    {
+        var so = await _context.SalesOrders
+            .Include(s => s.Customer)
+            .Include(s => s.SalesOrderItems)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+        if (so == null) return NotFound();
+
+        return Ok(new {
+            so.Id,
+            so.OrderNumber,
+            so.Status,
+            CustomerName = so.Customer.CompanyName,
+            Items = so.SalesOrderItems.Select(i => new {
+                i.ProductId,
+                ProductName = i.Product.Name,
+                i.Quantity,
+                i.UnitPrice
+            })
+        });
     }
 
     // POST: api/SalesOrders
@@ -70,7 +112,7 @@ public class SalesOrdersController : ControllerBase
             {
                 OrderNumber = OrderNumber,
                 OrderDate = today,
-                Status = "Completed", // สมมติว่าขายหน้าร้าน ตัดสต๊อกและเสร็จสิ้นทันที
+                Status = "Pending", // เปลี่ยนเป็น Pending เพราะต้องรอส่งของผ่าน GI
                 TotalAmount = totalAmount,
                 CustomerId = dto.CustomerId,
                 CreatedByUserId = user.Id
@@ -83,11 +125,12 @@ public class SalesOrdersController : ControllerBase
                 if (product == null)
                     throw new Exception($"ไม่พบสินค้า (ID: {item.ProductId}) ในระบบ");
 
-                if (product.StockQuantity < item.Quantity)
-                    throw new Exception($"สินค้า '{product.Name}' มีสต๊อกไม่พอ (เหลือ {product.StockQuantity}, ต้องการ {item.Quantity})");
+                var available = product.OnHandQuantity - product.ReservedQuantity;
+                if (available < item.Quantity)
+                    throw new Exception($"สินค้า '{product.Name}' มีสต็อกไม่พอจำหน่าย (พร้อมขาย {available}, ต้องการสั่ง {item.Quantity})");
 
-                // 🌟 -หักสต๊อก
-                product.StockQuantity -= item.Quantity;
+                // เพิ่มยอดจอง (Reserved) สต็อกจริง (OnHand) จะไปตัดตอนออกใบ Goods Issue (GI)
+                product.ReservedQuantity += item.Quantity;
 
                 so.SalesOrderItems.Add(new SalesOrderItem
                 {
@@ -108,6 +151,52 @@ public class SalesOrdersController : ControllerBase
             // 🚨 ถ้าพัง (เช่น สต๊อกไม่พอ) บิลขายจะไม่ถูกสร้าง และสต๊อกจะไม่ถูกตัด (Rollback)
             await transaction.RollbackAsync();
             return BadRequest(new { message = "ไม่สามารถสร้างบิลขายได้ การทำรายการถูกยกเลิก", error = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelSalesOrder(Guid id)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var so = await _context.SalesOrders
+                .Include(s => s.SalesOrderItems)
+                .FirstOrDefaultAsync(s => s.Id == id && !s.IsDeleted);
+
+            if (so == null) return NotFound(new { message = "ไม่พบบิลขาย" });
+
+            if (so.Status != "Pending")
+                return BadRequest(new { message = "สามารถยกเลิกได้เฉพาะบิลที่ยัง Pending เท่านั้น" });
+
+            so.Status = "Cancelled";
+
+            foreach (var item in so.SalesOrderItems)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    // Return reserved stock
+                    if (product.ReservedQuantity >= item.Quantity)
+                    {
+                        product.ReservedQuantity -= item.Quantity;
+                    }
+                    else
+                    {
+                        product.ReservedQuantity = 0; // Failsafe
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new { message = "ยกเลิกบิลขายและคืนสต๊อกสำเร็จ" });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return BadRequest(new { message = "เกิดข้อผิดพลาดในการยกเลิกบิล", error = ex.Message });
         }
     }
 }

@@ -20,6 +20,10 @@ public class AppDbContext : DbContext
     public DbSet<SalesOrderItem> SalesOrderItems { get; set; } = null!;
     public DbSet<PurchaseOrder> PurchaseOrders { get; set; } = null!;
     public DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; } = null!;
+    public DbSet<GoodsReceipt> GoodsReceipts { get; set; } = null!;
+    public DbSet<GoodsReceiptItem> GoodsReceiptItems { get; set; } = null!;
+    public DbSet<GoodsIssue> GoodsIssues { get; set; } = null!;
+    public DbSet<GoodsIssueItem> GoodsIssueItems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +39,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Quotation>().HasIndex(q => q.QuoteNumber).IsUnique();
         modelBuilder.Entity<SalesOrder>().HasIndex(s => s.OrderNumber).IsUnique();
         modelBuilder.Entity<PurchaseOrder>().HasIndex(p => p.PoNumber).IsUnique();
+        modelBuilder.Entity<GoodsReceipt>().HasIndex(gr => gr.GrNumber).IsUnique();
+        modelBuilder.Entity<GoodsIssue>().HasIndex(gi => gi.GiNumber).IsUnique();
 
         // Global Query Filter for Soft Delete
         modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);
@@ -48,5 +54,9 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<SalesOrderItem>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<PurchaseOrder>().HasQueryFilter(e => !e.IsDeleted);
         modelBuilder.Entity<PurchaseOrderItem>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<GoodsReceipt>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<GoodsReceiptItem>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<GoodsIssue>().HasQueryFilter(e => !e.IsDeleted);
+        modelBuilder.Entity<GoodsIssueItem>().HasQueryFilter(e => !e.IsDeleted);
     }
 }

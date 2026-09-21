@@ -114,7 +114,7 @@ export class ProductDetailComponent implements OnInit {
 
   increaseQty() {
     const p = this.product();
-    if (p && this.quantity() < p.stockQuantity) {
+    if (p && this.quantity() < p.availableQuantity) {
       this.quantity.update(q => q + 1);
     }
   }

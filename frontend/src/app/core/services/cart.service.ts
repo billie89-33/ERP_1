@@ -1,4 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { ProductDto } from '../models/product.model';
+import { firstValueFrom } from 'rxjs';
 
 export interface CartItem {
   productId: string;
@@ -9,10 +12,20 @@ export interface CartItem {
   maxStock: number;
 }
 
+export interface CheckoutPayload {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  items: { productId: string; quantity: number }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
+  private http = inject(HttpClient);
   // State
   private cartItemsSignal = signal<CartItem[]>([]);
 
@@ -32,14 +45,14 @@ export class CartService {
   }
 
   // Actions
-  addToCart(product: any, quantity: number = 1) {
+  addToCart(product: ProductDto, quantity: number = 1) {
     const currentItems = this.cartItemsSignal();
     const existingItem = currentItems.find(item => item.productId === product.id);
 
     if (existingItem) {
       // Update quantity if already exists, but respect max stock
       const newQty = existingItem.quantity + quantity;
-      const finalQty = newQty > product.stockQuantity ? product.stockQuantity : newQty;
+      const finalQty = newQty > product.availableQuantity ? product.availableQuantity : newQty;
       
       this.cartItemsSignal.update(items => 
         items.map(item => 
@@ -54,9 +67,9 @@ export class CartService {
         productId: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imageUrl,
-        quantity: quantity > product.stockQuantity ? product.stockQuantity : quantity,
-        maxStock: product.stockQuantity
+        imageUrl: product.imageUrl || null,
+        quantity: quantity > product.availableQuantity ? product.availableQuantity : quantity,
+        maxStock: product.availableQuantity
       };
       
       this.cartItemsSignal.update(items => [...items, newItem]);
@@ -107,5 +120,11 @@ export class CartService {
         console.error('Failed to parse cart data from local storage');
       }
     }
+  }
+
+  async submitCheckout(payload: CheckoutPayload) {
+    const response = await firstValueFrom(this.http.post<any>(`http://localhost:5243/api/storefront/checkout`, payload));
+    this.clearCart();
+    return response;
   }
 }

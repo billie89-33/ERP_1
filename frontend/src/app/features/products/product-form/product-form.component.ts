@@ -39,7 +39,6 @@ export class ProductFormComponent implements OnInit {
       name: ['', Validators.required],
       price: [0, [Validators.required, Validators.min(0)]],
       cost: [0, [Validators.required, Validators.min(0)]],
-      stockQuantity: [0, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
     });
   }
@@ -56,11 +55,13 @@ export class ProductFormComponent implements OnInit {
           name: product.name,
           price: product.price,
           cost: product.cost,
-          stockQuantity: product.stockQuantity,
-          categoryId: product.categoryId
+          categoryId: product.categoryId,
+          imageUrl: product.imageUrl,
+          cloudinaryPublicId: product.cloudinaryPublicId
         });
-        this.imageUrl = product.imageUrl || null;
         
+        this.imageUrl = product.imageUrl || null;
+
         // Parse JSON object back into dynamic array
         if (product.specifications && typeof product.specifications === 'object') {
           this.dynamicSpecs = [];

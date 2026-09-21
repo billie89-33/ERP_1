@@ -45,6 +45,32 @@ public class PurchaseOrdersController : ControllerBase
         return Ok(pos);
     }
     
+    // GET: api/PurchaseOrders/{id}
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetPurchaseOrder(Guid id)
+    {
+        var po = await _context.PurchaseOrders
+            .Include(p => p.Supplier)
+            .Include(p => p.PurchaseOrderItems)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+
+        if (po == null) return NotFound();
+
+        return Ok(new {
+            po.Id,
+            po.PoNumber,
+            po.Status,
+            SupplierName = po.Supplier.CompanyName,
+            Items = po.PurchaseOrderItems.Select(i => new {
+                i.ProductId,
+                ProductName = i.Product.Name,
+                i.Quantity,
+                i.UnitCost
+            })
+        });
+    }
+
     // POST: api/PurchaseOrders
     [HttpPost]
     public async Task<IActionResult> CreatePurchaseOrder(CreatePurchaseOrderDto dto)
@@ -91,53 +117,19 @@ public class PurchaseOrdersController : ControllerBase
         return Ok(new { message = "สร้างใบสั่งซื้อ (PO) สำเร็จ", poId = po.Id, poNumber = po.PoNumber });
     }
 
-    // POST: api/PurchaseOrders/{id}/receive
-    [HttpPost("{id}/receive")]
-    public async Task<IActionResult> ReceivePurchaseOrder(Guid id)
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelPurchaseOrder(Guid id)
     {
-        // 🚀 ไฮไลท์: ใช้ Transaction ในการรับของเข้าสต๊อก
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        
-        try
-        {
-            var po = await _context.PurchaseOrders
-                .Include(p => p.PurchaseOrderItems)
-                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        var po = await _context.PurchaseOrders.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
-            if (po == null)
-                return NotFound(new { message = "ไม่พบใบสั่งซื้อที่ระบุ" });
+        if (po == null) return NotFound(new { message = "ไม่พบใบสั่งซื้อ" });
 
-            if (po.Status == "Received")
-                return BadRequest(new { message = "ใบสั่งซื้อนี้รับของเข้าระบบไปแล้ว!" });
+        if (po.Status != "Pending")
+            return BadRequest(new { message = "สามารถยกเลิกได้เฉพาะบิลที่ยัง Pending เท่านั้น" });
 
-            // 1. Update PO Status
-            po.Status = "Received";
+        po.Status = "Cancelled";
+        await _context.SaveChangesAsync();
 
-            // 2. Loop update product stock
-            foreach (var item in po.PurchaseOrderItems)
-            {
-                var product = await _context.Products.FindAsync(item.ProductId);
-                if (product == null)
-                    throw new Exception($"ไม่พบสินค้า ProductId: {item.ProductId} ในระบบ ข้อมูลอาจเสียหาย");
-
-                // 🌟 +เพิ่มสต๊อก (และอาจจะอัปเดตราคาต้นทุนเฉลี่ย (Moving Average) ได้ที่นี่)
-                product.StockQuantity += item.Quantity;
-                product.Cost = item.UnitCost; // อัปเดตต้นทุนล่าสุดง่ายๆ
-            }
-
-            // 3. Save Changes
-            await _context.SaveChangesAsync();
-
-            // 4. Commit Transaction
-            await transaction.CommitAsync();
-
-            return Ok(new { message = $"รับสินค้าเข้าระบบสำเร็จ สต๊อกอัปเดตแล้ว (PO: {po.PoNumber})" });
-        }
-        catch (Exception ex)
-        {
-            // 🚨 ถ้าพังตรงไหนก็ตาม (เช่น ไฟดับ, DB ล่ม, โค้ดผิด) ข้อมูลทั้งหมดจะถูก Rollback กลับคืนเหมือนไม่มีอะไรเกิดขึ้น!
-            await transaction.RollbackAsync();
-            return StatusCode(500, new { message = "เกิดข้อผิดพลาดขณะรับของเข้าระบบ การทำรายการถูกยกเลิก (Rollback)", error = ex.Message });
-        }
+        return Ok(new { message = "ยกเลิกใบสั่งซื้อสำเร็จ" });
     }
 }

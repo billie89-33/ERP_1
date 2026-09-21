@@ -28,19 +28,32 @@ export const routes: Routes = [
   {
     path: 'admin',
     component: AdminLayoutComponent,
-    canActivate: [authGuard], // ใช้ Route Guard ป้องกัน
+    canActivate: [authGuard], 
     children: [
-      // { path: 'dashboard', component: DashboardComponent },
+      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       
       // 📦 Product & Inventory
       { path: 'products', loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent) },
       { path: 'products/create', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       { path: 'products/edit/:id', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       
-      // 🤝 Sales & CRM
+      // 💰 Sales & CRM
       { 
         path: 'sales-orders', 
         loadComponent: () => import('./features/sales/sales-order-list/sales-order-list.component').then(m => m.SalesOrderListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
+      { 
+        path: 'sales-orders/create', 
+        loadComponent: () => import('./features/sales/sales-order-form/sales-order-form.component').then(m => m.SalesOrderFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
+      { 
+        path: 'sales-orders/:id', 
+        loadComponent: () => import('./features/sales/sales-order-detail/sales-order-detail.component').then(m => m.SalesOrderDetailComponent),
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Sales'] }
       },
@@ -51,6 +64,32 @@ export const routes: Routes = [
         loadComponent: () => import('./features/purchasing/purchase-order-list/purchase-order-list.component').then(m => m.PurchaseOrderListComponent),
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Purchasing'] }
+      },
+      { 
+        path: 'purchase-orders/create', 
+        loadComponent: () => import('./features/purchasing/purchase-order-form/purchase-order-form.component').then(m => m.PurchaseOrderFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
+      { 
+        path: 'purchase-orders/:id', 
+        loadComponent: () => import('./features/purchasing/purchase-order-detail/purchase-order-detail.component').then(m => m.PurchaseOrderDetailComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
+      
+      // 🏭 Warehouse
+      { 
+        path: 'warehouse/goods-receipt/:id', 
+        loadComponent: () => import('./features/warehouse/goods-receipt/goods-receipt.component').then(m => m.GoodsReceiptComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Warehouse'] }
+      },
+      { 
+        path: 'warehouse/goods-issue/:id', 
+        loadComponent: () => import('./features/warehouse/goods-issue/goods-issue.component').then(m => m.GoodsIssueComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Warehouse'] }
       },
     ]
   },

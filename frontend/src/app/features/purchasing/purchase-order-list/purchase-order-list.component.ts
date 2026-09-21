@@ -34,17 +34,4 @@ export class PurchaseOrderListComponent implements OnInit {
     });
   }
 
-  receivePO(id: string) {
-    if (confirm('ยืนยันรับของเข้าสต๊อก? สต๊อกสินค้าจะเพิ่มขึ้นทันทีและไม่สามารถย้อนกลับได้')) {
-      this.http.post(`http://localhost:5243/api/PurchaseOrders/${id}/receive`, {}).subscribe({
-        next: (res: any) => {
-          alert(res.message);
-          this.loadPOs();
-        },
-        error: (err) => {
-          alert(err.error?.message || 'เกิดข้อผิดพลาดในการรับของ');
-        }
-      });
-    }
-  }
 }

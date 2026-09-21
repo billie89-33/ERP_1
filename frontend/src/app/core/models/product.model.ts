@@ -4,10 +4,13 @@ export interface ProductDto {
   name: string;
   price: number;
   cost: number;
-  stockQuantity: number;
+  onHandQuantity: number;
+  reservedQuantity: number;
+  availableQuantity: number;
   categoryId: string;
   categoryName: string;
   imageUrl?: string;
+  cloudinaryPublicId?: string;
   specifications?: Record<string, any>;
 }
 

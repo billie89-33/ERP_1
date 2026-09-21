@@ -122,7 +122,9 @@ public class ProductsController : ControllerBase
                 Name = p.Name,
                 Price = p.Price,
                 Cost = p.Cost,
-                StockQuantity = p.StockQuantity,
+                OnHandQuantity = p.OnHandQuantity,
+                ReservedQuantity = p.ReservedQuantity,
+                AvailableQuantity = p.OnHandQuantity - p.ReservedQuantity,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category != null ? p.Category.Name : "N/A",
                 ImageUrl = p.ImageUrl,
@@ -247,7 +249,9 @@ public class ProductsController : ControllerBase
             Name = product.Name,
             Price = product.Price,
             Cost = product.Cost,
-            StockQuantity = product.StockQuantity,
+            OnHandQuantity = product.OnHandQuantity,
+            ReservedQuantity = product.ReservedQuantity,
+            AvailableQuantity = product.OnHandQuantity - product.ReservedQuantity,
             Specifications = product.Specifications != null ? JsonDocument.Parse(product.Specifications.RootElement.GetRawText()).RootElement : null,
             CategoryId = product.CategoryId,
             CategoryName = product.Category != null ? product.Category.Name : "N/A",
@@ -273,7 +277,6 @@ public class ProductsController : ControllerBase
             Name = dto.Name,
             Price = dto.Price,
             Cost = dto.Cost,
-            StockQuantity = dto.StockQuantity,
             CategoryId = dto.CategoryId,
             ImageUrl = dto.ImageUrl,
             CloudinaryPublicId = dto.CloudinaryPublicId
@@ -325,7 +328,6 @@ public class ProductsController : ControllerBase
         product.Name = dto.Name;
         product.Price = dto.Price;
         product.Cost = dto.Cost;
-        product.StockQuantity = dto.StockQuantity;
         product.CategoryId = dto.CategoryId;
 
         if (dto.Specifications.HasValue)
@@ -340,20 +342,6 @@ public class ProductsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "อัปเดตข้อมูลสำเร็จ" });
-    }
-
-    // PATCH: api/Products/5/stock
-    [HttpPatch("{id}/stock")]
-    [Authorize(Roles = "Admin,Purchasing,Warehouse")]
-    public async Task<IActionResult> PatchStock(Guid id, PatchProductStockDto dto)
-    {
-        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
-        if (product == null) return NotFound(new { message = "ไม่พบสินค้าที่คุณค้นหา" });
-
-        product.StockQuantity = dto.StockQuantity;
-        
-        await _context.SaveChangesAsync();
-        return Ok(new { message = "อัปเดตสต๊อกสินค้าสำเร็จ" });
     }
 
     // PATCH: api/Products/5/price
