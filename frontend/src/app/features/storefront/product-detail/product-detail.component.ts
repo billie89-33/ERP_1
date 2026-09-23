@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductDto } from '../../../core/models/product.model';
@@ -14,6 +14,7 @@ import { ProductDto } from '../../../core/models/product.model';
 })
 export class ProductDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
 
@@ -52,16 +53,12 @@ export class ProductDetailComponent implements OnInit {
        shortName = namePart.replace(modelMatch[0], '').trim();
     }
 
-    // เช็คว่ามี Description จาก JSON ปกติไหม
-    const mongoDesc = p.specifications ? p.specifications['description'] : null;
-    let finalDesc = descPart;
+    // Use description from top-level field if available, otherwise fallback to parsed descPart
+    let finalDesc = p.description || descPart;
     
-    if (mongoDesc && mongoDesc !== rawName) {
-        finalDesc = mongoDesc; // ใช้จาก JSON ถ่ามีและไม่ซ้ำกับชื่อเต็ม
-    } else if (mongoDesc === rawName) {
-        // ถ้า JSON ซ้ำกับชื่อเต็มเป๊ะๆ เราใช้ descPart ที่ตัดมาแล้วดีกว่า
-    } else if (!finalDesc && mongoDesc) {
-        finalDesc = mongoDesc;
+    // Sometimes top-level description is exact same as name, in that case use the split part if it exists
+    if (finalDesc === rawName && descPart) {
+        finalDesc = descPart;
     }
     
     return {
@@ -129,7 +126,18 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     if (p) {
       this.cartService.addToCart(p, this.quantity());
+      
+      // Optional: show a tiny toast or just let the cart badge update
+      // We will reset quantity to 1 after adding
       this.quantity.set(1);
+    }
+  }
+
+  buyNow() {
+    const p = this.product();
+    if (p) {
+      this.cartService.addToCart(p, this.quantity());
+      this.router.navigate(['/cart']);
     }
   }
 }

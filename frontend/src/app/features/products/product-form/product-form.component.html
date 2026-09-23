@@ -87,11 +87,11 @@
         </div>
         
         <div *ngFor="let spec of dynamicSpecs; let i = index" class="flex gap-3 items-center">
-          <input type="text" [(ngModel)]="spec.key" [ngModelOptions]="{standalone: true}" placeholder="e.g. RAM" 
-            class="flex-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+          <input type="text" [(ngModel)]="spec.key" [ngModelOptions]="{standalone: true}" placeholder="Property Name (e.g. RAM)" 
+            class="w-1/3 block border border-slate-300 rounded-md shadow-sm py-2 px-3 bg-slate-100 text-slate-700 font-medium focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors focus:bg-white">
           
-          <input type="text" [(ngModel)]="spec.value" [ngModelOptions]="{standalone: true}" placeholder="e.g. 16GB DDR5" 
-            class="flex-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+          <input type="text" [(ngModel)]="spec.value" [ngModelOptions]="{standalone: true}" placeholder="Value (e.g. 16GB DDR5)" 
+            class="flex-1 block w-full border border-slate-300 rounded-md shadow-sm py-2 px-3 bg-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
           
           <button type="button" (click)="removeSpecRow(i)" class="text-red-500 hover:text-red-700 p-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>

@@ -199,4 +199,19 @@ public class SalesOrdersController : ControllerBase
             return BadRequest(new { message = "เกิดข้อผิดพลาดในการยกเลิกบิล", error = ex.Message });
         }
     }
+
+    [HttpPost("{id}/verify-payment")]
+    [Authorize(Roles = "Admin,Sales")]
+    public async Task<IActionResult> VerifyPayment(Guid id)
+    {
+        var so = await _context.SalesOrders.FindAsync(id);
+        if (so == null || so.IsDeleted) return NotFound();
+
+        if (so.PaymentStatus != "Checking")
+            return BadRequest(new { message = "Order is not waiting for payment verification." });
+
+        so.PaymentStatus = "Paid";
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Payment verified successfully." });
+    }
 }

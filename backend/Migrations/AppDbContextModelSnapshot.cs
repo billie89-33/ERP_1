@@ -61,14 +61,35 @@ namespace JamineERP.Backend.Migrations
                     b.Property<int>("CreditTermDays")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CustomerType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("TaxId")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyName")
+                        .IsUnique();
+
+                    b.HasIndex("TaxId")
+                        .IsUnique();
 
                     b.ToTable("Customers");
                 });
@@ -215,20 +236,29 @@ namespace JamineERP.Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("CloudinaryPublicId")
-                        .HasColumnType("text");
 
                     b.Property<decimal>("Cost")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("IsFeatured")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ModelName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -247,8 +277,22 @@ namespace JamineERP.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("SoldCount")
+                        .HasColumnType("integer");
+
                     b.Property<JsonDocument>("Specifications")
                         .HasColumnType("jsonb");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string[]>("Tags")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<int>("ViewCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -415,13 +459,28 @@ namespace JamineERP.Backend.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("OrderChannel")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentSlipUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -480,22 +539,38 @@ namespace JamineERP.Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
                     b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ContactName")
-                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("PaymentTerms")
+                        .HasColumnType("text");
+
                     b.Property<string>("Phone")
-                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TaxId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CompanyName")
+                        .IsUnique();
+
+                    b.HasIndex("TaxId")
+                        .IsUnique();
 
                     b.ToTable("Suppliers");
                 });
@@ -506,8 +581,20 @@ namespace JamineERP.Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -522,6 +609,12 @@ namespace JamineERP.Backend.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -610,7 +703,31 @@ namespace JamineERP.Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.OwnsOne("JamineERP.Backend.Models.ProductImage", "Image", b1 =>
+                        {
+                            b1.Property<Guid>("ProductId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("PublicId")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Url")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("ProductId");
+
+                            b1.ToTable("Products");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProductId");
+                        });
+
                     b.Navigation("Category");
+
+                    b.Navigation("Image")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("JamineERP.Backend.Models.PurchaseOrder", b =>

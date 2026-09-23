@@ -2,3 +2,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Hide sidebar and topbar when printing */
+  app-admin-layout .w-64, 
+  app-admin-layout header {
+    display: none !important;
+  }
+  
+  /* Expand main content area */
+  app-admin-layout main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Remove shadow and borders for print */
+  .shadow-md, .shadow-lg, .shadow {
+    box-shadow: none !important;
+  }
+}

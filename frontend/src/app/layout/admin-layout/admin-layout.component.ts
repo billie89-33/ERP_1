@@ -18,4 +18,10 @@ export class AdminLayoutComponent {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
+
+  hasRole(allowedRoles: string[]): boolean {
+    const user = this.authService.currentUser();
+    if (!user) return false;
+    return allowedRoles.includes(user.role);
+  }
 }

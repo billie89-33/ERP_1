@@ -34,13 +34,31 @@ public class AppDbContext : DbContext
             .Property(p => p.Specifications)
             .HasColumnType("jsonb");
 
+        // Configure nested object for ProductImage
+        modelBuilder.Entity<Product>().OwnsOne(p => p.Image);
+
         // Unique constraints (From ERD)
+        modelBuilder.Entity<Supplier>()
+            .HasIndex(s => s.CompanyName)
+            .IsUnique();
+        modelBuilder.Entity<Supplier>()
+            .HasIndex(s => s.TaxId)
+            .IsUnique();
+        modelBuilder.Entity<Customer>()
+            .HasIndex(c => c.CompanyName)
+            .IsUnique();
+        modelBuilder.Entity<Customer>()
+            .HasIndex(c => c.TaxId)
+            .IsUnique();
         modelBuilder.Entity<Product>().HasIndex(p => p.Sku).IsUnique();
         modelBuilder.Entity<Quotation>().HasIndex(q => q.QuoteNumber).IsUnique();
         modelBuilder.Entity<SalesOrder>().HasIndex(s => s.OrderNumber).IsUnique();
         modelBuilder.Entity<PurchaseOrder>().HasIndex(p => p.PoNumber).IsUnique();
         modelBuilder.Entity<GoodsReceipt>().HasIndex(gr => gr.GrNumber).IsUnique();
         modelBuilder.Entity<GoodsIssue>().HasIndex(gi => gi.GiNumber).IsUnique();
+
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+        modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
         // Global Query Filter for Soft Delete
         modelBuilder.Entity<User>().HasQueryFilter(e => !e.IsDeleted);

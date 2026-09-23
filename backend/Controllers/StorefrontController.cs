@@ -87,7 +87,9 @@ public class StorefrontController : ControllerBase
                 Status = "Pending", // B2C orders start as Pending, awaiting payment or packing
                 CustomerId = customer.Id,
                 CreatedByUserId = systemUser.Id,
-                TotalAmount = 0 // Will calculate below
+                TotalAmount = 0, // Will calculate below
+                OrderChannel = "Web",
+                ExpiresAt = today.AddMinutes(10)
             };
 
             decimal totalAmount = 0;
@@ -135,5 +137,111 @@ public class StorefrontController : ControllerBase
             await transaction.RollbackAsync();
             return BadRequest(new { message = "Checkout failed.", error = ex.Message });
         }
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpGet("my-orders")]
+    public async Task<IActionResult> GetMyOrders()
+    {
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) return NotFound(new { message = "Customer profile not found." });
+
+        var orders = await _context.SalesOrders
+            .Where(so => so.CustomerId == customer.Id && !so.IsDeleted)
+            .OrderByDescending(so => so.OrderDate)
+            .Select(so => new
+            {
+                so.Id,
+                so.OrderNumber,
+                so.OrderDate,
+                so.Status,
+                so.PaymentStatus,
+                so.TotalAmount,
+                so.ExpiresAt
+            })
+            .ToListAsync();
+
+        return Ok(orders);
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpGet("orders/{id}")]
+    public async Task<IActionResult> GetOrderDetails(Guid id)
+    {
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) return Unauthorized();
+
+        var order = await _context.SalesOrders
+            .Include(so => so.SalesOrderItems)
+                .ThenInclude(i => i.Product)
+            .FirstOrDefaultAsync(so => so.Id == id && so.CustomerId == customer.Id && !so.IsDeleted);
+
+        if (order == null) return NotFound();
+
+        return Ok(new
+        {
+            order.Id,
+            order.OrderNumber,
+            order.OrderDate,
+            order.Status,
+            order.PaymentStatus,
+            order.PaymentSlipUrl,
+            order.TotalAmount,
+            order.ExpiresAt,
+            Items = order.SalesOrderItems.Select(i => new
+            {
+                i.ProductId,
+                ProductName = i.Product.Name,
+                i.Quantity,
+                i.UnitPrice
+            })
+        });
+    }
+
+    public class UploadSlipDto
+    {
+        public string Base64Image { get; set; } = string.Empty;
+    }
+
+    [Authorize(Roles = "Customer")]
+    [HttpPost("orders/{id}/upload-slip")]
+    public async Task<IActionResult> UploadSlip(Guid id, [FromBody] UploadSlipDto dto)
+    {
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
+            return Unauthorized();
+
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (customer == null) return Unauthorized();
+
+        var order = await _context.SalesOrders
+            .FirstOrDefaultAsync(so => so.Id == id && so.CustomerId == customer.Id && !so.IsDeleted);
+
+        if (order == null) return NotFound();
+
+        if (order.Status == "Cancelled")
+            return BadRequest(new { message = "Order has been cancelled." });
+
+        if (order.ExpiresAt.HasValue && DateTime.UtcNow > order.ExpiresAt.Value)
+        {
+            return BadRequest(new { message = "Order has expired. Please create a new order." });
+        }
+
+        if (string.IsNullOrEmpty(dto.Base64Image))
+            return BadRequest(new { message = "Image is required." });
+
+        order.PaymentSlipUrl = dto.Base64Image;
+        order.PaymentStatus = "Checking";
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Slip uploaded successfully." });
     }
 }

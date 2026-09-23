@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sales-order-detail',
@@ -25,18 +26,48 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
             </span>
           </p>
         </div>
-        <div class="space-x-3">
+        <div class="space-x-3 no-print">
+          <button (click)="printDocument()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md shadow-sm font-medium"><i class="fas fa-print mr-2"></i> Print PDF</button>
           <a routerLink="/admin/sales-orders" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md shadow-sm font-medium">Back to List</a>
-          <button *ngIf="order.status === 'Pending'" (click)="shipOrder()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm font-medium">📦 Ship Items (Goods Issue)</button>
-          <button *ngIf="order.status === 'Pending'" (click)="cancelOrder()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md shadow-sm font-medium border border-red-200">❌ Cancel Order</button>
+          
+          <!-- Only Admin or Warehouse can ship -->
+          <button *ngIf="order.status === 'Pending' && hasRole(['Admin', 'Warehouse'])" (click)="shipOrder()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm font-medium">📦 Ship Items (Goods Issue)</button>
+          
+          <!-- Only Admin or Sales can cancel -->
+          <button *ngIf="order.status === 'Pending' && hasRole(['Admin', 'Sales'])" (click)="cancelOrder()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md shadow-sm font-medium border border-red-200">❌ Cancel Order</button>
         </div>
       </div>
 
       <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
-        <div class="p-6 border-b border-slate-200 flex justify-between">
+        <div class="p-6 border-b border-slate-200 flex justify-between items-start">
           <div>
             <h3 class="text-sm font-medium text-slate-500 uppercase">Customer</h3>
             <p class="text-lg font-semibold text-slate-800 mt-1">{{ order.customerName }}</p>
+          </div>
+          
+          <div class="text-right">
+            <h3 class="text-sm font-medium text-slate-500 uppercase">Payment Status</h3>
+            <p class="text-lg font-bold mt-1"
+               [ngClass]="{
+                 'text-red-500': order.paymentStatus === 'Pending',
+                 'text-yellow-600': order.paymentStatus === 'Checking',
+                 'text-green-600': order.paymentStatus === 'Paid'
+               }">
+              {{ order.paymentStatus || 'Pending' }}
+            </p>
+          </div>
+        </div>
+        
+        <div *ngIf="order.paymentStatus === 'Checking' && order.paymentSlipUrl" class="p-6 bg-yellow-50 border-b border-slate-200 flex flex-col md:flex-row gap-6 items-center no-print">
+          <div>
+            <h3 class="text-sm font-bold text-yellow-800 mb-2">Customer uploaded a payment slip:</h3>
+            <img [src]="order.paymentSlipUrl" class="w-64 h-auto rounded-lg border border-yellow-200 shadow-sm" alt="Payment Slip">
+          </div>
+          <div>
+            <button *ngIf="hasRole(['Admin', 'Sales'])" (click)="verifyPayment()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md">
+              ✅ Verify Payment (Mark as Paid)
+            </button>
+            <p class="text-xs text-yellow-600 mt-2">Make sure the money is in the bank account before verifying.</p>
           </div>
         </div>
 
@@ -75,12 +106,19 @@ export class SalesOrderDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadOrder(id);
     }
+  }
+
+  hasRole(allowedRoles: string[]): boolean {
+    const user = this.authService.currentUser();
+    if (!user) return false;
+    return allowedRoles.includes(user.role);
   }
 
   loadOrder(id: string) {
@@ -133,5 +171,21 @@ export class SalesOrderDetailComponent implements OnInit {
         error: (err) => alert(err.error?.message || 'Failed to ship order')
       });
     }
+  }
+
+  verifyPayment() {
+    if (confirm('Are you sure this payment is valid and money is in the bank?')) {
+      this.http.post(`http://localhost:5243/api/SalesOrders/${this.order.id}/verify-payment`, {}, { withCredentials: true }).subscribe({
+        next: (res: any) => {
+          alert(res.message);
+          this.loadOrder(this.order.id);
+        },
+        error: (err) => alert(err.error?.message || 'Failed to verify payment')
+      });
+    }
+  }
+
+  printDocument() {
+    window.print();
   }
 }

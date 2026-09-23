@@ -80,6 +80,10 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddControllers();
+
+// Register Background Worker
+builder.Services.AddHostedService<JamineERP.Backend.Services.OrderExpiryWorker>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

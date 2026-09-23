@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
@@ -17,6 +17,9 @@ export class SalesOrderFormComponent implements OnInit {
   products: any[] = [];
   isLoading = false;
 
+  customerSearchCtrl = new FormControl('');
+  showCustomerDropdown = false;
+
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -25,6 +28,13 @@ export class SalesOrderFormComponent implements OnInit {
     this.soForm = this.fb.group({
       customerId: ['', Validators.required],
       items: this.fb.array([])
+    });
+
+    // Handle customer search filtering natively
+    this.customerSearchCtrl.valueChanges.subscribe((val: string | null) => {
+      if (!val) {
+        this.soForm.patchValue({ customerId: '' });
+      }
     });
   }
 
@@ -72,28 +82,63 @@ export class SalesOrderFormComponent implements OnInit {
 
   loadCustomers() {
     this.http.get<any[]>('http://localhost:5243/api/Customers').subscribe({
-      next: (data) => this.customers = data,
-      error: () => this.customers = [{ id: 'mock', companyName: 'Mock Customer (Please add API)' }]
+      next: (res: any) => this.customers = res.data || res,
+      error: () => console.error('Failed to load customers')
     });
   }
 
+  get filteredCustomers() {
+    const term = this.customerSearchCtrl.value?.toLowerCase() || '';
+    if (!term) return this.customers;
+    return this.customers.filter(c => 
+      (c.companyName || '').toLowerCase().includes(term) || 
+      (c.taxId || '').includes(term) ||
+      (c.firstName || '').toLowerCase().includes(term)
+    );
+  }
+
+  selectCustomer(customer: any) {
+    const displayName = customer.customerType === 'B2B' ? customer.companyName : (customer.companyName || customer.firstName + ' ' + customer.lastName);
+    this.customerSearchCtrl.setValue(displayName, { emitEvent: false });
+    this.soForm.patchValue({ customerId: customer.id });
+    this.showCustomerDropdown = false;
+  }
+
+  hideCustomerDropdown() {
+    setTimeout(() => {
+      this.showCustomerDropdown = false;
+      if (!this.soForm.value.customerId) {
+        this.customerSearchCtrl.setValue('');
+      } else {
+        const c = this.customers.find(x => x.id === this.soForm.value.customerId);
+        if (c) {
+          const displayName = c.customerType === 'B2B' ? c.companyName : (c.companyName || c.firstName + ' ' + c.lastName);
+          this.customerSearchCtrl.setValue(displayName, { emitEvent: false });
+        }
+      }
+    }, 200);
+  }
+
   loadProducts() {
-    this.http.get<any[]>('http://localhost:5243/api/Products').subscribe({
-      next: (data) => this.products = data,
-      error: () => this.products = [{ id: 'mock', name: 'Mock Product', price: 100 }]
+    this.http.get<any>('http://localhost:5243/api/Products?limit=100').subscribe({
+      next: (res) => {
+        this.products = res.data || res;
+      },
+      error: () => console.error('Failed to load products')
     });
   }
 
   onSubmit() {
     if (this.soForm.invalid) {
-      alert('Please fill in all required fields.');
+      this.soForm.markAllAsTouched();
+      alert('Please fill in all required fields correctly.');
       return;
     }
     
     this.isLoading = true;
     this.http.post('http://localhost:5243/api/SalesOrders', this.soForm.value).subscribe({
       next: (res: any) => {
-        alert(res.message);
+        alert(res.message || 'Sales Order created successfully!');
         this.router.navigate(['/admin/sales-orders']);
       },
       error: (err) => {

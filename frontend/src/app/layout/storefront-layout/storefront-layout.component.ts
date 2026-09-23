@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CartService } from '../../core/services/cart.service';
+import { StorefrontAuthService } from '../../core/services/storefront-auth.service';
 
 @Component({
   selector: 'app-storefront-layout',
@@ -12,4 +13,5 @@ import { CartService } from '../../core/services/cart.service';
 })
 export class StorefrontLayoutComponent {
   cartService = inject(CartService);
+  authService = inject(StorefrontAuthService);
 }

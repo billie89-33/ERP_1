@@ -56,9 +56,8 @@ public class MigrationController : ControllerBase
                 var batch = cursor.Current;
                 foreach (var doc in batch)
                 {
-                    // 1. ดึง Sku (เดาชื่อ Field)
-                    string sku = ExtractString(doc, new[] { "sku", "code", "barcode", "product_code" });
-                    if (string.IsNullOrEmpty(sku)) sku = "MIG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+                    string sku = ExtractString(doc, new[] { "sku", "itemCode" });
+                    if (string.IsNullOrEmpty(sku)) continue; 
 
                     // เช็ค SKU ซ้ำในระบบ
                     if (await _context.Products.AnyAsync(p => p.Sku == sku))
@@ -66,16 +65,47 @@ public class MigrationController : ControllerBase
                         sku = sku + "-" + Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
                     }
 
-                    // 2. ดึง Name
-                    string name = ExtractString(doc, new[] { "name", "title", "productName", "description" });
-                    if (string.IsNullOrEmpty(name)) name = "Unknown Product";
+                    // Extract Category Name
+                    string categoryName = ExtractString(doc, new[] { "category", "categoryName" });
+                    if (string.IsNullOrEmpty(categoryName)) categoryName = "Uncategorized";
+
+                    // Find or Create Category
+                    var category = await _context.Categories.FirstOrDefaultAsync(c => c.Name.ToLower() == categoryName.ToLower());
+                    if (category == null)
+                    {
+                        category = new Category { Name = categoryName };
+                        _context.Categories.Add(category);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    string brand = ExtractString(doc, new[] { "brand" });
+                    string modelName = ExtractString(doc, new[] { "modelName", "model" });
+                    string description = ExtractString(doc, new[] { "description" });
+
+                    string name = ExtractString(doc, new[] { "name", "title", "productName" });
+                    if (string.IsNullOrEmpty(name)) 
+                    {
+                        name = $"{brand} {modelName}".Trim();
+                        if (string.IsNullOrEmpty(name)) name = "Unknown Product";
+                    }
 
                     // 3. ดึง Price & Cost (พยายามแปลงเป็นตัวเลข)
                     decimal price = ExtractDecimal(doc, new[] { "price", "retailPrice", "sellPrice" });
                     decimal cost = ExtractDecimal(doc, new[] { "cost", "buyPrice", "capital" });
                     
-                    // 4. Stock
+                    // 4. Stock & Stats
                     int stock = (int)ExtractDecimal(doc, new[] { "stock", "stockQuantity", "qty", "quantity" });
+                    int soldCount = (int)ExtractDecimal(doc, new[] { "soldCount" });
+                    int viewCount = (int)ExtractDecimal(doc, new[] { "viewCount" });
+                    bool isFeatured = doc.Contains("isFeatured") && !doc["isFeatured"].IsBsonNull && doc["isFeatured"].AsBoolean;
+                    string status = ExtractString(doc, new[] { "status" });
+                    if (string.IsNullOrEmpty(status)) status = "ACTIVE";
+
+                    string[] tags = Array.Empty<string>();
+                    if (doc.Contains("tags") && doc["tags"].IsBsonArray)
+                    {
+                        tags = doc["tags"].AsBsonArray.Select(t => t.AsString).ToArray();
+                    }
 
                     // 5. Image (nested object)
                     string? imageUrl = null;
@@ -85,34 +115,66 @@ public class MigrationController : ControllerBase
                         var imgDoc = doc["image"].AsBsonDocument;
                         if (imgDoc.Contains("url") && !imgDoc["url"].IsBsonNull) imageUrl = imgDoc["url"].AsString;
                         if (imgDoc.Contains("publicId") && !imgDoc["publicId"].IsBsonNull) publicId = imgDoc["publicId"].AsString;
-                        doc.Remove("image"); // Remove so it doesn't duplicate into Specifications
                     }
                     else
                     {
                         imageUrl = ExtractString(doc, new[] { "imageUrl", "image", "photo" });
                     }
 
-                    // 6. Remaining specs
-                    doc.Remove("_id"); 
-                    doc.Remove("sku");
-                    doc.Remove("name");
-                    doc.Remove("price");
-                    doc.Remove("cost");
-                    doc.Remove("stock");
-
-                    string specsJson = doc.ToJson();
+                    // 6. Specifications
+                    string specsJson = "{}";
+                    if (doc.Contains("specifications") && doc["specifications"].IsBsonDocument)
+                    {
+                        specsJson = doc["specifications"].AsBsonDocument.ToJson();
+                    }
+                    else
+                    {
+                        // Fallback: Use remaining fields if no nested specs object
+                        doc.Remove("_id"); 
+                        doc.Remove("sku");
+                        doc.Remove("name");
+                        doc.Remove("price");
+                        doc.Remove("cost");
+                        doc.Remove("stock");
+                        doc.Remove("brand");
+                        doc.Remove("modelName");
+                        doc.Remove("description");
+                        doc.Remove("tags");
+                        doc.Remove("status");
+                        doc.Remove("isFeatured");
+                        doc.Remove("soldCount");
+                        doc.Remove("viewCount");
+                        doc.Remove("image");
+                        doc.Remove("imageUrl");
+                        doc.Remove("category");
+                        doc.Remove("createdAt");
+                        doc.Remove("updatedAt");
+                        doc.Remove("__v");
+                        specsJson = doc.ToJson();
+                    }
 
                     var newProduct = new Product
                     {
                         Sku = sku,
                         Name = name,
+                        Brand = brand,
+                        ModelName = modelName,
+                        Description = description,
                         Price = price,
                         Cost = cost,
                         OnHandQuantity = stock,
                         ReservedQuantity = 0,
-                        ImageUrl = imageUrl,
-                        CloudinaryPublicId = publicId,
-                        CategoryId = defaultCategory.Id,
+                        SoldCount = soldCount,
+                        ViewCount = viewCount,
+                        IsFeatured = isFeatured,
+                        Status = status,
+                        Tags = tags,
+                        Image = new ProductImage 
+                        {
+                            Url = imageUrl ?? "",
+                            PublicId = publicId ?? ""
+                        },
+                        CategoryId = category.Id,
                         Specifications = JsonDocument.Parse(specsJson)
                     };
 
@@ -132,25 +194,51 @@ public class MigrationController : ControllerBase
         }
     }
 
+    [HttpGet("peek-mongo")]
+    public async Task<IActionResult> PeekMongo()
+    {
+        var mongoConnectionString = Environment.GetEnvironmentVariable("MongoDb__ConnectionString") ?? _configuration["MongoDb:ConnectionString"];
+        var mongoDbName = Environment.GetEnvironmentVariable("MongoDb__DatabaseName") ?? _configuration["MongoDb:DatabaseName"];
+        var client = new MongoClient(mongoConnectionString);
+        var database = client.GetDatabase(mongoDbName);
+        var collection = database.GetCollection<BsonDocument>("products");
+        var doc = await collection.Find(new BsonDocument()).FirstOrDefaultAsync();
+        if (doc == null) return NotFound("No documents found in MongoDB.");
+        
+        // Remove _id for easier JSON serialization
+        doc.Remove("_id");
+        return Ok(doc.ToJson());
+    }
+
+    [HttpPost("clear-products")]
+    public async Task<IActionResult> ClearProducts()
+    {
+        _context.Products.RemoveRange(_context.Products);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "All products cleared from PostgreSQL." });
+    }
+
     [HttpPost("fix-images")]
     public async Task<IActionResult> FixImages()
     {
-        var products = await _context.Products.Where(p => p.ImageUrl == null).ToListAsync();
+        var products = await _context.Products.ToListAsync();
         int fixedCount = 0;
         foreach (var p in products)
         {
-            if (p.Specifications != null)
+            if (p.Image == null) p.Image = new ProductImage();
+            
+            if (string.IsNullOrEmpty(p.Image.Url) && p.Specifications != null)
             {
                 if (p.Specifications.RootElement.TryGetProperty("image", out var imageObj) && imageObj.ValueKind == JsonValueKind.Object)
                 {
                     if (imageObj.TryGetProperty("url", out var urlProp) && urlProp.ValueKind == JsonValueKind.String)
                     {
-                        p.ImageUrl = urlProp.GetString();
+                        p.Image.Url = urlProp.GetString() ?? "";
                         fixedCount++;
                     }
                     if (imageObj.TryGetProperty("publicId", out var pidProp) && pidProp.ValueKind == JsonValueKind.String)
                     {
-                        p.CloudinaryPublicId = pidProp.GetString();
+                        p.Image.PublicId = pidProp.GetString() ?? "";
                     }
                 }
             }

@@ -120,15 +120,23 @@ public class ProductsController : ControllerBase
                 Id = p.Id,
                 Sku = p.Sku,
                 Name = p.Name,
+                Brand = p.Brand,
+                ModelName = p.ModelName,
+                Description = p.Description,
                 Price = p.Price,
                 Cost = p.Cost,
                 OnHandQuantity = p.OnHandQuantity,
                 ReservedQuantity = p.ReservedQuantity,
                 AvailableQuantity = p.OnHandQuantity - p.ReservedQuantity,
+                Tags = p.Tags,
+                Status = p.Status,
+                IsFeatured = p.IsFeatured,
+                SoldCount = p.SoldCount,
+                ViewCount = p.ViewCount,
+                Specifications = p.Specifications != null ? JsonDocument.Parse(p.Specifications.RootElement.GetRawText()).RootElement : null,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category != null ? p.Category.Name : "N/A",
-                ImageUrl = p.ImageUrl,
-                Specifications = p.Specifications != null ? JsonDocument.Parse(p.Specifications.RootElement.GetRawText()).RootElement : null
+                Image = p.Image != null ? new ProductImageDto { Url = p.Image.Url, PublicId = p.Image.PublicId } : null
             }).ToList();
 
         return Ok(new
@@ -247,15 +255,23 @@ public class ProductsController : ControllerBase
             Id = product.Id,
             Sku = product.Sku,
             Name = product.Name,
+            Brand = product.Brand,
+            ModelName = product.ModelName,
+            Description = product.Description,
             Price = product.Price,
             Cost = product.Cost,
             OnHandQuantity = product.OnHandQuantity,
             ReservedQuantity = product.ReservedQuantity,
             AvailableQuantity = product.OnHandQuantity - product.ReservedQuantity,
+            Tags = product.Tags,
+            Status = product.Status,
+            IsFeatured = product.IsFeatured,
+            SoldCount = product.SoldCount,
+            ViewCount = product.ViewCount,
             Specifications = product.Specifications != null ? JsonDocument.Parse(product.Specifications.RootElement.GetRawText()).RootElement : null,
             CategoryId = product.CategoryId,
             CategoryName = product.Category != null ? product.Category.Name : "N/A",
-            ImageUrl = product.ImageUrl
+            Image = product.Image != null ? new ProductImageDto { Url = product.Image.Url, PublicId = product.Image.PublicId } : null
         };
 
         return Ok(dto);
@@ -275,11 +291,20 @@ public class ProductsController : ControllerBase
         {
             Sku = dto.Sku,
             Name = dto.Name,
+            Brand = dto.Brand,
+            ModelName = dto.ModelName,
+            Description = dto.Description,
             Price = dto.Price,
             Cost = dto.Cost,
+            Tags = dto.Tags,
+            Status = dto.Status,
+            IsFeatured = dto.IsFeatured,
             CategoryId = dto.CategoryId,
-            ImageUrl = dto.ImageUrl,
-            CloudinaryPublicId = dto.CloudinaryPublicId
+            Image = dto.Image != null ? new ProductImage 
+            { 
+                Url = dto.Image.Url ?? "", 
+                PublicId = dto.Image.PublicId ?? "" 
+            } : new ProductImage()
         };
 
         if (dto.Specifications.HasValue)
@@ -326,8 +351,14 @@ public class ProductsController : ControllerBase
 
         product.Sku = dto.Sku;
         product.Name = dto.Name;
+        product.Brand = dto.Brand;
+        product.ModelName = dto.ModelName;
+        product.Description = dto.Description;
         product.Price = dto.Price;
         product.Cost = dto.Cost;
+        product.Tags = dto.Tags;
+        product.Status = dto.Status;
+        product.IsFeatured = dto.IsFeatured;
         product.CategoryId = dto.CategoryId;
 
         if (dto.Specifications.HasValue)
@@ -390,19 +421,20 @@ public class ProductsController : ControllerBase
         if (result.Error != null) return BadRequest(new { message = result.Error.Message });
 
         // Delete old photo if it exists
-        if (!string.IsNullOrEmpty(product.CloudinaryPublicId))
+        if (product.Image != null && !string.IsNullOrEmpty(product.Image.PublicId))
         {
-            await _photoService.DeletePhotoAsync(product.CloudinaryPublicId);
+            await _photoService.DeletePhotoAsync(product.Image.PublicId);
         }
 
-        product.ImageUrl = result.SecureUrl.AbsoluteUri;
-        product.CloudinaryPublicId = result.PublicId;
+        if (product.Image == null) product.Image = new ProductImage();
+        product.Image.Url = result.SecureUrl.AbsoluteUri;
+        product.Image.PublicId = result.PublicId;
 
         await _context.SaveChangesAsync();
 
         return Ok(new { 
             message = "อัปโหลดรูปภาพสำเร็จ",
-            imageUrl = product.ImageUrl 
+            imageUrl = product.Image.Url 
         });
     }
 }

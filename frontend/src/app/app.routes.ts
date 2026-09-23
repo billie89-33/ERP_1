@@ -20,7 +20,10 @@ export const routes: Routes = [
       { path: '', loadComponent: () => import('./features/storefront/home/home.component').then(m => m.HomeComponent) },
       { path: 'shop', loadComponent: () => import('./features/storefront/shop/shop.component').then(m => m.ShopComponent) },
       { path: 'product/:id', loadComponent: () => import('./features/storefront/product-detail/product-detail.component').then(m => m.ProductDetailComponent) },
-      { path: 'cart', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) }
+      { path: 'cart', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) },
+      { path: 'shop/login', loadComponent: () => import('./features/storefront/auth/auth.component').then(m => m.AuthComponent) },
+      { path: 'shop/profile', loadComponent: () => import('./features/storefront/customer-portal/customer-portal.component').then(m => m.CustomerPortalComponent) },
+      { path: 'shop/orders/:id', loadComponent: () => import('./features/storefront/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent) }
     ]
   },
 
@@ -90,6 +93,64 @@ export const routes: Routes = [
         loadComponent: () => import('./features/warehouse/goods-issue/goods-issue.component').then(m => m.GoodsIssueComponent),
         canActivate: [roleGuard],
         data: { roles: ['Admin', 'Warehouse'] }
+      },
+
+      // 📁 Master Data
+      { 
+        path: 'suppliers', 
+        loadComponent: () => import('./features/master-data/supplier-list/supplier-list.component').then(m => m.SupplierListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
+      { 
+        path: 'suppliers/create', 
+        loadComponent: () => import('./features/master-data/supplier-form/supplier-form.component').then(m => m.SupplierFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
+      { 
+        path: 'suppliers/edit/:id', 
+        loadComponent: () => import('./features/master-data/supplier-form/supplier-form.component').then(m => m.SupplierFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Purchasing'] }
+      },
+      
+      { 
+        path: 'customers', 
+        loadComponent: () => import('./features/master-data/customer-list/customer-list.component').then(m => m.CustomerListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
+      { 
+        path: 'customers/create', 
+        loadComponent: () => import('./features/master-data/customer-form/customer-form.component').then(m => m.CustomerFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
+      { 
+        path: 'customers/edit/:id', 
+        loadComponent: () => import('./features/master-data/customer-form/customer-form.component').then(m => m.CustomerFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Sales'] }
+      },
+
+      { 
+        path: 'users', 
+        loadComponent: () => import('./features/master-data/user-list/user-list.component').then(m => m.UserListComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] }
+      },
+      { 
+        path: 'users/create', 
+        loadComponent: () => import('./features/master-data/user-form/user-form.component').then(m => m.UserFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] }
+      },
+      { 
+        path: 'users/edit/:id', 
+        loadComponent: () => import('./features/master-data/user-form/user-form.component').then(m => m.UserFormComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] }
       },
     ]
   },

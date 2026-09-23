@@ -1,71 +1,120 @@
-<div class="mb-6 flex justify-between items-center">
-  <h1 class="text-2xl font-bold text-slate-800">Create Sales Order (SO)</h1>
-  <a routerLink="/admin/sales-orders" class="text-slate-500 hover:text-slate-700">Back to List</a>
+<!-- Top Navigation / Title (Replaces standard header to match wireframe) -->
+<div class="mb-4">
+  <a routerLink="/admin/sales-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-arrow-left mr-1"></i> กลับหน้ารายการบิลขาย</a>
 </div>
 
-<div class="bg-white rounded-lg shadow p-6">
-  <form [formGroup]="soForm" (ngSubmit)="onSubmit()">
-    
-    <!-- Customer Selection -->
-    <div class="mb-6">
-      <label class="block text-sm font-medium text-slate-700 mb-1">Customer <span class="text-red-500">*</span></label>
-      <select formControlName="customerId" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
-        <option value="">Select a Customer</option>
-        <option *ngFor="let c of customers" [value]="c.id">{{ c.companyName || c.firstName + ' ' + c.lastName }}</option>
-      </select>
+<form [formGroup]="soForm" (ngSubmit)="onSubmit()">
+  <div class="bg-white shadow-md rounded-lg overflow-hidden border border-slate-200">
+    <!-- Header -->
+    <div class="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
+      <h2 class="text-lg font-bold">เปิดบิลขาย (Sales Order)</h2>
+      <button type="submit" [disabled]="soForm.invalid || isLoading" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold transition disabled:bg-blue-400 shadow-sm border border-blue-500">
+        <i class="fas fa-save mr-2"></i> {{ isLoading ? 'กำลังบันทึก...' : 'บันทึกบิลขาย' }}
+      </button>
     </div>
-
-    <hr class="my-6 border-slate-200">
-
-    <h2 class="text-lg font-bold text-slate-800 mb-4">Order Items</h2>
     
-    <div formArrayName="items">
-      <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="flex items-end gap-4 mb-4 bg-slate-50 p-4 rounded-md border border-slate-200">
-        
-        <div class="flex-1">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Product</label>
-          <select formControlName="productId" (change)="onProductSelected(i)" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
-            <option value="">Select Product</option>
-            <option *ngFor="let p of products" [value]="p.id">{{ p.name }} (Stock: {{ p.onHandQuantity - p.reservedQuantity }})</option>
-          </select>
-        </div>
-        
-        <div class="w-32">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Quantity</label>
-          <input type="number" formControlName="quantity" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
-        </div>
-        
-        <div class="w-32">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Unit Price (฿)</label>
-          <input type="number" formControlName="unitPrice" class="block w-full rounded-md border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border text-sm">
-        </div>
-
-        <div class="w-32 text-right">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Subtotal (฿)</label>
-          <div class="p-2 text-sm font-medium text-slate-800 bg-slate-100 rounded-md border border-slate-200">
-            {{ (item.get('quantity')?.value || 0) * (item.get('unitPrice')?.value || 0) | number:'1.2-2' }}
+    <div class="p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Section 1: Customer -->
+        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">1. เลือกลูกค้า <span class="text-red-500">*</span></label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <input type="text" [formControl]="customerSearchCtrl" (focus)="showCustomerDropdown = true" (blur)="hideCustomerDropdown()"
+                placeholder="ค้นหาชื่อลูกค้า, บริษัท หรือ เลขผู้เสียภาษี..." 
+                class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
+              
+              <!-- Dropdown -->
+              <ul *ngIf="showCustomerDropdown" class="absolute z-10 mt-1 w-full bg-white border border-slate-300 shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
+                <li *ngIf="filteredCustomers.length === 0" class="text-slate-500 cursor-default select-none relative py-2 pl-3 pr-9">
+                  ไม่พบลูกค้าที่ค้นหา
+                </li>
+                <li *ngFor="let c of filteredCustomers" (mousedown)="selectCustomer(c)" class="text-slate-900 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white group">
+                  <div class="flex flex-col">
+                    <span class="font-medium block truncate">{{ c.customerType === 'B2B' ? c.companyName : (c.companyName || 'ลูกค้าทั่วไป') }}</span>
+                    <span class="text-xs text-slate-500 group-hover:text-blue-100 block truncate">
+                      <span *ngIf="c.customerType === 'B2B'" class="mr-2 px-1 bg-slate-200 group-hover:bg-blue-500 rounded text-[10px]">B2B</span>
+                      <span *ngIf="c.customerType === 'B2C'" class="mr-2 px-1 bg-slate-200 group-hover:bg-blue-500 rounded text-[10px]">B2C</span>
+                      <span *ngIf="c.taxId">Tax ID: {{ c.taxId }}</span>
+                      <span *ngIf="!c.taxId">ไม่มีเลขผู้เสียภาษี</span>
+                    </span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <a routerLink="/admin/customers/create" target="_blank" class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded text-slate-700 bg-white hover:bg-slate-50 focus:outline-none transition">
+              <i class="fas fa-external-link-alt mr-1 text-blue-600"></i> เพิ่มใหม่
+            </a>
           </div>
         </div>
 
-        <button type="button" (click)="removeItem(i)" [disabled]="items.length === 1" class="px-3 py-2 bg-red-100 text-red-600 rounded-md hover:bg-red-200 disabled:opacity-50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-        </button>
+        <!-- Section 2: Order Details (Placeholders for now) -->
+        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">2. รายละเอียดการขาย</label>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="text-xs text-slate-500 mb-1 block">วันที่จัดส่ง</label>
+              <input type="date" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
+            </div>
+            <div class="flex-1">
+              <label class="text-xs text-slate-500 mb-1 block">หมายเหตุ</label>
+              <input type="text" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border" placeholder="ใส่โน้ตเพิ่มเติม (ถ้ามี)">
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <button type="button" (click)="addItem()" class="mb-6 text-sm text-blue-600 font-medium hover:text-blue-800 flex items-center">
-      + Add Another Item
-    </button>
-
-    <div class="flex justify-between items-center pt-4 border-t border-slate-200">
-      <div class="text-xl font-bold text-slate-800">
-        Grand Total: <span class="text-blue-600">฿{{ getTotal() | number:'1.2-2' }}</span>
+      <!-- Section 3: Line Items -->
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-3">3. เพิ่มรายการสินค้า</label>
+      <div class="overflow-x-auto border rounded-lg mb-4">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-100">
+            <tr>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">สินค้า / แบรนด์ / รุ่น</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-32">จำนวนที่ขาย</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">ราคาขาย (฿)</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">รวมเป็นเงิน (฿)</th>
+              <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-slate-600 uppercase tracking-wider w-16"></th>
+            </tr>
+          </thead>
+          <tbody formArrayName="items" class="bg-white divide-y divide-slate-200">
+            <tr *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3">
+                <select formControlName="productId" (change)="onProductSelected(i)" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
+                  <option value="">เลือกสินค้า...</option>
+                  <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (พร้อมขาย: {{ p.availableQuantity }})</option>
+                </select>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <input type="number" formControlName="quantity" min="1" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border text-right bg-white">
+              </td>
+              <td class="px-4 py-3 text-right">
+                <input type="number" formControlName="unitPrice" min="0" step="0.01" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border text-right bg-white">
+              </td>
+              <td class="px-4 py-3 text-right whitespace-nowrap text-sm font-medium text-slate-800 align-middle">
+                {{ (item.get('quantity')?.value || 0) * (item.get('unitPrice')?.value || 0) | number:'1.2-2' }}
+              </td>
+              <td class="px-4 py-3 text-center align-middle">
+                <button type="button" (click)="removeItem(i)" [disabled]="items.length === 1" class="text-red-400 hover:text-red-600 transition disabled:opacity-30 disabled:cursor-not-allowed p-1">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <button type="submit" [disabled]="soForm.invalid || isLoading" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-slate-400 font-medium">
-        {{ isLoading ? 'Processing...' : 'Create Sales Order' }}
+      
+      <button type="button" (click)="addItem()" class="text-sm text-blue-600 font-medium hover:text-blue-800 transition">
+        <i class="fas fa-plus mr-1"></i> เพิ่มรายการ
       </button>
+
+      <div class="mt-6 flex justify-end">
+        <div class="text-right">
+          <div class="text-sm text-slate-500 mb-1">ยอดรวมทั้งสิ้น (Grand Total)</div>
+          <div class="text-3xl font-bold text-blue-600">฿ {{ getTotal() | number:'1.2-2' }}</div>
+        </div>
+      </div>
     </div>
-  </form>
-</div>
+  </div>
+</form>

@@ -1,0 +1,79 @@
+<div class="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+  <!-- Back to Home -->
+  <a routerLink="/" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+    กลับหน้าแรก
+  </a>
+
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <h2 class="mt-6 text-center text-3xl font-extrabold text-white">
+      {{ isLoginMode ? 'เข้าสู่ระบบบัญชีลูกค้า' : 'สมัครสมาชิกใหม่' }}
+    </h2>
+    <p class="mt-2 text-center text-sm text-slate-400">
+      {{ isLoginMode ? 'ยังไม่มีบัญชีใช่ไหม?' : 'มีบัญชีอยู่แล้วใช่ไหม?' }}
+      <button (click)="toggleMode()" class="font-medium text-indigo-400 hover:text-indigo-300 transition">
+        {{ isLoginMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบเลย' }}
+      </button>
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-700">
+      <form class="space-y-6" (ngSubmit)="onSubmit()">
+        
+        <!-- Error Message -->
+        <div *ngIf="error" class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm">
+          {{ error }}
+        </div>
+
+        <!-- Register Fields -->
+        <ng-container *ngIf="!isLoginMode">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-300">ชื่อ</label>
+              <input type="text" name="firstName" [(ngModel)]="registerData.firstName" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-300">นามสกุล</label>
+              <input type="text" name="lastName" [(ngModel)]="registerData.lastName" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">เบอร์โทรศัพท์</label>
+            <input type="text" name="phone" [(ngModel)]="registerData.phone" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+        </ng-container>
+
+        <!-- Common Fields (Email & Password) -->
+        <ng-container *ngIf="isLoginMode">
+          <div>
+            <label class="block text-sm font-medium text-slate-300">อีเมล</label>
+            <input type="email" name="loginEmail" [(ngModel)]="loginData.email" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">รหัสผ่าน</label>
+            <input type="password" name="loginPassword" [(ngModel)]="loginData.password" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+        </ng-container>
+
+        <ng-container *ngIf="!isLoginMode">
+          <div>
+            <label class="block text-sm font-medium text-slate-300">อีเมล</label>
+            <input type="email" name="registerEmail" [(ngModel)]="registerData.email" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">รหัสผ่าน</label>
+            <input type="password" name="registerPassword" [(ngModel)]="registerData.password" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+          </div>
+        </ng-container>
+
+        <div>
+          <button type="submit" [disabled]="isLoading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+            <span *ngIf="!isLoading">{{ isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก' }}</span>
+            <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,80 @@
+<div class="max-w-4xl mx-auto px-4 py-12">
+  <div class="mb-6">
+    <a routerLink="/shop/profile" class="text-slate-400 hover:text-white transition-colors">&larr; กลับหน้าประวัติการสั่งซื้อ</a>
+  </div>
+
+  <div *ngIf="isLoading" class="text-center py-12 text-slate-400">กำลังโหลดข้อมูล...</div>
+
+  <div *ngIf="!isLoading && order" class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl p-8">
+    <div class="flex justify-between items-start mb-8 pb-6 border-b border-slate-700">
+      <div>
+        <h1 class="text-3xl font-black text-white mb-2">บิลเลขที่ {{ order.orderNumber }}</h1>
+        <p class="text-slate-400">วันที่สั่งซื้อ: {{ order.orderDate | date:'dd/MM/yyyy HH:mm' }}</p>
+      </div>
+      <div class="text-right">
+        <div class="text-slate-400 text-sm mb-1">สถานะชำระเงิน</div>
+        <span class="px-3 py-1.5 rounded-lg text-sm font-bold" 
+              [ngClass]="{
+                'bg-rose-500/20 text-rose-500': order.paymentStatus === 'Pending',
+                'bg-yellow-500/20 text-yellow-500': order.paymentStatus === 'Checking',
+                'bg-emerald-500/20 text-emerald-500': order.paymentStatus === 'Paid'
+              }">
+          {{ order.paymentStatus === 'Pending' ? 'รอชำระเงิน' : (order.paymentStatus === 'Checking' ? 'รอตรวจสอบ' : 'ชำระเงินแล้ว') }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Upload Slip Section -->
+    <div *ngIf="order.paymentStatus === 'Pending' || order.paymentStatus === 'Checking'" class="mb-10 bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <h3 class="text-xl font-bold text-white mb-4">แจ้งชำระเงิน (อัปโหลดสลิป)</h3>
+      
+      <div *ngIf="order.paymentStatus === 'Checking'" class="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm">
+        <i class="fas fa-clock mr-2"></i> คุณได้อัปโหลดสลิปแล้ว กำลังรอผู้ดูแลระบบตรวจสอบยอดเงิน หากต้องการเปลี่ยนรูปสลิปสามารถอัปโหลดใหม่ได้
+      </div>
+
+      <div class="flex items-center gap-4">
+        <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" #fileInput>
+        <button (click)="fileInput.click()" [disabled]="isUploading" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg font-bold transition-colors disabled:opacity-50">
+          <span *ngIf="!isUploading"><i class="fas fa-upload mr-2"></i> เลือกรูปสลิปโอนเงิน</span>
+          <span *ngIf="isUploading"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังอัปโหลด...</span>
+        </button>
+        <div *ngIf="uploadSuccess" class="text-emerald-400 font-medium">
+          <i class="fas fa-check-circle mr-1"></i> อัปโหลดสำเร็จ!
+        </div>
+      </div>
+
+      <div *ngIf="order.paymentSlipUrl" class="mt-6">
+        <p class="text-slate-400 text-sm mb-2">รูปสลิปปัจจุบัน:</p>
+        <img [src]="order.paymentSlipUrl" alt="Slip" class="w-48 h-auto rounded-lg border border-slate-700 shadow-md">
+      </div>
+    </div>
+
+    <!-- Order Items -->
+    <h3 class="text-xl font-bold text-white mb-4">รายการสินค้า</h3>
+    <table class="w-full text-left mb-6">
+      <thead>
+        <tr class="border-b border-slate-700 text-slate-400">
+          <th class="py-3">สินค้า</th>
+          <th class="py-3 text-center">จำนวน</th>
+          <th class="py-3 text-right">ราคา/ชิ้น</th>
+          <th class="py-3 text-right">รวม</th>
+        </tr>
+      </thead>
+      <tbody class="text-slate-300">
+        <tr *ngFor="let item of order.items" class="border-b border-slate-700/50">
+          <td class="py-4">{{ item.productName }}</td>
+          <td class="py-4 text-center">{{ item.quantity }}</td>
+          <td class="py-4 text-right">฿{{ item.unitPrice | number:'1.2-2' }}</td>
+          <td class="py-4 text-right font-medium text-white">฿{{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="flex justify-end pt-4 border-t border-slate-700">
+      <div class="text-right">
+        <span class="text-slate-400 mr-4">ยอดชำระสุทธิ:</span>
+        <span class="text-3xl font-black text-indigo-400">฿{{ order.totalAmount | number:'1.2-2' }}</span>
+      </div>
+    </div>
+  </div>
+</div>

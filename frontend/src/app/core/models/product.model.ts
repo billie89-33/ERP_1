@@ -2,6 +2,9 @@ export interface ProductDto {
   id: string;
   sku: string;
   name: string;
+  brand: string;
+  modelName: string;
+  description: string;
   price: number;
   cost: number;
   onHandQuantity: number;
@@ -9,8 +12,15 @@ export interface ProductDto {
   availableQuantity: number;
   categoryId: string;
   categoryName: string;
-  imageUrl?: string;
-  cloudinaryPublicId?: string;
+  image?: {
+    url: string;
+    publicId: string;
+  };
+  tags: string[];
+  status: string;
+  isFeatured: boolean;
+  soldCount: number;
+  viewCount: number;
   specifications?: Record<string, any>;
 }
 

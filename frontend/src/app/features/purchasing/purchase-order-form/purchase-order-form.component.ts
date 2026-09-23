@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 
@@ -17,6 +17,15 @@ export class PurchaseOrderFormComponent implements OnInit {
   products: any[] = [];
   isLoading = false;
 
+  supplierSearchCtrl = new FormControl('');
+  showSupplierDropdown = false;
+  selectedSupplierName = '';
+
+  isSupplierModalOpen = false;
+  isSavingSupplier = false;
+  supplierError = '';
+  supplierForm: FormGroup;
+
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private router = inject(Router);
@@ -25,6 +34,22 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.poForm = this.fb.group({
       supplierId: ['', Validators.required],
       items: this.fb.array([])
+    });
+
+    // Handle supplier search filtering natively
+    this.supplierSearchCtrl.valueChanges.subscribe((val: string | null) => {
+      if (!val) {
+        this.poForm.patchValue({ supplierId: '' });
+      }
+    });
+
+    this.supplierForm = this.fb.group({
+      companyName: ['', Validators.required],
+      taxId: ['', Validators.required],
+      contactName: [''],
+      phone: [''],
+      email: [''],
+      address: ['']
     });
   }
 
@@ -72,28 +97,98 @@ export class PurchaseOrderFormComponent implements OnInit {
 
   loadSuppliers() {
     this.http.get<any[]>('http://localhost:5243/api/Suppliers').subscribe({
-      next: (data) => this.suppliers = data,
-      error: () => this.suppliers = [{ id: 'mock', name: 'Mock Supplier (Please add API)' }]
+      next: (res: any) => this.suppliers = res.data || res,
+      error: () => console.error('Failed to load suppliers')
     });
   }
 
+  get filteredSuppliers() {
+    const term = this.supplierSearchCtrl.value?.toLowerCase() || '';
+    if (!term) return this.suppliers;
+    return this.suppliers.filter(s => 
+      s.companyName.toLowerCase().includes(term) || 
+      s.taxId.includes(term)
+    );
+  }
+
+  selectSupplier(supplier: any) {
+    this.supplierSearchCtrl.setValue(supplier.companyName, { emitEvent: false });
+    this.poForm.patchValue({ supplierId: supplier.id });
+    this.showSupplierDropdown = false;
+  }
+
+  hideSupplierDropdown() {
+    // Timeout to allow mousedown event on list items to fire first
+    setTimeout(() => {
+      this.showSupplierDropdown = false;
+      // If user typed something but didn't select, reset if ID is missing
+      if (!this.poForm.value.supplierId) {
+        this.supplierSearchCtrl.setValue('');
+      } else {
+        // Revert text to the selected supplier's name
+        const s = this.suppliers.find(x => x.id === this.poForm.value.supplierId);
+        if (s) this.supplierSearchCtrl.setValue(s.companyName, { emitEvent: false });
+      }
+    }, 200);
+  }
+
   loadProducts() {
-    this.http.get<any[]>('http://localhost:5243/api/Products').subscribe({
-      next: (data) => this.products = data,
-      error: () => this.products = [{ id: 'mock', name: 'Mock Product', cost: 80 }]
+    this.http.get<any>('http://localhost:5243/api/Products?limit=100').subscribe({
+      next: (res) => {
+        this.products = res.data || res;
+      },
+      error: () => console.error('Failed to load products')
+    });
+  }
+
+  // --- Supplier Modal Logic ---
+  openSupplierModal() {
+    this.supplierError = '';
+    this.supplierForm.reset();
+    this.isSupplierModalOpen = true;
+  }
+
+  closeSupplierModal() {
+    this.isSupplierModalOpen = false;
+  }
+
+  submitSupplier() {
+    if (this.supplierForm.invalid) return;
+
+    this.isSavingSupplier = true;
+    this.supplierError = '';
+
+    this.http.post('http://localhost:5243/api/Suppliers', this.supplierForm.value).subscribe({
+      next: (res: any) => {
+        this.isSavingSupplier = false;
+        const newSupplier = res.data || res;
+        
+        // Add to local list and select it
+        this.suppliers = [newSupplier, ...this.suppliers];
+        this.poForm.patchValue({ supplierId: newSupplier.id });
+        this.supplierSearchCtrl.setValue(newSupplier.companyName, { emitEvent: false });
+        
+        this.closeSupplierModal();
+      },
+      error: (err) => {
+        this.isSavingSupplier = false;
+        // The API returns { message: "..." } on 400 Bad Request
+        this.supplierError = err.error?.message || 'Failed to create supplier. It might already exist.';
+      }
     });
   }
 
   onSubmit() {
     if (this.poForm.invalid) {
-      alert('Please fill in all required fields.');
+      this.poForm.markAllAsTouched();
+      alert('Please fill in all required fields correctly.');
       return;
     }
     
     this.isLoading = true;
     this.http.post('http://localhost:5243/api/PurchaseOrders', this.poForm.value).subscribe({
       next: (res: any) => {
-        alert(res.message);
+        alert(res.message || 'Purchase Order created successfully!');
         this.router.navigate(['/admin/purchase-orders']);
       },
       error: (err) => {

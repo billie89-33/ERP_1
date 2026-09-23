@@ -67,7 +67,7 @@ export class CartService {
         productId: product.id,
         name: product.name,
         price: product.price,
-        imageUrl: product.imageUrl || null,
+        imageUrl: product.image?.url || null,
         quantity: quantity > product.availableQuantity ? product.availableQuantity : quantity,
         maxStock: product.availableQuantity
       };

@@ -37,9 +37,15 @@ export class ProductFormComponent implements OnInit {
     this.productForm = this.fb.group({
       sku: ['', Validators.required],
       name: ['', Validators.required],
+      brand: ['', Validators.required],
+      modelName: ['', Validators.required],
+      description: [''],
       price: [0, [Validators.required, Validators.min(0)]],
       cost: [0, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
+      tags: [''],
+      status: ['ACTIVE'],
+      isFeatured: [false]
     });
   }
 
@@ -56,11 +62,16 @@ export class ProductFormComponent implements OnInit {
           price: product.price,
           cost: product.cost,
           categoryId: product.categoryId,
-          imageUrl: product.imageUrl,
-          cloudinaryPublicId: product.cloudinaryPublicId
+          brand: product.brand,
+          modelName: product.modelName,
+          description: product.description,
+          tags: product.tags ? product.tags.join(', ') : '',
+          status: product.status,
+          isFeatured: product.isFeatured
         });
         
-        this.imageUrl = product.imageUrl || null;
+        this.imageUrl = product.image?.url || null;
+        this.cloudinaryPublicId = product.image?.publicId || null;
 
         // Parse JSON object back into dynamic array
         if (product.specifications && typeof product.specifications === 'object') {
@@ -152,8 +163,11 @@ export class ProductFormComponent implements OnInit {
     const payload = {
       ...this.productForm.value,
       specifications: Object.keys(specsObj).length > 0 ? specsObj : null,
-      imageUrl: this.imageUrl,
-      cloudinaryPublicId: this.cloudinaryPublicId
+      image: {
+        url: this.imageUrl || '',
+        publicId: this.cloudinaryPublicId || ''
+      },
+      tags: this.productForm.value.tags ? this.productForm.value.tags.split(',').map((t: string) => t.trim()).filter((t: string) => t) : []
     };
 
     if (this.isEditMode && this.productId) {
