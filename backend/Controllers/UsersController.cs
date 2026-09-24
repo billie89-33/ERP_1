@@ -42,11 +42,22 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetUsers()
+    public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string search = "")
     {
-        var users = await _context.Users
-            .Where(u => !u.IsDeleted)
+        var query = _context.Users.Where(u => !u.IsDeleted).AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            query = query.Where(u => u.Username.ToLower().Contains(search) || u.Email.ToLower().Contains(search));
+        }
+
+        int totalCount = await query.CountAsync();
+
+        var users = await query
             .OrderBy(u => u.Username)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(u => new
             {
                 u.Id,
@@ -58,7 +69,13 @@ public class UsersController : ControllerBase
             })
             .ToListAsync();
             
-        return Ok(users);
+        return Ok(new JamineERP.Backend.Models.Pagination.PaginatedResult<object>
+        {
+            Items = users.Cast<object>().ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpGet("{id}")]

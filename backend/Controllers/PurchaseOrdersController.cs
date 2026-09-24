@@ -24,13 +24,31 @@ public class PurchaseOrdersController : ControllerBase
 
     // GET: api/PurchaseOrders
     [HttpGet]
-    public async Task<IActionResult> GetPurchaseOrders()
+    public async Task<IActionResult> GetPurchaseOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string search = "", [FromQuery] string status = "")
     {
-        var pos = await _context.PurchaseOrders
+        var query = _context.PurchaseOrders
             .Include(p => p.Supplier)
             .Include(p => p.CreatedByUser)
             .Where(p => !p.IsDeleted)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            query = query.Where(p => p.PoNumber.ToLower().Contains(search) || (p.Supplier != null && p.Supplier.CompanyName.ToLower().Contains(search)));
+        }
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            query = query.Where(p => p.Status == status);
+        }
+
+        int totalCount = await query.CountAsync();
+
+        var pos = await query
             .OrderByDescending(p => p.OrderDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new {
                 p.Id,
                 p.PoNumber,
@@ -42,7 +60,13 @@ public class PurchaseOrdersController : ControllerBase
             })
             .ToListAsync();
             
-        return Ok(pos);
+        return Ok(new JamineERP.Backend.Models.Pagination.PaginatedResult<object>
+        {
+            Items = pos.Cast<object>().ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
     
     // GET: api/PurchaseOrders/{id}

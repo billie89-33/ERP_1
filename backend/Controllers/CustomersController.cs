@@ -23,11 +23,22 @@ public class CustomersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetCustomers()
+    public async Task<IActionResult> GetCustomers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string search = "")
     {
-        var customers = await _context.Customers
-            .Where(c => !c.IsDeleted)
+        var query = _context.Customers.Where(c => !c.IsDeleted).AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            query = query.Where(c => c.CompanyName.ToLower().Contains(search) || c.TaxId.ToLower().Contains(search) || c.Phone.ToLower().Contains(search));
+        }
+
+        int totalCount = await query.CountAsync();
+
+        var customers = await query
             .OrderBy(c => c.CompanyName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(c => new
             {
                 c.Id,
@@ -43,7 +54,13 @@ public class CustomersController : ControllerBase
             })
             .ToListAsync();
             
-        return Ok(customers);
+        return Ok(new JamineERP.Backend.Models.Pagination.PaginatedResult<object>
+        {
+            Items = customers.Cast<object>().ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpGet("{id}")]

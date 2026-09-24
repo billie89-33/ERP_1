@@ -1,24 +1,27 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
-
 import { ProductDto } from '../../../core/models/product.model';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.scss'
 })
 export class ProductListComponent implements OnInit {
   products: ProductDto[] = [];
+  
+  // Pagination State
   page = 1;
   limit = 10;
   total = 0;
-  totalPages = 0;
   search = '';
+  searchTimeout: any;
   
   private productService = inject(ProductService);
 
@@ -30,29 +33,20 @@ export class ProductListComponent implements OnInit {
     this.productService.getProducts({ page: this.page, limit: this.limit, searchQuery: this.search }).subscribe(res => {
       this.products = res.data;
       this.total = res.total;
-      this.totalPages = res.totalPages;
     });
   }
 
-  onSearch(event: Event) {
-    const target = event.target as HTMLInputElement;
-    this.search = target.value;
-    this.page = 1;
+  onSearchChange() {
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.page = 1;
+      this.loadProducts();
+    }, 500);
+  }
+
+  onPageChange(newPage: number) {
+    this.page = newPage;
     this.loadProducts();
-  }
-
-  nextPage() {
-    if (this.page < this.totalPages) {
-      this.page++;
-      this.loadProducts();
-    }
-  }
-
-  prevPage() {
-    if (this.page > 1) {
-      this.page--;
-      this.loadProducts();
-    }
   }
 
   deleteProduct(id: string) {

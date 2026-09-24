@@ -2,11 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule, PaginationComponent],
   template: `
     <div class="mb-6 flex justify-between items-center">
       <div>
@@ -19,6 +21,15 @@ import { RouterLink } from '@angular/router';
     </div>
 
     <div class="bg-white shadow-md rounded-lg overflow-hidden border border-slate-200">
+      <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+        <div class="relative w-64">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-search text-slate-400"></i>
+          </div>
+          <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()" placeholder="Search username, email..." class="pl-10 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-slate-300 rounded-md">
+        </div>
+      </div>
+
       <div *ngIf="isLoading" class="p-12 text-center text-slate-500">
         <i class="fas fa-spinner fa-spin text-3xl mb-3 text-blue-500"></i>
         <p>กำลังโหลดข้อมูลผู้ใช้งาน...</p>
@@ -64,12 +75,26 @@ import { RouterLink } from '@angular/router';
           </tbody>
         </table>
       </div>
+      
+      <app-pagination 
+        *ngIf="!isLoading && totalCount > 0"
+        [totalCount]="totalCount" 
+        [pageSize]="pageSize" 
+        [currentPage]="page" 
+        (pageChange)="onPageChange($event)">
+      </app-pagination>
     </div>
   `
 })
 export class UserListComponent implements OnInit {
   users: any[] = [];
   isLoading = true;
+
+  totalCount = 0;
+  page = 1;
+  pageSize = 10;
+  searchQuery = '';
+  searchTimeout: any;
 
   private http = inject(HttpClient);
 
@@ -78,9 +103,11 @@ export class UserListComponent implements OnInit {
   }
 
   loadUsers() {
-    this.http.get<any[]>('http://localhost:5243/api/Users').subscribe({
+    this.isLoading = true;
+    this.http.get<any>(`http://localhost:5243/api/Users?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
-        this.users = data;
+        this.users = data.items;
+        this.totalCount = data.totalCount;
         this.isLoading = false;
       },
       error: (err) => {
@@ -88,5 +115,18 @@ export class UserListComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  onSearchChange() {
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      this.page = 1;
+      this.loadUsers();
+    }, 500);
+  }
+
+  onPageChange(newPage: number) {
+    this.page = newPage;
+    this.loadUsers();
   }
 }

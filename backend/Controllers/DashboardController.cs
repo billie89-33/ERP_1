@@ -29,6 +29,9 @@ public class DashboardController : ControllerBase
         var pendingSoCount = await _context.SalesOrders
             .CountAsync(so => !so.IsDeleted && so.Status == "Pending");
 
+        var pendingSlipCount = await _context.SalesOrders
+            .CountAsync(so => !so.IsDeleted && so.PaymentStatus == "Checking");
+
         var pendingPoCount = await _context.PurchaseOrders
             .CountAsync(po => !po.IsDeleted && po.Status == "Pending");
 
@@ -43,6 +46,7 @@ public class DashboardController : ControllerBase
         {
             TotalSales = totalSales,
             PendingSalesOrders = pendingSoCount,
+            PendingSlipVerifications = pendingSlipCount,
             PendingPurchaseOrders = pendingPoCount,
             LowStockProducts = lowStockProducts
         });

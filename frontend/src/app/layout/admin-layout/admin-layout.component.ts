@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, Router, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -10,9 +11,26 @@ import { AuthService } from '../../core/services/auth.service';
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
-export class AdminLayoutComponent {
+export class AdminLayoutComponent implements OnInit {
   authService = inject(AuthService);
   private router = inject(Router);
+  private http = inject(HttpClient);
+
+  pendingSlipCount = 0;
+
+  ngOnInit() {
+    this.fetchNotifications();
+    setInterval(() => this.fetchNotifications(), 30000);
+  }
+
+  fetchNotifications() {
+    this.http.get<any>('http://localhost:5243/api/Dashboard/stats', { withCredentials: true }).subscribe({
+      next: (data) => {
+        this.pendingSlipCount = data.pendingSlipVerifications || 0;
+      },
+      error: () => {}
+    });
+  }
 
   logout() {
     this.authService.logout();

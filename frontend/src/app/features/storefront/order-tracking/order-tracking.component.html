@@ -15,32 +15,71 @@
         <div class="text-slate-400 text-sm mb-1">สถานะชำระเงิน</div>
         <span class="px-3 py-1.5 rounded-lg text-sm font-bold" 
               [ngClass]="{
-                'bg-rose-500/20 text-rose-500': order.paymentStatus === 'Pending',
+                'bg-rose-500/20 text-rose-500': order.paymentStatus === 'Pending' && !isExpired && order.status !== 'Cancelled',
                 'bg-yellow-500/20 text-yellow-500': order.paymentStatus === 'Checking',
-                'bg-emerald-500/20 text-emerald-500': order.paymentStatus === 'Paid'
+                'bg-emerald-500/20 text-emerald-500': order.paymentStatus === 'Paid',
+                'bg-slate-700 text-slate-400': isExpired || order.status === 'Cancelled'
               }">
-          {{ order.paymentStatus === 'Pending' ? 'รอชำระเงิน' : (order.paymentStatus === 'Checking' ? 'รอตรวจสอบ' : 'ชำระเงินแล้ว') }}
+          {{ (isExpired || order.status === 'Cancelled') ? 'ยกเลิกออเดอร์' : (order.paymentStatus === 'Pending' ? 'รอชำระเงิน' : (order.paymentStatus === 'Checking' ? 'รอตรวจสอบ' : 'ชำระเงินแล้ว')) }}
         </span>
       </div>
     </div>
 
-    <!-- Upload Slip Section -->
-    <div *ngIf="order.paymentStatus === 'Pending' || order.paymentStatus === 'Checking'" class="mb-10 bg-slate-900 border border-slate-700 rounded-xl p-6">
-      <h3 class="text-xl font-bold text-white mb-4">แจ้งชำระเงิน (อัปโหลดสลิป)</h3>
+    <!-- Expired Message -->
+    <div *ngIf="isExpired || order.status === 'Cancelled'" class="mb-10 bg-rose-500/10 border border-rose-500/30 rounded-xl p-6 text-center">
+      <svg class="w-16 h-16 text-rose-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <h3 class="text-xl font-bold text-rose-400 mb-2">ออเดอร์หมดอายุ / ถูกยกเลิก</h3>
+      <p class="text-rose-400/80">ระบบได้ทำการยกเลิกออเดอร์และคืนสต็อกสินค้าแล้ว เนื่องจากหมดเวลาชำระเงิน</p>
+    </div>
+
+    <!-- Upload Slip Section (QR + Form) -->
+    <div *ngIf="order.paymentStatus === 'Pending' && !isExpired && order.status !== 'Cancelled'" class="mb-10 flex flex-col md:flex-row gap-8 bg-slate-900 border border-slate-700 rounded-xl p-8">
       
-      <div *ngIf="order.paymentStatus === 'Checking'" class="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm">
-        <i class="fas fa-clock mr-2"></i> คุณได้อัปโหลดสลิปแล้ว กำลังรอผู้ดูแลระบบตรวจสอบยอดเงิน หากต้องการเปลี่ยนรูปสลิปสามารถอัปโหลดใหม่ได้
+      <!-- QR Code Mock -->
+      <div class="md:w-1/3 flex flex-col items-center justify-center bg-white p-6 rounded-2xl">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" alt="PromptPay QR" class="w-48 h-48 mb-4">
+        <div class="text-slate-800 font-bold text-center mb-1">สแกนจ่ายด้วยแอปธนาคาร</div>
+        <div class="text-indigo-600 font-black text-2xl">฿{{ order.totalAmount | number:'1.0-0' }}</div>
       </div>
 
-      <div class="flex items-center gap-4">
-        <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" #fileInput>
-        <button (click)="fileInput.click()" [disabled]="isUploading" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-lg font-bold transition-colors disabled:opacity-50">
-          <span *ngIf="!isUploading"><i class="fas fa-upload mr-2"></i> เลือกรูปสลิปโอนเงิน</span>
-          <span *ngIf="isUploading"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังอัปโหลด...</span>
-        </button>
-        <div *ngIf="uploadSuccess" class="text-emerald-400 font-medium">
-          <i class="fas fa-check-circle mr-1"></i> อัปโหลดสำเร็จ!
+      <!-- Upload Form & Timer -->
+      <div class="md:w-2/3 flex flex-col justify-center">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-xl font-bold text-white">อัปโหลดสลิปโอนเงิน</h3>
+          <!-- Timer -->
+          <div class="bg-rose-500/10 border border-rose-500 text-rose-400 px-4 py-2 rounded-lg font-mono font-bold text-xl animate-pulse flex items-center gap-2">
+            <i class="fas fa-clock"></i> {{ countdownText }}
+          </div>
         </div>
+        
+        <p class="text-slate-400 mb-8 leading-relaxed">
+          กรุณาโอนเงินและอัปโหลดหลักฐานภายในเวลาที่กำหนด <br>
+          <span class="text-rose-400 font-medium">หากหมดเวลา ระบบจะยกเลิกออเดอร์และคืนสต็อกทันที!</span>
+        </p>
+
+        <div class="flex items-center gap-4">
+          <input type="file" (change)="onFileSelected($event)" accept="image/*" class="hidden" #fileInput>
+          <button (click)="fileInput.click()" [disabled]="isUploading" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/20">
+            <span *ngIf="!isUploading"><i class="fas fa-upload mr-2"></i> เลือกรูปสลิป</span>
+            <span *ngIf="isUploading"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังอัปโหลด...</span>
+          </button>
+          <div *ngIf="uploadSuccess" class="text-emerald-400 font-medium text-lg ml-4">
+            <i class="fas fa-check-circle mr-1"></i> อัปโหลดสำเร็จ!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Uploaded Slip Status (Checking/Paid) -->
+    <div *ngIf="order.paymentStatus === 'Checking' || order.paymentStatus === 'Paid'" class="mb-10 bg-slate-900 border border-slate-700 rounded-xl p-6">
+      <h3 class="text-xl font-bold text-white mb-4">หลักฐานการชำระเงิน</h3>
+      
+      <div *ngIf="order.paymentStatus === 'Checking'" class="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-yellow-400 text-sm">
+        <i class="fas fa-clock mr-2"></i> คุณได้อัปโหลดสลิปแล้ว กำลังรอผู้ดูแลระบบตรวจสอบยอดเงิน
+      </div>
+      
+      <div *ngIf="order.paymentStatus === 'Paid'" class="mb-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm">
+        <i class="fas fa-check mr-2"></i> การชำระเงินได้รับการยืนยันแล้ว!
       </div>
 
       <div *ngIf="order.paymentSlipUrl" class="mt-6">

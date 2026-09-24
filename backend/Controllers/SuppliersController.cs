@@ -19,12 +19,31 @@ public class SuppliersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetSuppliers()
+    public async Task<IActionResult> GetSuppliers([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string search = "")
     {
-        var suppliers = await _context.Suppliers
+        var query = _context.Suppliers.AsQueryable();
+        
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            query = query.Where(s => s.CompanyName.ToLower().Contains(search) || s.TaxId.ToLower().Contains(search));
+        }
+
+        int totalCount = await query.CountAsync();
+        
+        var suppliers = await query
             .OrderBy(s => s.CompanyName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
-        return Ok(new { success = true, data = suppliers });
+            
+        return Ok(new JamineERP.Backend.Models.Pagination.PaginatedResult<object>
+        {
+            Items = suppliers.Cast<object>().ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpGet("{id}")]

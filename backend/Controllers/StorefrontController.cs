@@ -128,8 +128,10 @@ public class StorefrontController : ControllerBase
 
             return Ok(new { 
                 message = "Checkout successful! Your order has been placed.", 
+                orderId = so.Id,
                 orderNumber = so.OrderNumber,
-                totalAmount = so.TotalAmount
+                totalAmount = so.TotalAmount,
+                expiresAt = so.ExpiresAt
             });
         }
         catch (Exception ex)

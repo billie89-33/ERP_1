@@ -40,25 +40,51 @@ public class SalesOrdersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetSalesOrders()
+    public async Task<IActionResult> GetSalesOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string search = "", [FromQuery] string status = "")
     {
-        var sos = await _context.SalesOrders
+        var query = _context.SalesOrders
             .Include(p => p.Customer)
             .Include(p => p.CreatedByUser)
             .Where(p => !p.IsDeleted)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.ToLower();
+            query = query.Where(p => p.OrderNumber.ToLower().Contains(search) || (p.Customer != null && p.Customer.CompanyName.ToLower().Contains(search)));
+        }
+        
+        if (!string.IsNullOrEmpty(status))
+        {
+            query = query.Where(p => p.Status == status || p.PaymentStatus == status);
+        }
+
+        int totalCount = await query.CountAsync();
+
+        var sos = await query
             .OrderByDescending(p => p.OrderDate)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(p => new {
                 p.Id,
                 p.OrderNumber,
                 p.OrderDate,
                 p.Status,
+                p.PaymentStatus,
+                p.OrderChannel,
                 p.TotalAmount,
                 CustomerName = p.Customer.CompanyName,
                 CreatedByName = p.CreatedByUser.Username
             })
             .ToListAsync();
             
-        return Ok(sos);
+        return Ok(new JamineERP.Backend.Models.Pagination.PaginatedResult<object>
+        {
+            Items = sos.Cast<object>().ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
     }
 
     // GET: api/SalesOrders/{id}
@@ -213,5 +239,46 @@ public class SalesOrdersController : ControllerBase
         so.PaymentStatus = "Paid";
         await _context.SaveChangesAsync();
         return Ok(new { message = "Payment verified successfully." });
+    }
+
+    [HttpGet("export")]
+    [Authorize(Roles = "Admin,Sales")]
+    public async Task<IActionResult> ExportSalesOrders()
+    {
+        var orders = await _context.SalesOrders
+            .Include(so => so.Customer)
+            .Where(so => !so.IsDeleted)
+            .OrderByDescending(so => so.OrderDate)
+            .ToListAsync();
+
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Sales Orders");
+        var currentRow = 1;
+
+        worksheet.Cell(currentRow, 1).Value = "Order Number";
+        worksheet.Cell(currentRow, 2).Value = "Order Date";
+        worksheet.Cell(currentRow, 3).Value = "Customer";
+        worksheet.Cell(currentRow, 4).Value = "Amount";
+        worksheet.Cell(currentRow, 5).Value = "Status";
+        worksheet.Cell(currentRow, 6).Value = "Payment Status";
+
+        foreach (var order in orders)
+        {
+            currentRow++;
+            worksheet.Cell(currentRow, 1).Value = order.OrderNumber;
+            worksheet.Cell(currentRow, 2).Value = order.OrderDate.ToString("yyyy-MM-dd HH:mm");
+            worksheet.Cell(currentRow, 3).Value = order.Customer?.CompanyName ?? "Unknown";
+            worksheet.Cell(currentRow, 4).Value = order.TotalAmount;
+            worksheet.Cell(currentRow, 5).Value = order.Status;
+            worksheet.Cell(currentRow, 6).Value = order.PaymentStatus;
+        }
+
+        worksheet.Columns().AdjustToContents();
+
+        using var stream = new System.IO.MemoryStream();
+        workbook.SaveAs(stream);
+        var content = stream.ToArray();
+
+        return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "SalesOrders.xlsx");
     }
 }
