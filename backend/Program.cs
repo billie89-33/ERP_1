@@ -91,10 +91,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200") // Angular Dev Server
+        policy.SetIsOriginAllowed(origin => true) // Allow any Vercel/Localhost URL
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // สำคัญมาก! สำหรับรับส่ง HttpOnly Cookie (JWT)
+              .AllowCredentials(); // For HttpOnly Cookies
     });
 });
 
