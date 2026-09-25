@@ -2,11 +2,12 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore as distinct layers
-COPY ["JamineERP.Backend.csproj", "./"]
-RUN dotnet restore "JamineERP.Backend.csproj"
+COPY ["backend/JamineERP.Backend.csproj", "backend/"]
+RUN dotnet restore "backend/JamineERP.Backend.csproj"
 
 # Copy everything else and build
-COPY . .
+COPY backend/ backend/
+WORKDIR /src/backend
 RUN dotnet publish "JamineERP.Backend.csproj" -c Release -o /app/publish
 
 # Build runtime image
