@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://erp-1-1gu3.onrender.com'
+  apiUrl: 'https://erp-1-1-my89.onrender.com'
 };
