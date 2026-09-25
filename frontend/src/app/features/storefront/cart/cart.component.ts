@@ -60,6 +60,11 @@ export class CartComponent implements OnInit {
   }
 
   startCheckout() {
+    if (!this.authService.currentUser()) {
+      alert('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อสินค้าครับ');
+      this.router.navigate(['/shop/login'], { queryParams: { returnUrl: '/cart' } });
+      return;
+    }
     this.isCheckoutMode = true;
   }
 
