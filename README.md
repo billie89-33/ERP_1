@@ -88,19 +88,19 @@ npm start
 ## 📂 Project Structure (โครงสร้างโปรเจกต์)
 ```text
 Jamine_ERP/
-â”œâ”€â”€ backend/               # ASP.NET Core Web API
-â”‚   â”œâ”€â”€ Controllers/       # API Endpoints
-â”‚   â”œâ”€â”€ Models/            # Database Entities
-â”‚   â”œâ”€â”€ Data/              # Entity Framework DbContext
-â”‚   â””â”€â”€ Services/          # Business Logic & Auth Services
-â”‚
-â”œâ”€â”€ frontend/              # Angular 18 Application
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ app/
-â”‚   â”‚   â”‚   â”œâ”€â”€ core/      # Guards, Interceptors, Models
-â”‚   â”‚   â”‚   â”œâ”€â”€ features/  # Business Modules (Sales, Purchasing, Warehouse, Storefront)
-â”‚   â”‚   â”‚   â””â”€â”€ layout/    # Admin Sidebar, Storefront Navbar
-â”‚   â”‚   â””â”€â”€ styles.scss    # Global Styles & Tailwind Configuration
-â”‚
-â””â”€â”€ docs/                  # Project Design & Architecture Documentation
++-- backend/               # ASP.NET Core Web API
+|   +-- Controllers/       # API Endpoints
+|   +-- Models/            # Database Entities
+|   +-- Data/              # Entity Framework DbContext
+|   +-- Services/          # Business Logic & Auth Services
+|
++-- frontend/              # Angular 18 Application
+|   +-- src/
+|   |   +-- app/
+|   |   |   +-- core/      # Guards, Interceptors, Models
+|   |   |   +-- features/  # Business Modules (Sales, Purchasing, Warehouse, Storefront)
+|   |   |   +-- layout/    # Admin Sidebar, Storefront Navbar
+|   |   |   +-- styles.scss    # Global Styles & Tailwind Configuration
+|
++-- docs/                  # Project Design & Architecture Documentation
 ```
