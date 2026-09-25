@@ -152,6 +152,14 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ['Admin'] }
       },
+
+      // â⚙️ Settings
+      { 
+        path: 'settings', 
+        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin'] }
+      },
     ]
   },
   

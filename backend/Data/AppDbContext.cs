@@ -24,6 +24,7 @@ public class AppDbContext : DbContext
     public DbSet<GoodsReceiptItem> GoodsReceiptItems { get; set; } = null!;
     public DbSet<GoodsIssue> GoodsIssues { get; set; } = null!;
     public DbSet<GoodsIssueItem> GoodsIssueItems { get; set; } = null!;
+    public DbSet<CompanySettings> CompanySettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -13,6 +13,17 @@ import { AuthService } from '../../../core/services/auth.service';
     <div *ngIf="isLoading" class="p-8 text-center text-slate-500">Loading Order Details...</div>
 
     <div *ngIf="!isLoading && order" class="max-w-5xl mx-auto">
+      
+      <!-- Print Header (Visible only when printing) -->
+      <div class="hidden print:block mb-8 text-center" *ngIf="companySettings">
+        <img *ngIf="companySettings.logoUrl" [src]="companySettings.logoUrl" class="h-16 mx-auto mb-2" alt="Company Logo">
+        <h1 class="text-2xl font-bold">{{ companySettings.companyName }}</h1>
+        <p class="text-sm text-gray-600">{{ companySettings.address }}</p>
+        <p class="text-sm text-gray-600">Tax ID: {{ companySettings.taxId }} | Phone: {{ companySettings.phone }} | Email: {{ companySettings.email }}</p>
+        <div class="border-b-2 border-gray-800 my-4"></div>
+        <h2 class="text-xl font-bold uppercase tracking-wider">Purchase Order</h2>
+      </div>
+
       <div class="mb-4 flex justify-between items-center no-print">
         <a routerLink="/admin/purchase-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-arrow-left mr-1"></i> กลับหน้ารายการใบสั่งซื้อ</a>
         <div class="space-x-3">
@@ -131,6 +142,7 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class PurchaseOrderDetailComponent implements OnInit {
   order: any = null;
+  companySettings: any = null;
   isLoading = true;
   isSubmitting = false;
 
@@ -140,10 +152,18 @@ export class PurchaseOrderDetailComponent implements OnInit {
   private authService = inject(AuthService);
 
   ngOnInit() {
+    this.loadCompanySettings();
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loadOrder(id);
     }
+  }
+
+  loadCompanySettings() {
+    this.http.get('http://localhost:5243/api/Settings/company').subscribe({
+      next: (data) => this.companySettings = data,
+      error: (err) => console.error('Failed to load company settings', err)
+    });
   }
 
   hasRole(allowedRoles: string[]): boolean {
