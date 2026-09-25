@@ -24,6 +24,25 @@ builder.Services.AddScoped<JamineERP.Backend.Services.IPhotoService, JamineERP.B
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
     ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
+// Render automatically injects DATABASE_URL for connected databases
+var renderDbUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+if (!string.IsNullOrEmpty(renderDbUrl))
+{
+    // Parse postgres://user:pass@host/db to Host=host;Database=db;Username=user;Password=pass
+    var databaseUri = new Uri(renderDbUrl);
+    var userInfo = databaseUri.UserInfo.Split(':');
+    var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.Port,
+        Username = userInfo[0],
+        Password = userInfo.Length > 1 ? userInfo[1] : "",
+        Database = databaseUri.LocalPath.TrimStart('/'),
+        Pooling = true
+    };
+    connectionString = npgsqlBuilder.ToString();
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
