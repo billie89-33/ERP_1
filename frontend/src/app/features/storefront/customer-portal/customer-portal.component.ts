@@ -38,7 +38,7 @@ export class CustomerPortalComponent implements OnInit {
     // Wait, the ERP uses cookies! StorefrontAuthController also uses SetJwtCookie!
     // So withCredentials: true is all we need!
     
-    this.http.get<any[]>('http://localhost:5243/api/Storefront/my-orders', { withCredentials: true }).subscribe({
+    this.http.get<any[]>('/api/Storefront/my-orders', { withCredentials: true }).subscribe({
       next: (data) => {
         this.orders = data;
         this.isLoading = false;

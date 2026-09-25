@@ -129,7 +129,7 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   loadCompanySettings() {
-    this.http.get('http://localhost:5243/api/Settings/company').subscribe({
+    this.http.get('/api/Settings/company').subscribe({
       next: (data) => this.companySettings = data,
       error: (err) => console.error('Failed to load company settings', err)
     });
@@ -142,7 +142,7 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   loadOrder(id: string) {
-    this.http.get(`http://localhost:5243/api/SalesOrders/${id}`).subscribe({
+    this.http.get(`/api/SalesOrders/${id}`).subscribe({
       next: (data) => {
         this.order = data;
         this.isLoading = false;
@@ -162,7 +162,7 @@ export class SalesOrderDetailComponent implements OnInit {
 
   cancelOrder() {
     if (confirm('Are you sure you want to cancel this order? This will return the reserved stock to available inventory.')) {
-      this.http.put(`http://localhost:5243/api/SalesOrders/${this.order.id}/cancel`, {}).subscribe({
+      this.http.put(`/api/SalesOrders/${this.order.id}/cancel`, {}).subscribe({
         next: (res: any) => {
           alert(res.message);
           this.loadOrder(this.order.id);
@@ -183,7 +183,7 @@ export class SalesOrderDetailComponent implements OnInit {
         }))
       };
 
-      this.http.post('http://localhost:5243/api/GoodsIssues', giPayload).subscribe({
+      this.http.post('/api/GoodsIssues', giPayload).subscribe({
         next: (res: any) => {
           alert(res.message);
           this.loadOrder(this.order.id);
@@ -195,7 +195,7 @@ export class SalesOrderDetailComponent implements OnInit {
 
   verifyPayment() {
     if (confirm('Are you sure this payment is valid and money is in the bank?')) {
-      this.http.post(`http://localhost:5243/api/SalesOrders/${this.order.id}/verify-payment`, {}, { withCredentials: true }).subscribe({
+      this.http.post(`/api/SalesOrders/${this.order.id}/verify-payment`, {}, { withCredentials: true }).subscribe({
         next: (res: any) => {
           alert(res.message);
           this.loadOrder(this.order.id);

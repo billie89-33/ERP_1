@@ -86,7 +86,7 @@ export class GoodsIssueComponent implements OnInit {
   }
 
   loadSO() {
-    this.http.get<any>(`http://localhost:5243/api/SalesOrders/${this.soId}`).subscribe({
+    this.http.get<any>(`/api/SalesOrders/${this.soId}`).subscribe({
       next: (data) => {
         this.so = data;
         // Map items
@@ -125,7 +125,7 @@ export class GoodsIssueComponent implements OnInit {
       items: items
     };
 
-    this.http.post('http://localhost:5243/api/GoodsIssues', payload).subscribe({
+    this.http.post('/api/GoodsIssues', payload).subscribe({
       next: (res: any) => {
         alert('Goods Issue created successfully! Stock has been deducted.');
         this.router.navigate(['/admin/sales-orders']);

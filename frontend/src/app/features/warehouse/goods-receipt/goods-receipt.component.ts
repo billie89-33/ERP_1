@@ -86,7 +86,7 @@ export class GoodsReceiptComponent implements OnInit {
   }
 
   loadPO() {
-    this.http.get<any>(`http://localhost:5243/api/PurchaseOrders/${this.poId}`).subscribe({
+    this.http.get<any>(`/api/PurchaseOrders/${this.poId}`).subscribe({
       next: (data) => {
         this.po = data;
         // Map items
@@ -126,7 +126,7 @@ export class GoodsReceiptComponent implements OnInit {
       items: items
     };
 
-    this.http.post('http://localhost:5243/api/GoodsReceipts', payload).subscribe({
+    this.http.post('/api/GoodsReceipts', payload).subscribe({
       next: (res: any) => {
         alert('Goods Receipt created successfully! Stock has been updated.');
         this.router.navigate(['/admin/purchase-orders']);

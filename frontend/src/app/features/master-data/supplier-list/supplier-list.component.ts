@@ -96,7 +96,7 @@ export class SupplierListComponent implements OnInit {
 
   loadSuppliers() {
     this.isLoading = true;
-    this.http.get<any>(`http://localhost:5243/api/Suppliers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<any>(`/api/Suppliers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.suppliers = data.items;
         this.totalCount = data.totalCount;

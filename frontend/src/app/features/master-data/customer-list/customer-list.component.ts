@@ -101,7 +101,7 @@ export class CustomerListComponent implements OnInit {
 
   loadCustomers() {
     this.isLoading = true;
-    this.http.get<any>(`http://localhost:5243/api/Customers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<any>(`/api/Customers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.customers = data.items;
         this.totalCount = data.totalCount;

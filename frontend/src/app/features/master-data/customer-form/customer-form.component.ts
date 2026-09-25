@@ -127,7 +127,7 @@ export class CustomerFormComponent implements OnInit {
   }
 
   loadCustomer() {
-    this.http.get<any>(`http://localhost:5243/api/Customers/${this.customerId}`).subscribe({
+    this.http.get<any>(`/api/Customers/${this.customerId}`).subscribe({
       next: (data) => this.customer = data,
       error: () => this.errorMessage = 'ไม่สามารถโหลดข้อมูลลูกค้าได้'
     });
@@ -147,8 +147,8 @@ export class CustomerFormComponent implements OnInit {
     this.errorMessage = '';
 
     const req = this.isEditMode 
-      ? this.http.put(`http://localhost:5243/api/Customers/${this.customerId}`, this.customer)
-      : this.http.post('http://localhost:5243/api/Customers', this.customer);
+      ? this.http.put(`/api/Customers/${this.customerId}`, this.customer)
+      : this.http.post('/api/Customers', this.customer);
 
     req.subscribe({
       next: () => {

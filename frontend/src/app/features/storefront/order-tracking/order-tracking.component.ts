@@ -35,7 +35,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   }
 
   fetchOrderDetails() {
-    this.http.get<any>(`http://localhost:5243/api/Storefront/orders/${this.orderId}`, { withCredentials: true }).subscribe({
+    this.http.get<any>(`/api/Storefront/orders/${this.orderId}`, { withCredentials: true }).subscribe({
       next: (data) => {
         this.order = data;
         this.isLoading = false;
@@ -94,7 +94,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   uploadSlip(base64Image: string) {
     this.isUploading = true;
     this.uploadSuccess = false;
-    this.http.post(`http://localhost:5243/api/Storefront/orders/${this.orderId}/upload-slip`, 
+    this.http.post(`/api/Storefront/orders/${this.orderId}/upload-slip`, 
       { base64Image }, 
       { withCredentials: true }
     ).subscribe({

@@ -8,7 +8,7 @@ import { throwError, Observable, of } from 'rxjs';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5243/api/auth';
+  private apiUrl = '/api/auth';
 
   currentUser = signal<{id: string, username: string, role: string} | null>(null);
 

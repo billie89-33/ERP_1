@@ -30,7 +30,7 @@ export class PurchaseOrderListComponent implements OnInit {
 
   loadPOs() {
     this.isLoading = true;
-    this.http.get<any>(`http://localhost:5243/api/PurchaseOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<any>(`/api/PurchaseOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.purchaseOrders = data.items;
         this.totalCount = data.totalCount;

@@ -106,7 +106,7 @@ export class UserFormComponent implements OnInit {
   }
 
   loadUser() {
-    this.http.get<any>(`http://localhost:5243/api/Users/${this.userId}`).subscribe({
+    this.http.get<any>(`/api/Users/${this.userId}`).subscribe({
       next: (data) => {
         this.user.username = data.username;
         this.user.role = data.role;
@@ -140,8 +140,8 @@ export class UserFormComponent implements OnInit {
     }
 
     const req = this.isEditMode 
-      ? this.http.put(`http://localhost:5243/api/Users/${this.userId}`, payload)
-      : this.http.post('http://localhost:5243/api/Users', payload);
+      ? this.http.put(`/api/Users/${this.userId}`, payload)
+      : this.http.post('/api/Users', payload);
 
     req.subscribe({
       next: () => {

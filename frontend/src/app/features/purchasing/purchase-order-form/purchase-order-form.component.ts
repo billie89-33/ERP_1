@@ -96,7 +96,7 @@ export class PurchaseOrderFormComponent implements OnInit {
   }
 
   loadSuppliers() {
-    this.http.get<any[]>('http://localhost:5243/api/Suppliers').subscribe({
+    this.http.get<any[]>('/api/Suppliers').subscribe({
       next: (res: any) => this.suppliers = res.data || res,
       error: () => console.error('Failed to load suppliers')
     });
@@ -133,7 +133,7 @@ export class PurchaseOrderFormComponent implements OnInit {
   }
 
   loadProducts() {
-    this.http.get<any>('http://localhost:5243/api/Products?limit=100').subscribe({
+    this.http.get<any>('/api/Products?limit=100').subscribe({
       next: (res) => {
         this.products = res.data || res;
       },
@@ -158,7 +158,7 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.isSavingSupplier = true;
     this.supplierError = '';
 
-    this.http.post('http://localhost:5243/api/Suppliers', this.supplierForm.value).subscribe({
+    this.http.post('/api/Suppliers', this.supplierForm.value).subscribe({
       next: (res: any) => {
         this.isSavingSupplier = false;
         const newSupplier = res.data || res;
@@ -186,7 +186,7 @@ export class PurchaseOrderFormComponent implements OnInit {
     }
     
     this.isLoading = true;
-    this.http.post('http://localhost:5243/api/PurchaseOrders', this.poForm.value).subscribe({
+    this.http.post('/api/PurchaseOrders', this.poForm.value).subscribe({
       next: (res: any) => {
         alert(res.message || 'Purchase Order created successfully!');
         this.router.navigate(['/admin/purchase-orders']);

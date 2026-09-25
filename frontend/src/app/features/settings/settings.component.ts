@@ -34,7 +34,7 @@ export class SettingsComponent implements OnInit {
 
   loadSettings() {
     this.isLoading = true;
-    this.http.get<any>('http://localhost:5243/api/Settings/company').subscribe({
+    this.http.get<any>('/api/Settings/company').subscribe({
       next: (data) => {
         this.settingsForm.patchValue({
           companyName: data.companyName,
@@ -79,7 +79,7 @@ export class SettingsComponent implements OnInit {
     this.isSaving = true;
     this.successMessage = '';
 
-    this.http.put('http://localhost:5243/api/Settings/company', this.settingsForm.value, { withCredentials: true }).subscribe({
+    this.http.put('/api/Settings/company', this.settingsForm.value, { withCredentials: true }).subscribe({
       next: (res: any) => {
         this.isSaving = false;
         this.successMessage = 'Company settings saved successfully!';

@@ -123,7 +123,7 @@ export class CartService {
   }
 
   async submitCheckout(payload: CheckoutPayload) {
-    const response = await firstValueFrom(this.http.post<any>(`http://localhost:5243/api/storefront/checkout`, payload));
+    const response = await firstValueFrom(this.http.post<any>(`/api/storefront/checkout`, payload));
     this.clearCart();
     return response;
   }

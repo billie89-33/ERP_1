@@ -32,7 +32,7 @@ export class SalesOrderListComponent implements OnInit {
 
   loadSOs() {
     this.isLoading = true;
-    this.http.get<any>(`http://localhost:5243/api/SalesOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}&status=${this.statusFilter}`).subscribe({
+    this.http.get<any>(`/api/SalesOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}&status=${this.statusFilter}`).subscribe({
       next: (data) => {
         this.salesOrders = data.items;
         this.totalCount = data.totalCount;
@@ -65,7 +65,7 @@ export class SalesOrderListComponent implements OnInit {
   }
 
   exportExcel() {
-    this.http.get('http://localhost:5243/api/SalesOrders/export', { responseType: 'blob', withCredentials: true }).subscribe({
+    this.http.get('/api/SalesOrders/export', { responseType: 'blob', withCredentials: true }).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');

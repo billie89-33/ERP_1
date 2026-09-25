@@ -160,7 +160,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
   }
 
   loadCompanySettings() {
-    this.http.get('http://localhost:5243/api/Settings/company').subscribe({
+    this.http.get('/api/Settings/company').subscribe({
       next: (data) => this.companySettings = data,
       error: (err) => console.error('Failed to load company settings', err)
     });
@@ -174,7 +174,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   loadOrder(id: string) {
     this.isLoading = true;
-    this.http.get(`http://localhost:5243/api/PurchaseOrders/${id}`).subscribe({
+    this.http.get(`/api/PurchaseOrders/${id}`).subscribe({
       next: (data: any) => {
         // Initialize actualReceivedQty for Goods Receipt UI
         if (data && data.items) {
@@ -201,7 +201,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   cancelOrder() {
     if (confirm('Are you sure you want to cancel this Purchase Order?')) {
-      this.http.put(`http://localhost:5243/api/PurchaseOrders/${this.order.id}/cancel`, {}).subscribe({
+      this.http.put(`/api/PurchaseOrders/${this.order.id}/cancel`, {}).subscribe({
         next: (res: any) => {
           alert(res.message);
           this.loadOrder(this.order.id);
@@ -223,7 +223,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
         }))
       };
 
-      this.http.post('http://localhost:5243/api/GoodsReceipts', grPayload).subscribe({
+      this.http.post('/api/GoodsReceipts', grPayload).subscribe({
         next: (res: any) => {
           alert(res.message || 'บันทึกรับสินค้าสำเร็จ!');
           this.isSubmitting = false;

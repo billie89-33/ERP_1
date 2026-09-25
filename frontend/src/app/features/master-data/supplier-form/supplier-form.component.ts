@@ -98,7 +98,7 @@ export class SupplierFormComponent implements OnInit {
   }
 
   loadSupplier() {
-    this.http.get<any>(`http://localhost:5243/api/Suppliers/${this.supplierId}`).subscribe({
+    this.http.get<any>(`/api/Suppliers/${this.supplierId}`).subscribe({
       next: (data) => this.supplier = data,
       error: () => this.errorMessage = 'ไม่สามารถโหลดข้อมูลซัพพลายเออร์ได้'
     });
@@ -109,8 +109,8 @@ export class SupplierFormComponent implements OnInit {
     this.errorMessage = '';
 
     const req = this.isEditMode 
-      ? this.http.put(`http://localhost:5243/api/Suppliers/${this.supplierId}`, this.supplier)
-      : this.http.post('http://localhost:5243/api/Suppliers', this.supplier);
+      ? this.http.put(`/api/Suppliers/${this.supplierId}`, this.supplier)
+      : this.http.post('/api/Suppliers', this.supplier);
 
     req.subscribe({
       next: () => {

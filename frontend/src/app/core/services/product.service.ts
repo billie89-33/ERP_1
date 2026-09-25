@@ -8,8 +8,8 @@ import { ProductDto, PaginatedResponse, FilterOptionsDto, CategoryDto, FilterSta
 })
 export class ProductService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5243/api/products';
-  private catUrl = 'http://localhost:5243/api/categories';
+  private apiUrl = '/api/products';
+  private catUrl = '/api/categories';
 
   getProducts(state: Partial<FilterState>): Observable<PaginatedResponse<ProductDto>> {
     let params = new HttpParams()

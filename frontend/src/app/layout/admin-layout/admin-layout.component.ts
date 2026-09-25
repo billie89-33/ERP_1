@@ -24,7 +24,7 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   fetchNotifications() {
-    this.http.get<any>('http://localhost:5243/api/Dashboard/stats', { withCredentials: true }).subscribe({
+    this.http.get<any>('/api/Dashboard/stats', { withCredentials: true }).subscribe({
       next: (data) => {
         this.pendingSlipCount = data.pendingSlipVerifications || 0;
       },

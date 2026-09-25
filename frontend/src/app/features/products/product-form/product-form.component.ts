@@ -121,7 +121,7 @@ export class ProductFormComponent implements OnInit {
       const formData = new FormData();
       formData.append('file', file);
       
-      this.http.post<any>('http://localhost:5243/api/products/upload-temp-image', formData).subscribe({
+      this.http.post<any>('/api/products/upload-temp-image', formData).subscribe({
         next: (res) => {
           this.imageUrl = res.imageUrl;
           this.cloudinaryPublicId = res.publicId;
@@ -137,7 +137,7 @@ export class ProductFormComponent implements OnInit {
 
   loadCategories() {
     // For now, call direct API or mock
-    this.http.get<any[]>('http://localhost:5243/api/categories').subscribe(
+    this.http.get<any[]>('/api/categories').subscribe(
       res => this.categories = res,
       err => {
         // Fallback mock if category table is empty or api fails

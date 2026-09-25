@@ -81,7 +81,7 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   loadCustomers() {
-    this.http.get<any[]>('http://localhost:5243/api/Customers').subscribe({
+    this.http.get<any[]>('/api/Customers').subscribe({
       next: (res: any) => this.customers = res.data || res,
       error: () => console.error('Failed to load customers')
     });
@@ -120,7 +120,7 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   loadProducts() {
-    this.http.get<any>('http://localhost:5243/api/Products?limit=100').subscribe({
+    this.http.get<any>('/api/Products?limit=100').subscribe({
       next: (res) => {
         this.products = res.data || res;
       },
@@ -136,7 +136,7 @@ export class SalesOrderFormComponent implements OnInit {
     }
     
     this.isLoading = true;
-    this.http.post('http://localhost:5243/api/SalesOrders', this.soForm.value).subscribe({
+    this.http.post('/api/SalesOrders', this.soForm.value).subscribe({
       next: (res: any) => {
         alert(res.message || 'Sales Order created successfully!');
         this.router.navigate(['/admin/sales-orders']);

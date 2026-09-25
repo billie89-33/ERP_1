@@ -104,7 +104,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers() {
     this.isLoading = true;
-    this.http.get<any>(`http://localhost:5243/api/Users?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<any>(`/api/Users?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.users = data.items;
         this.totalCount = data.totalCount;
