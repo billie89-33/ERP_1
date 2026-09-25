@@ -8,20 +8,10 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { apiInterceptor } from './core/interceptors/api.interceptor';
 
-export function initializeApp(authService: AuthService): () => Observable<any> {
-  return () => authService.checkSession();
-}
-
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }), 
     provideRouter(routes),
-    provideHttpClient(withInterceptors([apiInterceptor, authInterceptor])),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeApp,
-      deps: [AuthService],
-      multi: true
-    }
+    provideHttpClient(withInterceptors([apiInterceptor, authInterceptor]))
   ]
 };
