@@ -44,7 +44,7 @@
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-right">
           {{ c.creditTermDays }} Days<br>
-          <span class="text-xs">Limit: ?{{ c.creditLimit | number:'1.0-0' }}</span>
+          <span class="text-xs">Limit: ฿{{ c.creditLimit | number:'1.0-0' }}</span>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
           <a [routerLink]="['/admin/master/customers/edit', c.id]" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
