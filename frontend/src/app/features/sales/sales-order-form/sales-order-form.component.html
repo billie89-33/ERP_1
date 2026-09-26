@@ -1,15 +1,15 @@
-﻿<!-- Top Navigation / Title (Replaces standard header to match wireframe) -->
+<!-- Top Navigation / Title (Replaces standard header to match wireframe) -->
 <div class="mb-4">
-  <a routerLink="/admin/sales-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-arrow-left mr-1"></i> à¸à¸¥à¸±à¸šà¸«à¸™à¹‰à¸²à¸£à¸²à¸¢à¸à¸²à¸£à¸šà¸´à¸¥à¸‚à¸²à¸¢</a>
+  <a routerLink="/admin/sales-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium"><i class="fas fa-arrow-left mr-1"></i> กลับหน้ารายการบิลขาย</a>
 </div>
 
 <form [formGroup]="soForm" (ngSubmit)="onSubmit()">
   <div class="bg-white shadow-md rounded-lg overflow-hidden border border-slate-200">
     <!-- Header -->
     <div class="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
-      <h2 class="text-lg font-bold">à¹€à¸›à¸´à¸”à¸šà¸´à¸¥à¸‚à¸²à¸¢ (Sales Order)</h2>
+      <h2 class="text-lg font-bold">เปิดบิลขาย (Sales Order)</h2>
       <button type="submit" [disabled]="soForm.invalid || isLoading" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-bold transition disabled:bg-blue-400 shadow-sm border border-blue-500">
-        <i class="fas fa-save mr-2"></i> {{ isLoading ? 'à¸à¸³à¸¥à¸±à¸‡à¸šà¸±à¸™à¸—à¸¶à¸...' : 'à¸šà¸±à¸™à¸—à¸¶à¸à¸šà¸´à¸¥à¸‚à¸²à¸¢' }}
+        <i class="fas fa-save mr-2"></i> {{ isLoading ? 'กำลังบันทึก...' : 'บันทึกบิลขาย' }}
       </button>
     </div>
     
@@ -17,26 +17,26 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- Section 1: Customer -->
         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">1. à¹€à¸¥à¸·à¸­à¸à¸¥à¸¹à¸à¸„à¹‰à¸² <span class="text-red-500">*</span></label>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">1. เลือกลูกค้า <span class="text-red-500">*</span></label>
           <div class="flex gap-2">
             <div class="relative flex-1">
               <input type="text" [formControl]="customerSearchCtrl" (focus)="showCustomerDropdown = true" (blur)="hideCustomerDropdown()"
-                placeholder="à¸„à¹‰à¸™à¸«à¸²à¸Šà¸·à¹ˆà¸­à¸¥à¸¹à¸à¸„à¹‰à¸², à¸šà¸£à¸´à¸©à¸±à¸— à¸«à¸£à¸·à¸­ à¹€à¸¥à¸‚à¸œà¸¹à¹‰à¹€à¸ªà¸µà¸¢à¸ à¸²à¸©à¸µ..." 
+                placeholder="ค้นหาชื่อลูกค้า, บริษัท หรือ เลขผู้เสียภาษี..." 
                 class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
               
               <!-- Dropdown -->
               <ul *ngIf="showCustomerDropdown" class="absolute z-10 mt-1 w-full bg-white border border-slate-300 shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm">
                 <li *ngIf="filteredCustomers.length === 0" class="text-slate-500 cursor-default select-none relative py-2 pl-3 pr-9">
-                  à¹„à¸¡à¹ˆà¸žà¸šà¸¥à¸¹à¸à¸„à¹‰à¸²à¸—à¸µà¹ˆà¸„à¹‰à¸™à¸«à¸²
+                  ไม่พบลูกค้าที่ค้นหา
                 </li>
                 <li *ngFor="let c of filteredCustomers" (mousedown)="selectCustomer(c)" class="text-slate-900 cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-600 hover:text-white group">
                   <div class="flex flex-col">
-                    <span class="font-medium block truncate">{{ c.customerType === 'B2B' ? c.companyName : (c.companyName || 'à¸¥à¸¹à¸à¸„à¹‰à¸²à¸—à¸±à¹ˆà¸§à¹„à¸›') }}</span>
+                    <span class="font-medium block truncate">{{ c.customerType === 'B2B' ? c.companyName : (c.companyName || 'ลูกค้าทั่วไป') }}</span>
                     <span class="text-xs text-slate-500 group-hover:text-blue-100 block truncate">
                       <span *ngIf="c.customerType === 'B2B'" class="mr-2 px-1 bg-slate-200 group-hover:bg-blue-500 rounded text-[10px]">B2B</span>
                       <span *ngIf="c.customerType === 'B2C'" class="mr-2 px-1 bg-slate-200 group-hover:bg-blue-500 rounded text-[10px]">B2C</span>
                       <span *ngIf="c.taxId">Tax ID: {{ c.taxId }}</span>
-                      <span *ngIf="!c.taxId">à¹„à¸¡à¹ˆà¸¡à¸µà¹€à¸¥à¸‚à¸œà¸¹à¹‰à¹€à¸ªà¸µà¸¢à¸ à¸²à¸©à¸µ</span>
+                      <span *ngIf="!c.taxId">ไม่มีเลขผู้เสียภาษี</span>
                     </span>
                   </div>
                 </li>
@@ -44,37 +44,37 @@
             </div>
             
             <a routerLink="/admin/customers/create" target="_blank" class="inline-flex items-center px-3 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded text-slate-700 bg-white hover:bg-slate-50 focus:outline-none transition">
-              <i class="fas fa-external-link-alt mr-1 text-blue-600"></i> à¹€à¸žà¸´à¹ˆà¸¡à¹ƒà¸«à¸¡à¹ˆ
+              <i class="fas fa-external-link-alt mr-1 text-blue-600"></i> เพิ่มใหม่
             </a>
           </div>
         </div>
 
         <!-- Section 2: Order Details (Placeholders for now) -->
         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">2. à¸£à¸²à¸¢à¸¥à¸°à¹€à¸­à¸µà¸¢à¸”à¸à¸²à¸£à¸‚à¸²à¸¢</label>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-3">2. รายละเอียดการขาย</label>
           <div class="flex gap-4">
             <div class="flex-1">
-              <label class="text-xs text-slate-500 mb-1 block">à¸§à¸±à¸™à¸—à¸µà¹ˆà¸ˆà¸±à¸”à¸ªà¹ˆà¸‡</label>
+              <label class="text-xs text-slate-500 mb-1 block">วันที่จัดส่ง</label>
               <input type="date" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
             </div>
             <div class="flex-1">
-              <label class="text-xs text-slate-500 mb-1 block">à¸«à¸¡à¸²à¸¢à¹€à¸«à¸•à¸¸</label>
-              <input type="text" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border" placeholder="à¹ƒà¸ªà¹ˆà¹‚à¸™à¹‰à¸•à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡ (à¸–à¹‰à¸²à¸¡à¸µ)">
+              <label class="text-xs text-slate-500 mb-1 block">หมายเหตุ</label>
+              <input type="text" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border" placeholder="ใส่โน้ตเพิ่มเติม (ถ้ามี)">
             </div>
           </div>
         </div>
       </div>
 
       <!-- Section 3: Line Items -->
-      <label class="block text-xs font-bold text-slate-700 uppercase mb-3">3. à¹€à¸žà¸´à¹ˆà¸¡à¸£à¸²à¸¢à¸à¸²à¸£à¸ªà¸´à¸™à¸„à¹‰à¸²</label>
+      <label class="block text-xs font-bold text-slate-700 uppercase mb-3">3. เพิ่มรายการสินค้า</label>
       <div class="overflow-x-auto border rounded-lg mb-4">
         <table class="min-w-full divide-y divide-slate-200">
           <thead class="bg-slate-100">
             <tr>
-              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">à¸ªà¸´à¸™à¸„à¹‰à¸² / à¹à¸šà¸£à¸™à¸”à¹Œ / à¸£à¸¸à¹ˆà¸™</th>
-              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-32">à¸ˆà¸³à¸™à¸§à¸™à¸—à¸µà¹ˆà¸‚à¸²à¸¢</th>
-              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">à¸£à¸²à¸„à¸²à¸‚à¸²à¸¢ (à¸¿)</th>
-              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">à¸£à¸§à¸¡à¹€à¸›à¹‡à¸™à¹€à¸‡à¸´à¸™ (à¸¿)</th>
+              <th scope="col" class="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">สินค้า / แบรนด์ / รุ่น</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-32">จำนวนที่ขาย</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">ราคาขาย (฿)</th>
+              <th scope="col" class="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider w-40">รวมเป็นเงิน (฿)</th>
               <th scope="col" class="px-4 py-3 text-center text-xs font-bold text-slate-600 uppercase tracking-wider w-16"></th>
             </tr>
           </thead>
@@ -82,8 +82,8 @@
             <tr *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="hover:bg-slate-50 transition-colors">
               <td class="px-4 py-3">
                 <select formControlName="productId" (change)="onProductSelected(i)" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
-                  <option value="">à¹€à¸¥à¸·à¸­à¸à¸ªà¸´à¸™à¸„à¹‰à¸²...</option>
-                  <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (à¸žà¸£à¹‰à¸­à¸¡à¸‚à¸²à¸¢: {{ p.availableQuantity }})</option>
+                  <option value="">เลือกสินค้า...</option>
+                  <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (พร้อมขาย: {{ p.availableQuantity }})</option>
                 </select>
               </td>
               <td class="px-4 py-3 text-right">
@@ -106,13 +106,13 @@
       </div>
       
       <button type="button" (click)="addItem()" class="text-sm text-blue-600 font-medium hover:text-blue-800 transition">
-        <i class="fas fa-plus mr-1"></i> à¹€à¸žà¸´à¹ˆà¸¡à¸£à¸²à¸¢à¸à¸²à¸£
+        <i class="fas fa-plus mr-1"></i> เพิ่มรายการ
       </button>
 
       <div class="mt-6 flex justify-end">
         <div class="text-right">
-          <div class="text-sm text-slate-500 mb-1">à¸¢à¸­à¸”à¸£à¸§à¸¡à¸—à¸±à¹‰à¸‡à¸ªà¸´à¹‰à¸™ (Grand Total)</div>
-          <div class="text-3xl font-bold text-blue-600">à¸¿ {{ getTotal() | number:'1.2-2' }}</div>
+          <div class="text-sm text-slate-500 mb-1">ยอดรวมทั้งสิ้น (Grand Total)</div>
+          <div class="text-3xl font-bold text-blue-600">฿ {{ getTotal() | number:'1.2-2' }}</div>
         </div>
       </div>
     </div>
