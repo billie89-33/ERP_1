@@ -42,13 +42,45 @@ public class DashboardController : ControllerBase
             .Select(p => new { p.Sku, p.Name, p.OnHandQuantity })
             .ToListAsync();
 
+        // Generate past 7 days for the chart
+        var past7Days = Enumerable.Range(0, 7)
+            .Select(i => DateTime.UtcNow.Date.AddDays(-6 + i))
+            .ToList();
+
+        // Calculate sales per day (client-side grouping because EF Core might struggle with Date translation)
+        var recentSales = await _context.SalesOrders
+            .Where(so => !so.IsDeleted && so.Status != "Cancelled" && so.CreatedAt >= DateTime.UtcNow.AddDays(-7))
+            .Select(so => new { so.CreatedAt, so.TotalAmount })
+            .ToListAsync();
+
+        var chartData = past7Days.Select(date => new {
+            Date = date.ToString("dd MMM"),
+            Amount = recentSales.Where(s => s.CreatedAt.Date == date).Sum(s => s.TotalAmount)
+        }).ToList();
+
+        // Get recent events (Mocking with SalesOrders for now)
+        var recentEvents = await _context.SalesOrders
+            .Where(so => !so.IsDeleted)
+            .OrderByDescending(so => so.CreatedAt)
+            .Take(5)
+            .Select(so => new {
+                Timestamp = so.CreatedAt.ToString("HH:mm:ss"),
+                EventId = so.OrderNumber,
+                Type = "ORDER_CREATE",
+                Details = "Total: " + so.TotalAmount + " THB",
+                Status = so.Status
+            })
+            .ToListAsync();
+
         return Ok(new
         {
             TotalSales = totalSales,
             PendingSalesOrders = pendingSoCount,
             PendingSlipVerifications = pendingSlipCount,
             PendingPurchaseOrders = pendingPoCount,
-            LowStockProducts = lowStockProducts
+            LowStockProducts = lowStockProducts,
+            ChartData = chartData,
+            RecentEvents = recentEvents
         });
     }
 }

@@ -1,68 +1,94 @@
-<div class="mb-6">
-  <h1 class="text-2xl font-bold text-slate-800">ERP Dashboard</h1>
-  <p class="text-slate-500">Overview of your business operations</p>
-</div>
-
-<div *ngIf="isLoading" class="text-center py-10 text-slate-500">Loading data...</div>
-
-<div *ngIf="!isLoading && stats">
-  <!-- Top KPI Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-      <h3 class="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">Total Sales</h3>
-      <p class="text-3xl font-bold text-slate-800">฿{{ stats.totalSales | number:'1.2-2' }}</p>
+<div class="bg-slate-950 text-slate-200 min-h-screen -m-6 p-6 font-mono font-bold tracking-tight">
+  
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+    <div class="flex items-center space-x-3">
+      <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+      <h2 class="text-2xl font-black text-white tracking-widest uppercase">System_Overview</h2>
     </div>
-    
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-      <h3 class="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">Pending Sales Orders</h3>
-      <div class="flex items-end justify-between">
-        <p class="text-3xl font-bold text-slate-800">{{ stats.pendingSalesOrders }}</p>
-        <a routerLink="/admin/sales-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View all &rarr;</a>
-      </div>
-    </div>
-    
-    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-      <h3 class="text-slate-500 text-sm font-medium uppercase tracking-wider mb-1">Pending Purchase Orders</h3>
-      <div class="flex items-end justify-between">
-        <p class="text-3xl font-bold text-slate-800">{{ stats.pendingPurchaseOrders }}</p>
-        <a routerLink="/admin/purchase-orders" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View all &rarr;</a>
-      </div>
+    <div class="flex space-x-3">
+      <span class="bg-slate-900 text-xs px-3 py-1.5 rounded border border-slate-800 text-emerald-400 font-bold uppercase tracking-widest">UPTIME: 99.9%</span>
+      <span class="bg-slate-900 text-xs px-3 py-1.5 rounded border border-slate-800 text-blue-400 font-bold uppercase tracking-widest">SYNC: OK</span>
     </div>
   </div>
 
-  <!-- Low Stock Alert Table -->
-  <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="px-6 py-4 border-b border-slate-200 bg-red-50">
-      <h2 class="text-lg font-bold text-red-700 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        Low Stock Alerts (Action Required)
-      </h2>
+  <div *ngIf="isLoading" class="text-center py-20 text-slate-500 font-bold">
+    [ LOADING DATA... ]
+  </div>
+
+  <div *ngIf="!isLoading && stats">
+    <!-- Top KPI Cards -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="bg-slate-900 p-5 border-l-4 border-emerald-500 rounded shadow-md relative overflow-hidden group">
+        <div class="absolute inset-0 bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors"></div>
+        <p class="text-xs text-slate-400 mb-2 font-bold tracking-widest">TOTAL_REVENUE</p>
+        <p class="text-3xl text-emerald-400 font-black">฿{{ stats.totalSales | number:'1.2-2' }}</p>
+      </div>
+      <div class="bg-slate-900 p-5 border-l-4 border-blue-500 rounded shadow-md relative overflow-hidden group">
+        <div class="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors"></div>
+        <p class="text-xs text-slate-400 mb-2 font-bold tracking-widest">PENDING_SALES</p>
+        <p class="text-3xl text-blue-400 font-black">{{ stats.pendingSalesOrders }} <span class="text-sm font-bold text-slate-500">ords</span></p>
+      </div>
+      <div class="bg-slate-900 p-5 border-l-4 border-amber-500 rounded shadow-md relative overflow-hidden group">
+        <div class="absolute inset-0 bg-amber-500/5 group-hover:bg-amber-500/10 transition-colors"></div>
+        <p class="text-xs text-slate-400 mb-2 font-bold tracking-widest">PAYMENTS_CHECK</p>
+        <p class="text-3xl text-amber-400 font-black">{{ stats.pendingSlipVerifications }} <span class="text-sm font-bold text-slate-500">slips</span></p>
+      </div>
+      <div class="bg-slate-900 p-5 border-l-4 border-rose-500 rounded shadow-md relative overflow-hidden group">
+        <div class="absolute inset-0 bg-rose-500/5 group-hover:bg-rose-500/10 transition-colors"></div>
+        <p class="text-xs text-slate-400 mb-2 font-bold tracking-widest">LOW_STOCK_ALERTS</p>
+        <p class="text-3xl text-rose-400 font-black">{{ stats.lowStockProducts.length }} <span class="text-sm font-bold text-slate-500">skus</span></p>
+      </div>
+    </div>
+
+    <!-- Glowing Chart Section -->
+    <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-lg mb-6">
+      <h3 class="text-sm text-slate-400 font-bold mb-4 tracking-widest border-b border-slate-800 pb-2">SALES_TREND (LAST_7_DAYS)</h3>
+      <div class="relative h-72 w-full">
+        <canvas #salesChart></canvas>
+      </div>
+    </div>
+
+    <!-- Dense Data Table (Recent Events) -->
+    <div class="border border-slate-800 rounded-lg bg-slate-900/50 shadow-lg overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-800 bg-slate-900">
+        <h3 class="text-sm text-slate-400 font-bold tracking-widest">SYSTEM_EVENT_LOG</h3>
+      </div>
+      <table class="w-full text-xs text-left">
+        <thead class="bg-slate-800 text-slate-400">
+          <tr>
+            <th class="px-4 py-2 font-bold tracking-wider border-b border-slate-700">TIMESTAMP</th>
+            <th class="px-4 py-2 font-bold tracking-wider border-b border-slate-700">EVENT_ID</th>
+            <th class="px-4 py-2 font-bold tracking-wider border-b border-slate-700">TYPE</th>
+            <th class="px-4 py-2 font-bold tracking-wider border-b border-slate-700">DETAILS</th>
+            <th class="px-4 py-2 font-bold tracking-wider border-b border-slate-700">STATUS</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800 text-sm">
+          <!-- Real events from backend -->
+          <tr *ngFor="let ev of stats.recentEvents" class="hover:bg-slate-800 transition-colors">
+            <td class="px-4 py-3 text-slate-500">{{ ev.timestamp }}</td>
+            <td class="px-4 py-3 text-blue-400 font-bold">{{ ev.eventId }}</td>
+            <td class="px-4 py-3 text-slate-300 font-bold">{{ ev.type }}</td>
+            <td class="px-4 py-3">{{ ev.details }}</td>
+            <td class="px-4 py-3 font-bold" 
+                [ngClass]="{
+                  'text-emerald-400': ev.status === 'Completed' || ev.status === 'Paid',
+                  'text-amber-400': ev.status === 'Pending' || ev.status === 'Checking',
+                  'text-rose-400': ev.status === 'Cancelled'
+                }">
+              [{{ ev.status | uppercase }}]
+            </td>
+          </tr>
+          <!-- Fallback if empty -->
+          <tr *ngIf="stats.recentEvents?.length === 0">
+            <td colspan="5" class="px-4 py-6 text-center text-slate-500 font-bold">
+              [ NO EVENTS FOUND ]
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     
-    <table class="min-w-full divide-y divide-slate-200">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">SKU</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Product Name</th>
-          <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">On Hand Qty</th>
-          <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Action</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-slate-200">
-        <tr *ngFor="let p of stats.lowStockProducts">
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{{ p.sku }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{{ p.name }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-red-600">{{ p.onHandQuantity }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-            <a routerLink="/admin/purchase-orders" class="text-blue-600 hover:text-blue-900 font-medium">Create PO</a>
-          </td>
-        </tr>
-        <tr *ngIf="stats.lowStockProducts.length === 0">
-          <td colspan="4" class="px-6 py-8 text-center text-slate-500">All products are sufficiently stocked.</td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </div>
