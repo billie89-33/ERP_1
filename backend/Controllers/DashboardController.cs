@@ -64,6 +64,7 @@ public class DashboardController : ControllerBase
             .OrderByDescending(so => so.CreatedAt)
             .Take(5)
             .Select(so => new {
+                Id = so.Id,
                 Timestamp = so.CreatedAt.ToString("HH:mm:ss"),
                 EventId = so.OrderNumber,
                 Type = "ORDER_CREATE",
