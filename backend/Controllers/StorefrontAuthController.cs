@@ -11,10 +11,8 @@ namespace JamineERP.Backend.Controllers;
 
 public class StorefrontRegisterDto
 {
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string Phone { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 }
 
@@ -46,7 +44,7 @@ public class StorefrontAuthController : ControllerBase
         try
         {
             // 1. Check if email already exists in Users
-            if (await _context.Users.AnyAsync(u => u.Username == dto.Email))
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
             {
                 return BadRequest(new { message = "Email already registered." });
             }
@@ -54,10 +52,10 @@ public class StorefrontAuthController : ControllerBase
             // 2. Create User (Role = Customer)
             var user = new User
             {
-                Username = dto.Email,
+                Username = dto.Username,
                 Email = dto.Email,
-                FirstName = dto.FirstName,
-                LastName = dto.LastName,
+                FirstName = dto.Username, // Default to username for now
+                LastName = "",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Role = "Customer"
             };
@@ -71,9 +69,9 @@ public class StorefrontAuthController : ControllerBase
             {
                 customer = new Customer
                 {
-                    CompanyName = $"{dto.FirstName} {dto.LastName}",
+                    CompanyName = dto.Username,
                     TaxId = dto.Email,
-                    Phone = dto.Phone,
+                    Phone = "",
                     CustomerType = "B2C",
                     UserId = user.Id
                 };
@@ -82,7 +80,6 @@ public class StorefrontAuthController : ControllerBase
             else
             {
                 customer.UserId = user.Id;
-                customer.Phone = dto.Phone;
                 customer.CustomerType = "B2C";
             }
             await _context.SaveChangesAsync();
