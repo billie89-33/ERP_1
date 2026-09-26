@@ -1,4 +1,4 @@
-﻿<div class="flex h-screen bg-slate-100">
+<div class="flex h-screen bg-slate-100">
   <!-- Sidebar -->
   <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex">
     <div class="h-16 flex items-center justify-center border-b border-slate-700">
@@ -39,6 +39,19 @@
       </a>
 
       <!-- Warehouse only handles PO Details & SO Details, so they don't have separate sidebar links for now. -->
+      <div *ngIf="hasRole(['Admin', 'Warehouse'])" class="pt-4 pb-2">
+        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Warehouse</p>
+      </div>
+
+      <a *ngIf="hasRole(['Admin', 'Warehouse'])" routerLink="/admin/warehouse/inbound" routerLinkActive="bg-blue-600 text-white" class="text-slate-300 hover:bg-slate-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+        <i class="fas fa-truck-loading mr-3 text-lg w-5 text-center"></i>
+        Inbound (GR)
+      </a>
+
+      <a *ngIf="hasRole(['Admin', 'Warehouse'])" routerLink="/admin/warehouse/outbound" routerLinkActive="bg-blue-600 text-white" class="text-slate-300 hover:bg-slate-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+        <i class="fas fa-box-open mr-3 text-lg w-5 text-center"></i>
+        Outbound (GI)
+      </a>
 
       <div *ngIf="hasRole(['Admin', 'Sales', 'Purchasing'])" class="pt-4 pb-2">
         <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">Contacts</p>

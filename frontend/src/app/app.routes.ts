@@ -83,6 +83,18 @@ export const routes: Routes = [
       
       // 🏭 Warehouse
       { 
+        path: 'warehouse/inbound', 
+        loadComponent: () => import('./features/warehouse/inbound/inbound.component').then(m => m.WarehouseInboundComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Warehouse'] }
+      },
+      { 
+        path: 'warehouse/outbound', 
+        loadComponent: () => import('./features/warehouse/outbound/outbound.component').then(m => m.WarehouseOutboundComponent),
+        canActivate: [roleGuard],
+        data: { roles: ['Admin', 'Warehouse'] }
+      },
+      { 
         path: 'warehouse/goods-receipt/:id', 
         loadComponent: () => import('./features/warehouse/goods-receipt/goods-receipt.component').then(m => m.GoodsReceiptComponent),
         canActivate: [roleGuard],
