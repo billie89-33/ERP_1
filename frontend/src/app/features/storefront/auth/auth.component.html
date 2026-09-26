@@ -5,7 +5,7 @@
   <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/30 blur-[120px] animate-pulse" style="animation-delay: 2s"></div>
 
   <!-- Glass Modal -->
-  <div class="relative z-10 w-full max-w-lg p-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl">
+  <div class="relative z-10 w-full max-w-lg p-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl min-h-[620px] flex flex-col">
     
     <div class="flex justify-center mb-8">
       <div class="w-14 h-14 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">J</div>
@@ -85,8 +85,8 @@
       </div>
     </form>
 
-    <div class="mt-8 text-center">
-      <a routerLink="/" class="text-sm text-white/50 hover:text-white transition">&larr; Return to Store</a>
+    <div class="mt-auto pt-8 text-center">
+      <button type="button" (click)="goBack()" class="text-sm text-white/50 hover:text-white transition">&larr; Return to Store</button>
     </div>
   </div>
 </div>

@@ -1,5 +1,5 @@
 ﻿import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorefrontAuthService } from '../../../core/services/storefront-auth.service';
@@ -18,6 +18,7 @@ export class AuthComponent {
   authService = inject(StorefrontAuthService);
   router = inject(Router);
   route = inject(ActivatedRoute);
+  location = inject(Location);
 
   loginData = { email: '', password: '' };
   registerData = { username: '', email: '', password: '', confirmPassword: '' };
@@ -25,6 +26,15 @@ export class AuthComponent {
   toggleMode(mode: 'login' | 'register') {
     this.isLoginMode = mode === 'login';
     this.error = '';
+  }
+
+  goBack() {
+    const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+    } else {
+      this.location.back();
+    }
   }
 
   onSubmit() {
