@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-slate-900 text-white font-sans">
+﻿<div class="min-h-screen bg-slate-900 text-white font-sans">
   <!-- Navbar -->
   <nav class="bg-slate-800 border-b border-slate-700 p-4">
     <div class="container mx-auto flex items-center justify-between">
@@ -32,14 +32,14 @@
 
         <!-- Login Button or Profile -->
         <a *ngIf="!authService.currentUser()" routerLink="/shop/login" class="text-sm font-medium text-slate-300 hover:text-white transition ml-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-white font-bold">
-          เข้าสู่ระบบ
+          à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸š
         </a>
         
         <a *ngIf="authService.currentUser()" routerLink="/shop/profile" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition ml-2 bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-600">
           <div class="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
             {{ authService.currentUser().firstName?.charAt(0) || 'U' }}
           </div>
-          <span>บัญชีของฉัน</span>
+          <span>à¸šà¸±à¸à¸Šà¸µà¸‚à¸­à¸‡à¸‰à¸±à¸™</span>
         </a>
       </div>
     </div>
@@ -57,7 +57,7 @@
       <div class="mt-4 flex justify-center gap-4">
         <a routerLink="/" class="hover:text-white transition">Home</a>
         <a routerLink="/shop" class="hover:text-white transition">Products</a>
-        <a routerLink="/login" class="text-indigo-400 hover:text-indigo-300 transition">เข้าสู่ระบบพนักงาน (ERP Admin)</a>
+        <a routerLink="/login" class="text-indigo-400 hover:text-indigo-300 transition">à¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¸£à¸°à¸šà¸šà¸žà¸™à¸±à¸à¸‡à¸²à¸™ (ERP Admin)</a>
       </div>
     </div>
   </footer>

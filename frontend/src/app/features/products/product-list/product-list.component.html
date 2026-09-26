@@ -1,4 +1,4 @@
-<div class="mb-6 flex justify-between items-center">
+﻿<div class="mb-6 flex justify-between items-center">
   <h1 class="text-2xl font-bold text-slate-800">Products Inventory</h1>
   <a routerLink="/admin/products/create" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
     + Add Product
@@ -53,8 +53,8 @@
           <div class="text-xs text-slate-500">Resv: {{ p.reservedQuantity }}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-right">
-          <div class="text-sm font-bold text-slate-900">?{{ p.price | number:'1.2-2' }}</div>
-          <div class="text-xs text-slate-500">Cost: ?{{ p.cost | number:'1.2-2' }}</div>
+          <div class="text-sm font-bold text-slate-900">฿{{ p.price | number:'1.2-2' }}</div>
+          <div class="text-xs text-slate-500">Cost: ฿{{ p.cost | number:'1.2-2' }}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap text-center">
           <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"

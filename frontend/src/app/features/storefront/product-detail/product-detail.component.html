@@ -1,4 +1,4 @@
-<!-- Loading State -->
+﻿<!-- Loading State -->
 <div *ngIf="isLoading()" class="flex justify-center items-center py-32">
   <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
 </div>
@@ -30,11 +30,11 @@
       
       <div *ngIf="!product()?.image?.url" class="text-slate-300 flex flex-col items-center">
         <svg class="w-32 h-32 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-        <p class="font-medium text-lg">ไม่มีรูปภาพสินค้า</p>
+        <p class="font-medium text-lg">à¹„à¸¡à¹ˆà¸¡à¸µà¸£à¸¹à¸›à¸ à¸²à¸žà¸ªà¸´à¸™à¸„à¹‰à¸²</p>
       </div>
 
       <div *ngIf="product()?.availableQuantity === 0" class="absolute top-6 left-6 bg-rose-500 text-white font-black uppercase tracking-widest text-xs px-4 py-2 rounded-lg shadow-lg">
-        สินค้าหมดชั่วคราว
+        à¸ªà¸´à¸™à¸„à¹‰à¸²à¸«à¸¡à¸”à¸Šà¸±à¹ˆà¸§à¸„à¸£à¸²à¸§
       </div>
     </div>
 
@@ -52,7 +52,7 @@
         <div class="flex items-center gap-4 text-sm text-slate-400 mb-8 border-b border-slate-700/50 pb-6">
           <div class="flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-            รหัสสินค้า (SKU): <span class="text-slate-300 font-mono">{{ product()?.sku }}</span>
+            à¸£à¸«à¸±à¸ªà¸ªà¸´à¸™à¸„à¹‰à¸² (SKU): <span class="text-slate-300 font-mono">{{ product()?.sku }}</span>
           </div>
         </div>
         
@@ -61,13 +61,13 @@
         <!-- Price & Stock -->
         <div class="mt-auto pt-6">
           <div class="flex items-end gap-4 mb-3">
-            <div class="text-5xl font-black text-white tracking-tight">฿{{ product()?.price | number:'1.0-0' }}</div>
+            <div class="text-5xl font-black text-white tracking-tight">à¸¿{{ product()?.price | number:'1.0-0' }}</div>
           </div>
           
           <div class="mb-8 flex items-center gap-2">
             <div class="w-2.5 h-2.5 rounded-full" [ngClass]="(product()?.availableQuantity || 0) > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></div>
-            <span *ngIf="(product()?.availableQuantity || 0) > 0" class="text-emerald-400 font-medium text-sm">มีสินค้าพร้อมส่ง {{ product()?.availableQuantity }} ชิ้น</span>
-            <span *ngIf="product()?.availableQuantity === 0" class="text-rose-400 font-medium text-sm">สินค้าหมดชั่วคราว</span>
+            <span *ngIf="(product()?.availableQuantity || 0) > 0" class="text-emerald-400 font-medium text-sm">à¸¡à¸µà¸ªà¸´à¸™à¸„à¹‰à¸²à¸žà¸£à¹‰à¸­à¸¡à¸ªà¹ˆà¸‡ {{ product()?.availableQuantity }} à¸Šà¸´à¹‰à¸™</span>
+            <span *ngIf="product()?.availableQuantity === 0" class="text-rose-400 font-medium text-sm">à¸ªà¸´à¸™à¸„à¹‰à¸²à¸«à¸¡à¸”à¸Šà¸±à¹ˆà¸§à¸„à¸£à¸²à¸§</span>
           </div>
 
           <!-- Add to Cart Action -->
@@ -82,13 +82,13 @@
               <button (click)="addToCart()" [disabled]="product()?.availableQuantity === 0" 
                 class="flex-1 h-14 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span>เพิ่มลงตะกร้า</span>
+                <span>à¹€à¸žà¸´à¹ˆà¸¡à¸¥à¸‡à¸•à¸°à¸à¸£à¹‰à¸²</span>
               </button>
 
               <button (click)="buyNow()" [disabled]="product()?.availableQuantity === 0" 
                 class="flex-1 h-14 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:bg-slate-800 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed disabled:text-slate-600 flex justify-center items-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                <span>ซื้อเลย (ชำระเงิน)</span>
+                <span>à¸‹à¸·à¹‰à¸­à¹€à¸¥à¸¢ (à¸Šà¸³à¸£à¸°à¹€à¸‡à¸´à¸™)</span>
               </button>
             </div>
           </div>
@@ -106,24 +106,24 @@
         (click)="activeTab.set('description')" 
         [ngClass]="activeTab() === 'description' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
         class="px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap">
-        รายละเอียดสินค้า
+        à¸£à¸²à¸¢à¸¥à¸°à¹€à¸­à¸µà¸¢à¸”à¸ªà¸´à¸™à¸„à¹‰à¸²
       </button>
       <button 
         (click)="activeTab.set('specs')" 
         [ngClass]="activeTab() === 'specs' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'"
         class="px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap">
-        คุณสมบัติ (Specifications)
+        à¸„à¸¸à¸“à¸ªà¸¡à¸šà¸±à¸•à¸´ (Specifications)
       </button>
     </div>
 
     <!-- Tab Content: Description -->
     <div *ngIf="activeTab() === 'description'" class="bg-slate-800 rounded-3xl overflow-hidden shadow-xl border border-slate-700 p-8 lg:p-12 animate-fade-in">
-      <h2 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4">รายละเอียดสินค้า</h2>
+      <h2 class="text-2xl font-bold text-white mb-6 border-b border-slate-700 pb-4">à¸£à¸²à¸¢à¸¥à¸°à¹€à¸­à¸µà¸¢à¸”à¸ªà¸´à¸™à¸„à¹‰à¸²</h2>
       <div *ngIf="parsedProductInfo().description" class="text-slate-300 leading-relaxed text-lg">
         {{ parsedProductInfo().description }}
       </div>
       <div *ngIf="!parsedProductInfo().description" class="text-slate-400 italic">
-        ไม่มีข้อมูลรายละเอียดสินค้าเพิ่มเติม
+        à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸£à¸²à¸¢à¸¥à¸°à¹€à¸­à¸µà¸¢à¸”à¸ªà¸´à¸™à¸„à¹‰à¸²à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡
       </div>
     </div>
 
@@ -131,19 +131,19 @@
     <div *ngIf="activeTab() === 'specs'" class="bg-slate-800 rounded-3xl overflow-hidden shadow-xl border border-slate-700 animate-fade-in">
       
       <div class="p-8 lg:p-12 pb-6">
-        <h2 class="text-2xl font-bold text-white mb-6">คุณสมบัติ {{ parsedProductInfo().name }}</h2>
+        <h2 class="text-2xl font-bold text-white mb-6">à¸„à¸¸à¸“à¸ªà¸¡à¸šà¸±à¸•à¸´ {{ parsedProductInfo().name }}</h2>
       </div>
 
       <div *ngIf="technicalSpecs().length === 0" class="px-8 pb-12">
         <div class="text-slate-400 italic bg-slate-900/50 p-8 rounded-2xl text-center border border-slate-800 border-dashed">
-          ไม่มีข้อมูลจำเพาะทางเทคนิคสำหรับสินค้านี้
+          à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ˆà¸³à¹€à¸žà¸²à¸°à¸—à¸²à¸‡à¹€à¸—à¸„à¸™à¸´à¸„à¸ªà¸³à¸«à¸£à¸±à¸šà¸ªà¸´à¸™à¸„à¹‰à¸²à¸™à¸µà¹‰
         </div>
       </div>
 
       <div *ngIf="technicalSpecs().length > 0" class="w-full">
         <!-- Section Header -->
         <div class="bg-slate-900 px-8 py-4 border-y border-slate-700">
-          <h3 class="text-indigo-400 font-bold tracking-wide">ข้อมูลจำเพาะ (Specifications)</h3>
+          <h3 class="text-indigo-400 font-bold tracking-wide">à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸ˆà¸³à¹€à¸žà¸²à¸° (Specifications)</h3>
         </div>
         
         <!-- Table Rows -->
