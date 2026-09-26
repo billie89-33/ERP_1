@@ -21,10 +21,15 @@ export const routes: Routes = [
       { path: 'shop', loadComponent: () => import('./features/storefront/shop/shop.component').then(m => m.ShopComponent) },
       { path: 'product/:id', loadComponent: () => import('./features/storefront/product-detail/product-detail.component').then(m => m.ProductDetailComponent) },
       { path: 'cart', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) },
-      { path: 'shop/login', loadComponent: () => import('./features/storefront/auth/auth.component').then(m => m.AuthComponent) },
       { path: 'shop/profile', loadComponent: () => import('./features/storefront/customer-portal/customer-portal.component').then(m => m.CustomerPortalComponent) },
       { path: 'shop/orders/:id', loadComponent: () => import('./features/storefront/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent) }
     ]
+  },
+
+  // Customer Login (No Navbar)
+  { 
+    path: 'shop/login', 
+    loadComponent: () => import('./features/storefront/auth/auth.component').then(m => m.AuthComponent) 
   },
 
   // 👨‍💼 โซน B: Admin / ERP Back-Office (หลังบ้านพนักงาน)

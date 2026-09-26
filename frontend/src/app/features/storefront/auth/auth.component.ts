@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -20,10 +20,10 @@ export class AuthComponent {
   route = inject(ActivatedRoute);
 
   loginData = { email: '', password: '' };
-  registerData = { firstName: '', lastName: '', email: '', phone: '', password: '' };
+  registerData = { username: '', email: '', password: '', confirmPassword: '' };
 
-  toggleMode() {
-    this.isLoginMode = !this.isLoginMode;
+  toggleMode(mode: 'login' | 'register') {
+    this.isLoginMode = mode === 'login';
     this.error = '';
   }
 
@@ -31,7 +31,6 @@ export class AuthComponent {
     this.isLoading = true;
     this.error = '';
     
-    // ดึง returnUrl ถ้ามี ถ้าไม่มีให้กลับไปหน้าแรก
     const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/';
     
     if (this.isLoginMode) {
@@ -46,7 +45,17 @@ export class AuthComponent {
         }
       });
     } else {
-      this.authService.register(this.registerData).subscribe({
+      if (this.registerData.password !== this.registerData.confirmPassword) {
+        this.error = 'Passwords do not match.';
+        this.isLoading = false;
+        return;
+      }
+      
+      this.authService.register({
+        username: this.registerData.username,
+        email: this.registerData.email,
+        password: this.registerData.password
+      }).subscribe({
         next: () => {
           this.isLoading = false;
           this.router.navigateByUrl(returnUrl);
@@ -59,3 +68,4 @@ export class AuthComponent {
     }
   }
 }
+

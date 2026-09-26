@@ -1,79 +1,103 @@
-<div class="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
-  <!-- Back to Home -->
-  <a routerLink="/" class="absolute top-6 left-6 text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-    กลับหน้าแรก
-  </a>
+﻿<div class="min-h-screen w-full bg-slate-900 flex items-center justify-center relative overflow-hidden font-sans">
+    
+  <!-- Animated background blobs -->
+  <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/30 blur-[100px] animate-pulse"></div>
+  <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/30 blur-[120px] animate-pulse" style="animation-delay: 2s"></div>
 
-  <div class="sm:mx-auto sm:w-full sm:max-w-md">
-    <h2 class="mt-6 text-center text-3xl font-extrabold text-white">
-      {{ isLoginMode ? 'เข้าสู่ระบบบัญชีลูกค้า' : 'สมัครสมาชิกใหม่' }}
-    </h2>
-    <p class="mt-2 text-center text-sm text-slate-400">
-      {{ isLoginMode ? 'ยังไม่มีบัญชีใช่ไหม?' : 'มีบัญชีอยู่แล้วใช่ไหม?' }}
-      <button (click)="toggleMode()" class="font-medium text-indigo-400 hover:text-indigo-300 transition">
-        {{ isLoginMode ? 'สมัครสมาชิก' : 'เข้าสู่ระบบเลย' }}
+  <!-- Glass Modal -->
+  <div class="relative z-10 w-full max-w-lg p-10 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl">
+    
+    <div class="flex justify-center mb-8">
+      <div class="w-14 h-14 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">J</div>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="mb-6 bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl text-sm font-medium text-center">
+      {{ error }}
+    </div>
+
+    <!-- Tab Switcher -->
+    <div class="flex justify-center mb-8 border-b border-white/10 pb-4 space-x-8">
+      <button (click)="toggleMode('login')" 
+              [ngClass]="isLoginMode ? 'text-white font-bold text-lg border-b-2 border-blue-400 pb-1' : 'text-white/50 font-medium text-lg hover:text-white pb-1 transition'">
+        Log In
       </button>
-    </p>
-  </div>
+      <button (click)="toggleMode('register')" 
+              [ngClass]="!isLoginMode ? 'text-white font-bold text-lg border-b-2 border-blue-400 pb-1' : 'text-white/50 font-medium text-lg hover:text-white pb-1 transition'">
+        Sign Up
+      </button>
+    </div>
 
-  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-    <div class="bg-slate-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-700">
-      <form class="space-y-6" (ngSubmit)="onSubmit()">
-        
-        <!-- Error Message -->
-        <div *ngIf="error" class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded-lg text-sm">
-          {{ error }}
-        </div>
-
-        <!-- Register Fields -->
-        <ng-container *ngIf="!isLoginMode">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-300">ชื่อ</label>
-              <input type="text" name="firstName" [(ngModel)]="registerData.firstName" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-300">นามสกุล</label>
-              <input type="text" name="lastName" [(ngModel)]="registerData.lastName" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300">เบอร์โทรศัพท์</label>
-            <input type="text" name="phone" [(ngModel)]="registerData.phone" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-        </ng-container>
-
-        <!-- Common Fields (Email & Password) -->
-        <ng-container *ngIf="isLoginMode">
-          <div>
-            <label class="block text-sm font-medium text-slate-300">อีเมล</label>
-            <input type="email" name="loginEmail" [(ngModel)]="loginData.email" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300">รหัสผ่าน</label>
-            <input type="password" name="loginPassword" [(ngModel)]="loginData.password" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-        </ng-container>
-
-        <ng-container *ngIf="!isLoginMode">
-          <div>
-            <label class="block text-sm font-medium text-slate-300">อีเมล</label>
-            <input type="email" name="registerEmail" [(ngModel)]="registerData.email" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-300">รหัสผ่าน</label>
-            <input type="password" name="registerPassword" [(ngModel)]="registerData.password" required class="mt-1 block w-full bg-slate-900 border border-slate-700 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-          </div>
-        </ng-container>
-
+    <form (ngSubmit)="onSubmit()">
+      <!-- Login Form -->
+      <div *ngIf="isLoginMode" class="space-y-5 animate-fade-in-up">
         <div>
-          <button type="submit" [disabled]="isLoading" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-            <span *ngIf="!isLoading">{{ isLoginMode ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก' }}</span>
-            <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin mr-2"></i> กำลังดำเนินการ...</span>
-          </button>
+          <label class="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Email</label>
+          <input type="email" name="email" [(ngModel)]="loginData.email" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="you@domain.com">
         </div>
-      </form>
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-xs font-bold text-white/70 uppercase tracking-wider">Password</label>
+            <a href="#" class="text-xs text-blue-400 hover:text-blue-300">Forgot?</a>
+          </div>
+          <input type="password" name="password" [(ngModel)]="loginData.password" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="••••••••">
+        </div>
+        <button type="submit" [disabled]="isLoading"
+                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4 transition transform hover:scale-[1.02] disabled:opacity-50">
+          {{ isLoading ? 'Processing...' : 'Access Account' }}
+        </button>
+      </div>
+
+      <!-- Register Form -->
+      <div *ngIf="!isLoginMode" class="space-y-5 animate-fade-in-up">
+        <div>
+          <label class="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Username</label>
+          <input type="text" name="regUsername" [(ngModel)]="registerData.username" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="johndoe">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Email</label>
+          <input type="email" name="regEmail" [(ngModel)]="registerData.email" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="you@domain.com">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Password</label>
+          <input type="password" name="regPassword" [(ngModel)]="registerData.password" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="Min. 8 characters">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Confirm Password</label>
+          <input type="password" name="regConfirm" [(ngModel)]="registerData.confirmPassword" required
+                 class="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-400 focus:bg-black/40 transition" 
+                 placeholder="Repeat password">
+        </div>
+        <button type="submit" [disabled]="isLoading"
+                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4 transition transform hover:scale-[1.02] disabled:opacity-50">
+          {{ isLoading ? 'Processing...' : 'Create Account' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="mt-8 text-center">
+      <a routerLink="/" class="text-sm text-white/50 hover:text-white transition">&larr; Return to Store</a>
     </div>
   </div>
 </div>
+
+<style>
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+</style>
+
