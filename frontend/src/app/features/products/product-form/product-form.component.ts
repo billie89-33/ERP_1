@@ -43,9 +43,9 @@ export class ProductFormComponent implements OnInit {
       price: [0, [Validators.required, Validators.min(0)]],
       cost: [0, [Validators.required, Validators.min(0)]],
       categoryId: ['', Validators.required],
+      isFeatured: [false],
       tags: [''],
-      status: ['ACTIVE'],
-      isFeatured: [false]
+      status: ['ACTIVE']
     });
   }
 
@@ -62,12 +62,12 @@ export class ProductFormComponent implements OnInit {
           price: product.price,
           cost: product.cost,
           categoryId: product.categoryId,
+          isFeatured: product.isFeatured || false,
           brand: product.brand,
           modelName: product.modelName,
           description: product.description,
           tags: product.tags ? product.tags.join(', ') : '',
-          status: product.status,
-          isFeatured: product.isFeatured
+          status: product.status
         });
         
         this.imageUrl = product.image?.url || null;

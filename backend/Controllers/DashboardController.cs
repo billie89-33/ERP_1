@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using JamineERP.Backend.Data;
@@ -49,23 +49,23 @@ public class DashboardController : ControllerBase
 
         // Calculate sales per day (client-side grouping because EF Core might struggle with Date translation)
         var recentSales = await _context.SalesOrders
-            .Where(so => !so.IsDeleted && so.Status != "Cancelled" && so.CreatedAt >= DateTime.UtcNow.AddDays(-7))
-            .Select(so => new { so.CreatedAt, so.TotalAmount })
+            .Where(so => !so.IsDeleted && so.Status != "Cancelled" && so.OrderDate >= DateTime.UtcNow.AddDays(-7))
+            .Select(so => new { so.OrderDate, so.TotalAmount })
             .ToListAsync();
 
         var chartData = past7Days.Select(date => new {
             Date = date.ToString("dd MMM"),
-            Amount = recentSales.Where(s => s.CreatedAt.Date == date).Sum(s => s.TotalAmount)
+            Amount = recentSales.Where(s => s.OrderDate.Date == date).Sum(s => s.TotalAmount)
         }).ToList();
 
         // Get recent events (Mocking with SalesOrders for now)
         var recentEvents = await _context.SalesOrders
             .Where(so => !so.IsDeleted)
-            .OrderByDescending(so => so.CreatedAt)
+            .OrderByDescending(so => so.OrderDate)
             .Take(5)
             .Select(so => new {
                 Id = so.Id,
-                Timestamp = so.CreatedAt.ToString("HH:mm:ss"),
+                Timestamp = so.OrderDate.ToString("HH:mm:ss"),
                 EventId = so.OrderNumber,
                 Type = "ORDER_CREATE",
                 Details = "Total: " + so.TotalAmount + " THB",
@@ -85,3 +85,4 @@ public class DashboardController : ControllerBase
         });
     }
 }
+

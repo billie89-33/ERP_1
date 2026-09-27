@@ -11,6 +11,10 @@ export class ProductService {
   private apiUrl = '/api/products';
   private catUrl = '/api/categories';
 
+  getFeaturedProducts() {
+    return this.http.get<any[]>(`${this.apiUrl}/featured`);
+  }
+
   getProducts(state: Partial<FilterState>): Observable<PaginatedResponse<ProductDto>> {
     let params = new HttpParams()
       .set('page', (state.page || 1).toString())
@@ -56,6 +60,10 @@ export class ProductService {
 
   updateProduct(id: string, data: Partial<ProductDto>) {
     return this.http.put<ProductDto>(`${this.apiUrl}/${id}`, data);
+  }
+
+  toggleFeaturedProduct(id: string) {
+    return this.http.patch<{message: string, isFeatured: boolean}>(`${this.apiUrl}/${id}/toggle-featured`, {});
   }
 
   deleteProduct(id: string) {

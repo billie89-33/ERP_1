@@ -52,14 +52,24 @@
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
     </button>
 
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && newProducts.length === 0" class="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700 border-dashed">
+      <p class="text-slate-400">ยังไม่มีสินค้าแนะนำในขณะนี้</p>
+    </div>
+
     <!-- Scroll Container -->
-    <div #scrollContainer class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div *ngIf="!isLoading && newProducts.length > 0" #scrollContainer class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       
       <!-- Product Card -->
       <a *ngFor="let product of newProducts" routerLink="/shop" class="snap-start shrink-0 w-[220px] md:w-[260px] bg-slate-800 rounded-xl overflow-hidden border border-slate-700 hover:border-blue-500 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300 group/card flex flex-col cursor-pointer">
         <!-- Image Area -->
         <div class="aspect-[4/3] bg-slate-900 overflow-hidden relative">
-          <img [src]="product.image" [alt]="product.name" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500">
+          <img [src]="product.imageUrl || 'https://placehold.co/400x300/1e293b/ffffff?text=No+Image'" [alt]="product.name" class="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500">
         </div>
         
         <!-- Details Area -->

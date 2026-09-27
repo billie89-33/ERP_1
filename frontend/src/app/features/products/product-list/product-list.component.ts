@@ -49,6 +49,22 @@ export class ProductListComponent implements OnInit {
     this.loadProducts();
   }
 
+  toggleFeatured(product: any) {
+    const originalState = product.isFeatured;
+    product.isFeatured = !product.isFeatured; // Optimistic update
+    
+    this.productService.toggleFeaturedProduct(product.id).subscribe({
+      next: (res) => {
+        product.isFeatured = res.isFeatured;
+      },
+      error: (err) => {
+        console.error("Failed to toggle featured status", err);
+        product.isFeatured = originalState; // Revert on failure
+        alert("Failed to update featured status.");
+      }
+    });
+  }
+
   deleteProduct(id: string) {
     if (confirm('Are you sure you want to delete this product?')) {
       this.productService.deleteProduct(id).subscribe(() => {
