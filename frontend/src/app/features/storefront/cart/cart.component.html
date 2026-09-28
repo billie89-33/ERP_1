@@ -132,6 +132,27 @@
             <textarea formControlName="address" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
           </div>
 
+                  <!-- MOCK PAYMENT METHOD SELECTOR -->
+          <div class="pt-2">
+            <label class="block text.xs font-medium text-slate-400 mb-2">ช่องทางการชำระเงิฎ</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-2 p-3 border border-indigo-500 bg-indigo-500/10 rounded-lg cursor-pointer transition-colors">
+                <input type="radio" name="paymentMock" checked class="text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-600">
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-white">QR PromptPay</span>
+                  <span class="text-[10px] text-indigo-300">สแกนจ่ายทันที</span>
+                </div>
+              </label>
+              <label class="flex items-center gap-2 p-3 border border-slate-700 bg-slate-800 rounded-lg cursor-not-allowed opacity-50">
+                <input type="radio" name="paymentMock" disabled class="text-indigo-600 bg-slate-900 border-slate-600">
+                <div class="flex flex-col">
+                  <span class="text-sm font-bold text-slate-400">Credit Card</span>
+                  <span class="text-[10px] text-slate-500">เร็วๆ นี๊</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
           <div class="border-t border-slate-700/50 pt-4 mt-6">
              <button type="submit" [disabled]="checkoutForm.invalid || isSubmitting" 
                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
