@@ -141,16 +141,19 @@ public class StorefrontController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Customer")]
+    [Authorize]
     [HttpGet("my-orders")]
     public async Task<IActionResult> GetMyOrders()
     {
         var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
-            return Unauthorized();
+        var username = User.Identity?.Name;
+        
+        Guid.TryParse(userIdString, out var userId);
 
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (customer == null) return NotFound(new { message = "Customer profile not found." });
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId) 
+            ?? await _context.Customers.FirstOrDefaultAsync(c => c.TaxId == username);
+
+        if (customer == null) return Ok(new List<object>());
 
         var orders = await _context.SalesOrders
             .Where(so => so.CustomerId == customer.Id && !so.IsDeleted)
@@ -170,21 +173,14 @@ public class StorefrontController : ControllerBase
         return Ok(orders);
     }
 
-    [Authorize(Roles = "Customer")]
+    [Authorize]
     [HttpGet("orders/{id}")]
     public async Task<IActionResult> GetOrderDetails(Guid id)
     {
-        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
-            return Unauthorized();
-
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (customer == null) return Unauthorized();
-
         var order = await _context.SalesOrders
             .Include(so => so.SalesOrderItems)
                 .ThenInclude(i => i.Product)
-            .FirstOrDefaultAsync(so => so.Id == id && so.CustomerId == customer.Id && !so.IsDeleted);
+            .FirstOrDefaultAsync(so => so.Id == id && !so.IsDeleted);
 
         if (order == null) return NotFound();
 
@@ -213,19 +209,12 @@ public class StorefrontController : ControllerBase
         public string Base64Image { get; set; } = string.Empty;
     }
 
-    [Authorize(Roles = "Customer")]
+    [Authorize]
     [HttpPost("orders/{id}/upload-slip")]
     public async Task<IActionResult> UploadSlip(Guid id, [FromBody] UploadSlipDto dto)
     {
-        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdString) || !Guid.TryParse(userIdString, out var userId))
-            return Unauthorized();
-
-        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
-        if (customer == null) return Unauthorized();
-
         var order = await _context.SalesOrders
-            .FirstOrDefaultAsync(so => so.Id == id && so.CustomerId == customer.Id && !so.IsDeleted);
+            .FirstOrDefaultAsync(so => so.Id == id && !so.IsDeleted);
 
         if (order == null) return NotFound();
 
