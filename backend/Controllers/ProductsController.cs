@@ -22,6 +22,42 @@ public class ProductsController : ControllerBase
         _photoService = photoService;
     }
 
+    [HttpPatch("{id}/toggle-featured")]
+    [Authorize(Roles = "Admin,Purchasing")]
+    public async Task<IActionResult> ToggleFeatured(Guid id)
+    {
+        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
+        if (product == null)
+            return NotFound(new { message = "Product not found" });
+
+        product.IsFeatured = !product.IsFeatured;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Product featured status toggled", isFeatured = product.IsFeatured });
+    }
+
+    [HttpGet("featured")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetFeaturedProducts()
+    {
+        var products = await _context.Products
+            .Include(p => p.Category)
+            .Where(p => !p.IsDeleted && p.Status.ToLower() == "active" && p.IsFeatured)
+            
+            .Take(12)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Price,
+                ImageUrl = p.Image != null ? p.Image.Url : null,
+                CategoryName = p.Category.Name
+            })
+            .ToListAsync();
+
+        return Ok(products);
+    }
+
     // GET: api/Products (พร้อมระบบ Pagination และ Filters)
     [HttpGet]
     [AllowAnonymous]
