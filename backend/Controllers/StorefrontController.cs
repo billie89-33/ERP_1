@@ -86,7 +86,7 @@ public class StorefrontController : ControllerBase
                 OrderDate = today,
                 Status = "Pending", // B2C orders start as Pending, awaiting payment or packing
                 CustomerId = customer.Id,
-                CreatedByUserId = systemUser.Id,
+                CreatedByUserId = null,
                 TotalAmount = 0, // Will calculate below
                 OrderChannel = "Web",
                 ExpiresAt = today.AddMinutes(10)
