@@ -29,6 +29,7 @@ export class StorefrontAuthService {
     return this.http.post<any>('/api/StorefrontAuth/login', credentials, { withCredentials: true }).pipe(
       tap(res => {
         localStorage.setItem('storefront_user', JSON.stringify(res.user));
+        if (res.token) localStorage.setItem('jamine_token', res.token);
         this.currentUser.set(res.user);
       })
     );
@@ -38,6 +39,7 @@ export class StorefrontAuthService {
     return this.http.post<any>('/api/StorefrontAuth/register', data, { withCredentials: true }).pipe(
       tap(res => {
         localStorage.setItem('storefront_user', JSON.stringify(res.user));
+        if (res.token) localStorage.setItem('jamine_token', res.token);
         this.currentUser.set(res.user);
       })
     );
@@ -45,6 +47,7 @@ export class StorefrontAuthService {
 
   logout() {
     localStorage.removeItem('storefront_user');
+    localStorage.removeItem('jamine_token');
     this.currentUser.set(null);
     return this.http.post('/api/StorefrontAuth/logout', {}, { withCredentials: true });
   }

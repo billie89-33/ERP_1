@@ -173,7 +173,7 @@ public class StorefrontController : ControllerBase
         return Ok(orders);
     }
 
-    [AllowAnonymous]
+    [Authorize]
     [HttpGet("orders/{id}")]
     public async Task<IActionResult> GetOrderDetails(Guid id)
     {
@@ -209,7 +209,7 @@ public class StorefrontController : ControllerBase
         public string Base64Image { get; set; } = string.Empty;
     }
 
-    [AllowAnonymous]
+    [Authorize]
     [HttpPost("orders/{id}/upload-slip")]
     public async Task<IActionResult> UploadSlip(Guid id, [FromBody] UploadSlipDto dto)
     {

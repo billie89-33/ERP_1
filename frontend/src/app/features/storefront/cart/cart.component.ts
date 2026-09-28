@@ -103,7 +103,7 @@ export class CartComponent implements OnInit {
         this.router.navigate(['/']);
       }
     } catch (error: any) {
-      alert(`Checkout failed: ${error.error?.message || error.message}`);
+      alert(`Checkout failed: ${error.error?.error || error.error?.message || error.message}`);
     } finally {
       this.isSubmitting = false;
     }

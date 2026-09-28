@@ -17,6 +17,7 @@ export class AuthService {
       tap(res => {
         this.currentUser.set(res.user);
         localStorage.setItem('user', JSON.stringify(res.user));
+        if (res.token) localStorage.setItem('jamine_token', res.token);
       }),
       catchError(err => {
         return throwError(() => err.error?.message || 'Login failed');
@@ -29,10 +30,12 @@ export class AuthService {
       tap(() => {
         this.currentUser.set(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('jamine_token');
       }),
       catchError(() => {
         this.currentUser.set(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('jamine_token');
         return of(null);
       })
     ).subscribe();
