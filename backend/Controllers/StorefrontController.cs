@@ -76,7 +76,7 @@ public class StorefrontController : ControllerBase
             var orderNumber = $"WEB{today:yyyyMMdd}-{soCount + 1:D3}";
 
             // We need a system user to associate as "CreatedBy" for web orders
-            var systemUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == "Admin");
+            var systemUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == "Admin") ?? await _context.Users.FirstOrDefaultAsync();
             if (systemUser == null)
                 throw new Exception("System user not found.");
 
