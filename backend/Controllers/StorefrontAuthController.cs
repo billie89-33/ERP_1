@@ -101,7 +101,7 @@ public class StorefrontAuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(StorefrontLoginDto dto)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == dto.Email && u.Role == "Customer");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.Role == "Customer");
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
         {
             return Unauthorized(new { message = "Invalid email or password." });
