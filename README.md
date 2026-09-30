@@ -78,13 +78,6 @@ npm start
 
 ---
 
-## 🔐 Default Admin Account
-หลังจากติดตั้งระบบและสร้างฐานข้อมูลสำเร็จ ระบบจะสร้างบัญชีแอดมินให้โดยอัตโนมัติ:
-*   **Username:** `admin`
-*   **Password:** `password` (หรือ `admin123`)
-
----
-
 ## 📂 Project Structure (โครงสร้างโปรเจกต์)
 ```text
 Jamine_ERP/
