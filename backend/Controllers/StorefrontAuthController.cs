@@ -44,7 +44,7 @@ public class StorefrontAuthController : ControllerBase
         try
         {
             // 1. Check if email already exists in Users
-            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.ToLower()))
             {
                 return BadRequest(new { message = "Email already registered." });
             }
@@ -64,7 +64,7 @@ public class StorefrontAuthController : ControllerBase
 
             // 3. Create or Update Customer Profile (B2C)
             // Sometimes they checked out as guest before, so a Customer might exist with TaxId = Email
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId == dto.Email);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId.ToLower() == dto.Email.ToLower());
             if (customer == null)
             {
                 customer = new Customer
@@ -101,7 +101,7 @@ public class StorefrontAuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(StorefrontLoginDto dto)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email && u.Role == "Customer");
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower() && u.Role == "Customer");
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
         {
             return Unauthorized(new { message = "Invalid email or password." });
