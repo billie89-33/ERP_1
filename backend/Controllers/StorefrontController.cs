@@ -137,7 +137,7 @@ public class StorefrontController : ControllerBase
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return BadRequest(new { message = "Checkout failed.", error = ex.Message });
+            return BadRequest(new { message = "Checkout failed.", error = ex.InnerException?.Message ?? ex.Message });
         }
     }
 
