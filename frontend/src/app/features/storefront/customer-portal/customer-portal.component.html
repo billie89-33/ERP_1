@@ -4,7 +4,12 @@
       <h1 class="text-3xl font-black text-white">บัญชีของฉัน</h1>
       <p class="text-slate-400 mt-1">ยินดีต้อนรับคุณ {{ authService.currentUser()?.firstName }}</p>
     </div>
-    <button (click)="logout()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors border border-slate-700">
+    <div class="flex gap-3">
+      <a routerLink="/" class="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 font-medium rounded-lg transition-colors border border-indigo-500/30 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        กลับหน้าร้านค้า
+      </a>
+      <button (click)="logout()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors border border-slate-700">
       ออกจากระบบ
     </button>
   </div>
