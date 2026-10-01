@@ -56,6 +56,7 @@ public class StorefrontController : ControllerBase
                 {
                     CompanyName = $"{dto.FirstName} {dto.LastName}",
                     TaxId = dto.Email, // Store email here
+                    Phone = dto.Phone,
                     Address = dto.Address,
                     CreditTermDays = 0,
                     CreditLimit = 0
