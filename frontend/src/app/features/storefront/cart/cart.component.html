@@ -119,7 +119,7 @@
           
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1">อีเมล</label>
-            <input type="email" formControlName="email" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <input type="email" formControlName="email" [ngClass]="{'border-rose-500': checkoutForm.get('email')?.invalid && checkoutForm.get('email')?.touched}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
           </div>
 
           <div>
@@ -154,6 +154,7 @@
           </div>
 
           <div class="border-t border-slate-700/50 pt-4 mt-6">
+             <div *ngIf="checkoutForm.invalid && checkoutForm.dirty" class="text-rose-400 text-xs mb-3 text-center">Please check that all fields are filled correctly (e.g., valid email).</div>
              <button type="submit" [disabled]="checkoutForm.invalid || isSubmitting" 
                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                <span *ngIf="!isSubmitting">ยืนยันสั่งซื้อ (฿{{ cartService.totalPrice() | number:'1.0-0' }})</span>
