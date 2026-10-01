@@ -88,6 +88,16 @@
       </div>
     </div>
 
+    <!-- Shipping Address -->
+    <h3 class="text-xl font-bold text-white mb-4">ที่อยู่จัดส่ง</h3>
+    <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-10 text-slate-300 flex items-start gap-4">
+      <svg class="w-6 h-6 text-indigo-400 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      <div>
+        <div class="font-bold text-white mb-1">ส่งถึง: {{ order.customerName || '}}</div>
+        <div class="leading-relaxed">{{ order.shippingAddress || 'ไม่ระบุที่อยู่จัดส่ง' }}</div>
+      </div>
+    </div>
+
     <!-- Order Items -->
     <h3 class="text-xl font-bold text-white mb-4">รายการสินค้า</h3>
     <table class="w-full text-left mb-6">
@@ -101,7 +111,10 @@
       </thead>
       <tbody class="text-slate-300">
         <tr *ngFor="let item of order.items" class="border-b border-slate-700/50">
-          <td class="py-4">{{ item.productName }}</td>
+          <td class="py-4 flex items-center gap-4">
+            <img [src]="item.productImageUrl || 'https://via.placeholder.com/150'" class="w-12 h-12 object-cover rounded-lg border border-slate-700 bg-slate-800">
+            <span class="font-medium">{{ item.productName }}</span>
+          </td>
           <td class="py-4 text-center">{{ item.quantity }}</td>
           <td class="py-4 text-right">฿{{ item.unitPrice | number:'1.2-2' }}</td>
           <td class="py-4 text-right font-medium text-white">฿{{ (item.unitPrice * item.quantity) | number:'1.2-2' }}</td>

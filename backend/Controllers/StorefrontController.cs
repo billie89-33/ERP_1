@@ -179,6 +179,7 @@ public class StorefrontController : ControllerBase
     public async Task<IActionResult> GetOrderDetails(Guid id)
     {
         var order = await _context.SalesOrders
+            .Include(so => so.Customer)
             .Include(so => so.SalesOrderItems)
                 .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(so => so.Id == id && !so.IsDeleted);
@@ -195,10 +196,13 @@ public class StorefrontController : ControllerBase
             order.PaymentSlipUrl,
             order.TotalAmount,
             order.ExpiresAt,
+            ShippingAddress = order.Customer.Address,
+            CustomerName = order.Customer.CompanyName,
             Items = order.SalesOrderItems.Select(i => new
             {
                 i.ProductId,
                 ProductName = i.Product.Name,
+                ProductImageUrl = i.Product.Image.Url,
                 i.Quantity,
                 i.UnitPrice
             })
