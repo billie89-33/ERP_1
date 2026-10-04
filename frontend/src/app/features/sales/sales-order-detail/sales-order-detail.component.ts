@@ -9,18 +9,26 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div *ngIf="isLoading" class="p-8 text-center text-slate-500">Loading Order Details...</div>
+    <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+    </div>
 
     <div *ngIf="!isLoading && order" class="max-w-5xl mx-auto">
       
-      <!-- Print Header (Visible only when printing) -->
-      <div class="hidden print:block mb-8 text-center" *ngIf="companySettings">
-        <img *ngIf="companySettings.logoUrl" [src]="companySettings.logoUrl" class="h-16 mx-auto mb-2" alt="Company Logo">
-        <h1 class="text-2xl font-bold">{{ companySettings.companyName }}</h1>
-        <p class="text-sm text-gray-600">{{ companySettings.address }}</p>
-        <p class="text-sm text-gray-600">Tax ID: {{ companySettings.taxId }} | Phone: {{ companySettings.phone }} | Email: {{ companySettings.email }}</p>
-        <div class="border-b-2 border-gray-800 my-4"></div>
-        <h2 class="text-xl font-bold uppercase tracking-wider">Receipt / Delivery Note</h2>
+      <!-- Print Header (Hidden on screen) -->
+      <div class="hidden print:block mb-8 border-b pb-4">
+        <div class="flex justify-between items-start">
+          <div>
+            <h1 class="text-2xl font-black">{{ companySettings?.companyName || 'Jamine ERP' }}</h1>
+            <p class="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{{ companySettings?.address }}</p>
+            <p class="text-sm text-slate-600">Tax ID: {{ companySettings?.taxId }} | Tel: {{ companySettings?.phone }}</p>
+          </div>
+          <div class="text-right">
+            <h2 class="text-xl font-bold uppercase tracking-wider">Receipt / Delivery Note</h2>
+            <p class="font-bold mt-2 text-lg">{{ order.orderNumber }}</p>
+            <p class="text-sm text-slate-600">Date: {{ order.orderDate | date:'dd/MM/yyyy' }}</p>
+          </div>
+        </div>
       </div>
 
       <div class="mb-6 flex justify-between items-center no-print">
@@ -75,9 +83,14 @@ import { AuthService } from '../../../core/services/auth.service';
             <img [src]="order.paymentSlipUrl" class="w-64 h-auto rounded-lg border border-yellow-200 shadow-sm" alt="Payment Slip">
           </div>
           <div>
-            <button *ngIf="hasRole(['Admin', 'Sales'])" (click)="verifyPayment()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md">
-              ✅ Verify Payment (Mark as Paid)
-            </button>
+            <div class="flex gap-3">
+              <button *ngIf="hasRole(['Admin', 'Sales'])" (click)="verifyPayment()" class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg shadow-md">
+                <i class="fas fa-check mr-2"></i> Verify Payment (Mark as Paid)
+              </button>
+              <button *ngIf="hasRole(['Admin', 'Sales'])" (click)="rejectPayment()" class="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg shadow-md border border-red-200">
+                <i class="fas fa-times mr-2"></i> Reject Slip
+              </button>
+            </div>
             <p class="text-xs text-yellow-600 mt-2">Make sure the money is in the bank account before verifying.</p>
           </div>
         </div>
@@ -201,6 +214,18 @@ export class SalesOrderDetailComponent implements OnInit {
           this.loadOrder(this.order.id);
         },
         error: (err) => alert(err.error?.message || 'Failed to verify payment')
+      });
+    }
+  }
+
+  rejectPayment() {
+    if (confirm('Are you sure you want to reject this payment slip? The customer will be asked to upload again.')) {
+      this.http.post(`/api/SalesOrders/${this.order.id}/reject-payment`, {}, { withCredentials: true }).subscribe({
+        next: (res: any) => {
+          alert(res.message);
+          this.loadOrder(this.order.id);
+        },
+        error: (err) => alert(err.error?.message || 'Failed to reject payment')
       });
     }
   }

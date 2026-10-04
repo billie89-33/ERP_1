@@ -514,6 +514,12 @@ namespace JamineERP.Backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentSlipData")
+                        .HasColumnType("text");
+
                     b.Property<string>("PaymentSlipUrl")
                         .IsRequired()
                         .HasColumnType("text");

@@ -103,7 +103,9 @@ public class SalesOrdersController : ControllerBase
             so.Id,
             so.OrderNumber,
             so.Status,
-            CustomerName = so.Customer.CompanyName,
+              PaymentStatus = so.PaymentStatus,
+              PaymentSlipUrl = so.PaymentSlipUrl,
+                            CustomerName = so.Customer.CompanyName,
             Items = so.SalesOrderItems.Select(i => new {
                 i.ProductId,
                 ProductName = i.Product.Name,
@@ -239,6 +241,24 @@ public class SalesOrdersController : ControllerBase
         so.PaymentStatus = "Paid";
         await _context.SaveChangesAsync();
         return Ok(new { message = "Payment verified successfully." });
+    }
+
+    
+    [HttpPost("{id}/reject-payment")]
+    [Authorize(Roles = "Admin,Sales")]
+    public async Task<IActionResult> RejectPayment(Guid id)
+    {
+        var so = await _context.SalesOrders.FindAsync(id);
+        if (so == null || so.IsDeleted) return NotFound();
+
+        if (so.PaymentStatus != "Checking")
+            return BadRequest(new { message = "Order is not waiting for payment verification." });
+
+        so.PaymentStatus = "Pending";
+        so.PaymentSlipUrl = string.Empty;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Payment rejected. Customer needs to re-upload." });
     }
 
     [HttpGet("export")]
