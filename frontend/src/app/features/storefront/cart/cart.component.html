@@ -1,68 +1,57 @@
-<!-- Empty Cart State -->
-<div *ngIf="cartService.items().length === 0" class="flex flex-col items-center justify-center py-20 px-4">
-  <div class="w-32 h-32 bg-slate-800 rounded-full flex items-center justify-center text-slate-500 mb-6 shadow-inner">
-    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-  </div>
-  <h2 class="text-3xl font-black text-white mb-3">ตะกร้าสินค้าว่างเปล่า</h2>
-  <p class="text-slate-400 text-center max-w-md mb-8">คุณยังไม่มีสินค้าในตะกร้า ลองกลับไปเลือกดูสินค้าที่น่าสนใจในหน้าสินค้าของเราสิครับ</p>
-  <a routerLink="/shop" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-1">
-    เลือกซื้อสินค้าเลย
-  </a>
-</div>
-
-<!-- Cart Filled State -->
-<div *ngIf="cartService.items().length > 0" class="max-w-6xl mx-auto px-4 pb-20 pt-4">
+<div class="max-w-7xl mx-auto px-4 py-12">
   
-  <!-- Header -->
-  <div class="mb-10 border-b border-slate-700/50 pb-6 flex items-end justify-between">
-    <div>
-      <a routerLink="/shop" class="text-slate-400 hover:text-indigo-400 mb-2 inline-block font-medium">&larr; กลับไปเลือกซื้อสินค้าต่อ</a>
-      <h1 class="text-3xl lg:text-4xl font-black text-white">ตะกร้าสินค้า</h1>
-    </div>
-    <span class="text-indigo-400 font-bold text-lg">{{ cartService.totalItems() }} รายการ</span>
+  <div class="flex items-center gap-4 mb-10">
+    <h1 class="text-3xl font-black text-white">ตะกร้าสินค้า</h1>
+    <div class="h-px flex-1 bg-slate-800"></div>
+    <span class="text-slate-400 font-medium">{{ cartService.totalItems() }} รายการ</span>
   </div>
 
-  <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
-    
-    <!-- Cart Items (Left) -->
-    <div class="flex-1 space-y-6">
-      <div *ngFor="let item of cartService.items()" 
-           class="bg-slate-800 border border-slate-700 rounded-3xl p-5 lg:p-6 flex flex-col sm:flex-row items-center sm:items-stretch gap-6 shadow-xl relative overflow-hidden group">
-        
-        <!-- Decorative subtle glow on hover -->
-        <div class="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors pointer-events-none"></div>
-        
-        <!-- Image Placeholder / Actual Image -->
-        <div class="w-full sm:w-32 h-32 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-600 flex-shrink-0 z-10 p-2">
-          <img *ngIf="item.imageUrl" [src]="item.imageUrl" [alt]="item.name" class="max-w-full max-h-full object-contain">
-          <svg *ngIf="!item.imageUrl" class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-        </div>
-        
-        <!-- Details -->
-        <div class="flex-1 text-center sm:text-left z-10 flex flex-col justify-center">
-          <h3 class="font-bold text-lg lg:text-xl text-white mb-2 leading-tight">
-            <a [routerLink]="['/product', item.productId]" class="hover:text-indigo-400 transition-colors">{{ item.name }}</a>
-          </h3>
-          <div class="text-indigo-400 font-black text-xl mb-3">฿{{ item.price | number:'1.0-0' }}</div>
-          
-          <div class="text-sm">
-             <span *ngIf="item.quantity >= item.maxStock" class="text-rose-400 font-medium">มีสินค้าสูงสุด {{ item.maxStock }} ชิ้น</span>
-             <span *ngIf="item.quantity < item.maxStock" class="text-emerald-400 font-medium">มีสินค้าพร้อมส่ง</span>
-          </div>
-        </div>
+  <div *ngIf="cartService.items().length === 0" class="text-center py-20 bg-slate-800/50 rounded-3xl border border-slate-700/50">
+    <div class="w-24 h-24 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+    </div>
+    <h2 class="text-2xl font-bold text-white mb-2">ตะกร้าของคุณว่างเปล่า</h2>
+    <p class="text-slate-400 mb-8 max-w-md mx-auto">ดูเหมือนว่าคุณจะยังไม่ได้เพิ่มสินค้าใดๆ ลงในตะกร้า ลองดูสินค้าที่น่าสนใจในร้านของเราสิครับ</p>
+    <a routerLink="/shop" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-8 rounded-xl transition-all transform hover:-translate-y-1">
+      <span>ไปช้อปปิ้งกันเลย</span>
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+    </a>
+  </div>
 
-        <!-- Quantity & Actions -->
-        <div class="flex flex-row sm:flex-col items-center justify-between sm:justify-center gap-4 w-full sm:w-auto z-10 mt-4 sm:mt-0">
-          <div class="flex items-center bg-slate-900 border border-slate-700 rounded-xl overflow-hidden h-12 shadow-inner">
-            <button (click)="updateQuantity(item.productId, item.quantity, -1)" [disabled]="item.quantity <= 1" class="px-4 text-slate-400 hover:text-white hover:bg-slate-700 h-full font-bold transition-colors disabled:opacity-30 disabled:hover:bg-transparent">-</button>
-            <div class="w-12 text-center text-white font-bold select-none">{{ item.quantity }}</div>
-            <button (click)="updateQuantity(item.productId, item.quantity, 1)" [disabled]="item.quantity >= item.maxStock" class="px-4 text-slate-400 hover:text-white hover:bg-slate-700 h-full font-bold transition-colors disabled:opacity-30 disabled:hover:bg-transparent">+</button>
+  <div *ngIf="cartService.items().length > 0" class="flex flex-col lg:flex-row gap-8 relative items-start">
+    
+    <!-- Cart Items List (Left) -->
+    <div class="flex-1 w-full space-y-4">
+      <div *ngFor="let item of cartService.items()" class="bg-slate-800 border border-slate-700 hover:border-slate-600 rounded-2xl p-4 flex flex-col sm:flex-row gap-6 items-center transition-all shadow-lg">
+        
+        <div class="w-full sm:w-32 h-32 bg-slate-900 rounded-xl overflow-hidden flex-shrink-0 relative group">
+          <img [src]="item.imageUrl" [alt]="item.productName" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+        </div>
+        
+        <div class="flex-1 w-full">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <h3 class="text-lg font-bold text-white mb-1"><a [routerLink]="['/shop/product', item.productId]" class="hover:text-indigo-400 transition-colors">{{ item.productName }}</a></h3>
+              <p class="text-sm text-slate-400 font-medium font-mono">{{ item.sku }}</p>
+            </div>
+            <div class="text-right">
+              <div class="text-lg font-black text-white">฿{{ item.unitPrice | number:'1.0-0' }}</div>
+              <div class="text-xs text-slate-500">/ ชิ้น</div>
+            </div>
           </div>
           
-          <button (click)="removeItem(item.productId)" class="text-sm font-medium text-slate-500 hover:text-rose-500 transition-colors flex items-center gap-1">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-            ลบ
-          </button>
+          <div class="flex justify-between items-end mt-4">
+            <div class="flex items-center bg-slate-900 border border-slate-700 rounded-lg h-10 overflow-hidden">
+              <button (click)="updateQuantity(item.productId, item.quantity, -1)" class="px-4 text-slate-400 hover:text-white hover:bg-slate-700 h-full font-bold transition-colors">-</button>
+              <div class="w-12 text-center font-bold text-white text-sm">{{ item.quantity }}</div>
+              <button (click)="updateQuantity(item.productId, item.quantity, 1)" [disabled]="item.quantity >= item.maxStock" class="px-4 text-slate-400 hover:text-white hover:bg-slate-700 h-full font-bold transition-colors disabled:opacity-30 disabled:hover:bg-transparent">+</button>
+            </div>
+            
+            <button (click)="removeItem(item.productId)" class="text-sm font-medium text-slate-500 hover:text-rose-500 transition-colors flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              ลบ
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -76,7 +65,7 @@
         
         <div class="space-y-4 mb-6 text-sm">
           <div class="flex justify-between text-slate-400">
-            <span>ยอดรวม ({{ cartService.totalItems() }} ชิ้น)</span>
+            <span>ยอดสินค้า ({{ cartService.totalItems() }} ชิ้น)</span>
             <span class="text-white font-medium">฿{{ cartService.totalPrice() | number:'1.0-0' }}</span>
           </div>
           <div class="flex justify-between text-slate-400">
@@ -86,7 +75,7 @@
         </div>
         
         <div class="border-t border-slate-700/50 pt-6 mb-8 flex justify-between items-end">
-          <span class="text-lg font-bold text-white">ยอดชำระเงินสุทธิ</span>
+          <span class="text-lg font-bold text-white">ยอดชำระสุทธิ</span>
           <span class="text-3xl font-black text-indigo-400 tracking-tight">฿{{ cartService.totalPrice() | number:'1.0-0' }}</span>
         </div>
         
@@ -109,56 +98,65 @@
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1">ชื่อ</label>
-              <input type="text" formControlName="firstName" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+              <input type="text" formControlName="firstName" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
             </div>
             <div>
               <label class="block text-xs font-medium text-slate-400 mb-1">นามสกุล</label>
-              <input type="text" formControlName="lastName" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+              <input type="text" formControlName="lastName" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
             </div>
           </div>
           
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1">อีเมล</label>
-            <input type="email" formControlName="email" [ngClass]="{'border-rose-500': checkoutForm.get('email')?.invalid && checkoutForm.get('email')?.touched}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <input type="email" formControlName="email" [ngClass]="{'border-rose-500': checkoutForm.get('email')?.invalid && checkoutForm.get('email')?.touched}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
           </div>
 
           <div>
             <label class="block text-xs font-medium text-slate-400 mb-1">เบอร์โทรศัพท์</label>
-            <input type="text" formControlName="phone" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <input type="text" formControlName="phone" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors">
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">ที่อยู่จัดส่ง</label>
-            <textarea formControlName="address" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+            <label class="block text-xs font-medium text-slate-400 mb-1 flex justify-between">
+              <span>ที่อยู่จัดส่ง</span>
+              <a routerLink="/shop/profile" class="text-indigo-400 hover:text-indigo-300 text-[10px] underline">แก้ไขค่าเริ่มต้น</a>
+            </label>
+            <textarea formControlName="address" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500 transition-colors resize-none"></textarea>
           </div>
 
-                  <!-- MOCK PAYMENT METHOD SELECTOR -->
+          <!-- MOCK PAYMENT METHOD SELECTOR -->
           <div class="pt-2">
-            <label class="block text.xs font-medium text-slate-400 mb-2">ช่องทางการชำระเงิฎ</label>
+            <label class="block text-xs font-medium text-slate-400 mb-2">ช่องทางการชำระเงิน</label>
             <div class="grid grid-cols-2 gap-3">
               <label class="flex items-center gap-2 p-3 border border-indigo-500 bg-indigo-500/10 rounded-lg cursor-pointer transition-colors">
                 <input type="radio" name="paymentMock" checked class="text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-600">
                 <div class="flex flex-col">
                   <span class="text-sm font-bold text-white">QR PromptPay</span>
-                  <span class="text-[10px] text-indigo-300">สแกนจ่ายทันที</span>
+                  <span class="text-[10px] text-indigo-300">แสกนจ่ายอัตโนมัติ</span>
                 </div>
               </label>
               <label class="flex items-center gap-2 p-3 border border-slate-700 bg-slate-800 rounded-lg cursor-not-allowed opacity-50">
                 <input type="radio" name="paymentMock" disabled class="text-indigo-600 bg-slate-900 border-slate-600">
                 <div class="flex flex-col">
                   <span class="text-sm font-bold text-slate-400">Credit Card</span>
-                  <span class="text-[10px] text-slate-500">เร็วๆ นี๊</span>
+                  <span class="text-[10px] text-slate-500">เร็วๆ นี้</span>
                 </div>
               </label>
             </div>
           </div>
 
           <div class="border-t border-slate-700/50 pt-4 mt-6">
-             <div *ngIf="checkoutForm.invalid && checkoutForm.dirty" class="text-rose-400 text-xs mb-3 text-center">Please check that all fields are filled correctly (e.g., valid email).</div>
+             <div *ngIf="checkoutForm.invalid && checkoutForm.dirty" class="text-rose-400 text-xs mb-3 text-center bg-rose-500/10 py-2 rounded-lg border border-rose-500/20">กรุณากรอกข้อมูลจัดส่งให้ครบถ้วนและถูกต้อง</div>
              <button type="submit" [disabled]="checkoutForm.invalid || isSubmitting" 
                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
                <span *ngIf="!isSubmitting">ยืนยันสั่งซื้อ (฿{{ cartService.totalPrice() | number:'1.0-0' }})</span>
-               <span *ngIf="isSubmitting" class="animate-pulse">กำลังประมวลผล...</span>
+               <span *ngIf="isSubmitting" class="animate-pulse flex items-center gap-2">
+                 <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                 กำลังดำเนินการ...
+               </span>
              </button>
           </div>
         </form>

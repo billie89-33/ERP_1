@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -8,6 +9,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace JamineERP.Backend.Controllers;
+
+
+public class StorefrontProfileDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+}
 
 public class StorefrontRegisterDto
 {
@@ -111,6 +121,63 @@ public class StorefrontAuthController : ControllerBase
         SetJwtCookie(token);
 
         return Ok(new { token, user = new { user.Id, user.Username, user.Role, user.FirstName, user.LastName } });
+    }
+
+    
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+        var user = await _context.Users.FindAsync(userId);
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+
+        if (user == null || customer == null) return NotFound(new { message = "Profile not found." });
+
+        return Ok(new
+        {
+            email = user.Email,
+            firstName = user.FirstName,
+            lastName = user.LastName,
+            phone = customer.Phone,
+            address = customer.Address
+        });
+    }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile(StorefrontProfileDto dto)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!Guid.TryParse(userIdString, out var userId)) return Unauthorized();
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var user = await _context.Users.FindAsync(userId);
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+
+            if (user == null || customer == null) return NotFound(new { message = "Profile not found." });
+
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
+            
+            customer.Phone = dto.Phone;
+            customer.Address = dto.Address;
+            customer.CompanyName = $"{dto.FirstName} {dto.LastName} ({user.Email})";
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return Ok(new { message = "Profile updated successfully." });
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            return BadRequest(new { message = "Update failed.", error = ex.InnerException?.Message ?? ex.Message });
+        }
     }
 
     [HttpPost("logout")]

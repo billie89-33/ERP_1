@@ -4,6 +4,7 @@ import { RouterLink, Router } from '@angular/router';
 import { CartService, CheckoutPayload } from '../../../core/services/cart.service';
 import { StorefrontAuthService } from '../../../core/services/storefront-auth.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-cart',
@@ -17,6 +18,7 @@ export class CartComponent implements OnInit {
   private authService = inject(StorefrontAuthService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private http = inject(HttpClient);
 
   isCheckoutMode = false;
   isSubmitting = false;
@@ -33,17 +35,19 @@ export class CartComponent implements OnInit {
   }
 
   ngOnInit() {
-    // If logged in, pre-fill form
     const customer = this.authService.currentUser();
     if (customer) {
-      // Split CompanyName into First/Last name naively for now
-      const names = customer.companyName ? customer.companyName.split(' ') : [''];
-      this.checkoutForm.patchValue({
-        firstName: names[0] || '',
-        lastName: names.slice(1).join(' ') || '',
-        email: customer.taxId || '', // We store email in TaxId for B2C
-        phone: customer.phone || '',
-        address: customer.address || ''
+      this.http.get<any>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
+        next: (data) => {
+          this.checkoutForm.patchValue({
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || customer.email || '',
+            phone: data.phone || '',
+            address: data.address || ''
+          });
+        },
+        error: (err) => console.error('Error loading profile for checkout', err)
       });
     }
   }
@@ -61,7 +65,7 @@ export class CartComponent implements OnInit {
 
   startCheckout() {
     if (!this.authService.currentUser()) {
-      alert('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อสินค้าครับ');
+      alert('กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อครับ');
       this.router.navigate(['/shop/login'], { queryParams: { returnUrl: '/cart' } });
       return;
     }

@@ -1,43 +1,89 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StorefrontAuthService } from '../../../core/services/storefront-auth.service';
 
 @Component({
   selector: 'app-customer-portal',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule],
   templateUrl: './customer-portal.component.html'
 })
 export class CustomerPortalComponent implements OnInit {
   authService = inject(StorefrontAuthService);
   http = inject(HttpClient);
   router = inject(Router);
+  fb = inject(FormBuilder);
 
   orders: any[] = [];
   isLoading = true;
+  isSavingProfile = false;
+  profileSaveSuccess = false;
+
+  profileForm: FormGroup = this.fb.group({
+    firstName: ['', Validators.required],
+    lastName: ['', Validators.required],
+    phone: ['', Validators.required],
+    address: ['', Validators.required]
+  });
 
   ngOnInit() {
     if (!this.authService.currentUser()) {
       this.router.navigate(['/shop/login']);
       return;
     }
-
-    const token = localStorage.getItem('storefront_user') 
-      ? JSON.parse(localStorage.getItem('storefront_user') || '{}')?.token // wait, our auth service saves 'user' but not raw token. Let's fix this in auth service. 
-      // Actually AuthController returns { token, user: {...} }. StorefrontAuthService saves the whole thing or just user?
-      // Let's use standard withCredentials or get token from localstorage.
-      : null;
-      
+    this.fetchProfile();
     this.fetchOrders();
   }
 
+  fetchProfile() {
+    this.http.get<any>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
+      next: (data) => {
+        this.profileForm.patchValue({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          phone: data.phone,
+          address: data.address
+        });
+      },
+      error: (err) => console.error('Error loading profile', err)
+    });
+  }
+
+  saveProfile() {
+    if (this.profileForm.invalid) {
+      this.profileForm.markAllAsTouched();
+      return;
+    }
+    this.isSavingProfile = true;
+    this.profileSaveSuccess = false;
+
+    this.http.put('/api/StorefrontAuth/profile', this.profileForm.value, { withCredentials: true }).subscribe({
+      next: () => {
+        this.isSavingProfile = false;
+        this.profileSaveSuccess = true;
+        setTimeout(() => this.profileSaveSuccess = false, 3000);
+        
+        // update local signal if needed
+        const current = this.authService.currentUser();
+        if (current) {
+           this.authService.currentUser.set({
+              ...current,
+              firstName: this.profileForm.value.firstName,
+              lastName: this.profileForm.value.lastName
+           });
+        }
+      },
+      error: (err) => {
+        this.isSavingProfile = false;
+        console.error('Error saving profile', err);
+      }
+    });
+  }
+
   fetchOrders() {
-    // If not using interceptor, we might need to send token manually, but we can just let interceptor handle it if we have one.
-    // Wait, the ERP uses cookies! StorefrontAuthController also uses SetJwtCookie!
-    // So withCredentials: true is all we need!
-    
     this.http.get<any[]>('/api/Storefront/my-orders', { withCredentials: true }).subscribe({
       next: (data) => {
         this.orders = data;
