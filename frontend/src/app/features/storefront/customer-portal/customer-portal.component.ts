@@ -21,6 +21,8 @@ export class CustomerPortalComponent implements OnInit {
   isLoading = true;
   isSavingProfile = false;
   profileSaveSuccess = false;
+  isEditMode = false;
+  profileData: any = null;
 
   profileForm: FormGroup = this.fb.group({
     firstName: ['', Validators.required],
@@ -41,15 +43,32 @@ export class CustomerPortalComponent implements OnInit {
   fetchProfile() {
     this.http.get<any>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
       next: (data) => {
+        this.profileData = data;
         this.profileForm.patchValue({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone,
-          address: data.address
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          phone: data.phone || '',
+          address: data.address || ''
         });
+        // Auto enter edit mode if profile is completely empty
+        if (!data.phone && !data.address) {
+           this.isEditMode = true;
+        }
       },
       error: (err) => console.error('Error loading profile', err)
     });
+  }
+
+  toggleEditMode() {
+    this.isEditMode = !this.isEditMode;
+    if (this.isEditMode && this.profileData) {
+      this.profileForm.patchValue({
+        firstName: this.profileData.firstName || '',
+        lastName: this.profileData.lastName || '',
+        phone: this.profileData.phone || '',
+        address: this.profileData.address || ''
+      });
+    }
   }
 
   saveProfile() {
@@ -64,6 +83,11 @@ export class CustomerPortalComponent implements OnInit {
       next: () => {
         this.isSavingProfile = false;
         this.profileSaveSuccess = true;
+        this.isEditMode = false;
+        this.profileData = {
+          ...this.profileData,
+          ...this.profileForm.value
+        };
         setTimeout(() => this.profileSaveSuccess = false, 3000);
         
         // update local signal if needed
