@@ -68,7 +68,7 @@ public class StorefrontController : ControllerBase
             {
                 // Update address if changed
                 customer.Address = dto.Address;
-                customer.CompanyName = $"{dto.FirstName} {dto.LastName}";
+                customer.CompanyName = $"{dto.FirstName} {dto.LastName} ({dto.Email.Trim()})";
             }
 
             // 2. Generate SO Number
@@ -146,7 +146,7 @@ public class StorefrontController : ControllerBase
     [HttpGet("my-orders")]
     public async Task<IActionResult> GetMyOrders()
     {
-        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
         var username = User.Identity?.Name;
         
         Guid.TryParse(userIdString, out var userId);
