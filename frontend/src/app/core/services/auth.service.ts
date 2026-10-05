@@ -51,9 +51,13 @@ export class AuthService {
         this.currentUser.set(user);
         localStorage.setItem('user', JSON.stringify(user));
       }),
-      catchError(() => {
-        this.currentUser.set(null);
-        localStorage.removeItem('user');
+      catchError((err) => {
+        // Only log out if it's an explicit authentication error
+        if (err.status === 401 || err.status === 403) {
+          this.currentUser.set(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('jamine_token');
+        }
         return of(null);
       })
     );
