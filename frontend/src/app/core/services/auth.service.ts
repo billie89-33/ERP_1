@@ -12,6 +12,10 @@ export class AuthService {
 
   currentUser = signal<{id: string, username: string, role: string} | null>(null);
 
+  constructor() {
+    this.loadUserFromStorage();
+  }
+
   login(credentials: any) {
     return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
       tap(res => {
