@@ -91,7 +91,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://erp-1-bay.vercel.app") // Strict origins for security
+        policy.SetIsOriginAllowed(origin => true) // Strict origins for security
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // For HttpOnly Cookies
