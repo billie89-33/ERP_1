@@ -88,6 +88,22 @@
       </div>
     </div>
 
+    
+    <!-- Tracking Information -->
+    <div *ngIf="order.status === 'Shipped' && order.trackingNumber" class="mb-10 bg-indigo-900/30 border border-indigo-500/50 rounded-xl p-6">
+      <h3 class="text-xl font-bold text-white mb-4"><i class="fas fa-truck mr-2"></i>ข้อมูลการจัดส่ง (Tracking Information)</h3>
+      <div class="flex flex-col md:flex-row gap-6">
+        <div class="flex-1">
+          <p class="text-indigo-200 text-sm mb-1">บริษัทขนส่ง (Courier)</p>
+          <p class="text-white font-bold text-lg">{{ order.courier || '-' }}</p>
+        </div>
+        <div class="flex-1">
+          <p class="text-indigo-200 text-sm mb-1">เลขพัสดุ (Tracking Number)</p>
+          <p class="text-indigo-400 font-mono font-bold text-xl">{{ order.trackingNumber }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Shipping Address -->
     <h3 class="text-xl font-bold text-white mb-4">ที่อยู่จัดส่ง</h3>
     <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-10 text-slate-300 flex items-start gap-4">

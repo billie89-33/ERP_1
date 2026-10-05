@@ -24,5 +24,9 @@ public class SalesOrder : BaseEntity
     public string PaymentStatus { get; set; } = "Pending"; // Pending, Checking, Paid
     public string PaymentSlipUrl { get; set; } = string.Empty;
 
+    // Shipping Tracking
+    public string? Courier { get; set; }
+    public string? TrackingNumber { get; set; }
+
     public ICollection<SalesOrderItem> SalesOrderItems { get; set; } = new List<SalesOrderItem>();
 }

@@ -108,6 +108,8 @@ public class SalesOrdersController : ControllerBase
             PaymentSlipUrl = so.PaymentSlipUrl,
             CustomerName = so.Customer.CompanyName,
             CustomerEmail = so.Customer.TaxId, // B2C customers store email here
+            Courier = so.Courier,
+            TrackingNumber = so.TrackingNumber,
             Items = so.SalesOrderItems.Select(i => new {
                 i.ProductId,
                 ProductName = i.Product.Name,

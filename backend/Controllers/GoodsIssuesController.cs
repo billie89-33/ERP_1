@@ -14,6 +14,8 @@ public class CreateGoodsIssueDto
 {
     public Guid SalesOrderId { get; set; }
     public string Remarks { get; set; } = string.Empty;
+    public string? Courier { get; set; }
+    public string? TrackingNumber { get; set; }
     public List<GoodsIssueItemDto> Items { get; set; } = new();
 }
 
@@ -124,6 +126,8 @@ public class GoodsIssuesController : ControllerBase
 
             // Update SO Status
             so.Status = "Shipped";
+            if (!string.IsNullOrWhiteSpace(dto.Courier)) so.Courier = dto.Courier;
+            if (!string.IsNullOrWhiteSpace(dto.TrackingNumber)) so.TrackingNumber = dto.TrackingNumber;
 
             _context.GoodsIssues.Add(gi);
             await _context.SaveChangesAsync();

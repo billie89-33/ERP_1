@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -7,7 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-sales-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div *ngIf="isLoading" class="p-8 text-center text-slate-500">
       <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -47,13 +48,35 @@ import { AuthService } from '../../../core/services/auth.service';
               การชำระเงิน: {{ order.paymentStatus || 'Pending' }}
             </span>
           </div>
+          <div *ngIf="order.status === 'Shipped' && order.trackingNumber" class="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-lg max-w-sm">
+            <p class="text-sm font-bold text-blue-900 mb-2"><i class="fas fa-truck mr-2"></i>ข้อมูลการจัดส่ง</p>
+            <p class="text-sm text-blue-800 mb-1">ขนส่ง: <strong>{{ order.courier || '-' }}</strong></p>
+            <p class="text-sm text-blue-800">เลขพัสดุ: <strong>{{ order.trackingNumber }}</strong></p>
+          </div>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-yellow-100 text-yellow-800': order.status === 'Pending',
+                    'bg-green-100 text-green-800': order.status === 'Shipped',
+                    'bg-red-100 text-red-800': order.status === 'Cancelled'
+                  }">
+              สถานะ: {{ order.status }}
+            </span>
+            <span class="px-3 py-1 rounded-full text-xs font-semibold"
+               [ngClass]="{
+                 'bg-red-100 text-red-800': order.paymentStatus === 'Pending',
+                 'bg-yellow-100 text-yellow-800': order.paymentStatus === 'Checking',
+                 'bg-green-100 text-green-800': order.paymentStatus === 'Paid'
+               }">
+              การชำระเงิน: {{ order.paymentStatus || 'Pending' }}
+            </span>
+          </div>
         </div>
         <div class="flex flex-wrap gap-3 no-print">
           <a routerLink="/admin/sales-orders" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md shadow-sm font-medium"><i class="fas fa-arrow-left mr-2"></i> กลับหน้ารวม</a>
           <button (click)="printDocument()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-md shadow-sm font-medium"><i class="fas fa-print mr-2"></i> พิมพ์เอกสาร</button>
           
           <!-- Only Admin or Warehouse can ship (if paid) -->
-          <button *ngIf="order.status === 'Pending' && order.paymentStatus === 'Paid' && hasRole(['Admin', 'Warehouse'])" (click)="shipOrder()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm font-medium"><i class="fas fa-box-open mr-2"></i> จัดส่งสินค้า (ตัดสต๊อก)</button>
+          <button *ngIf="order.status === 'Pending' && order.paymentStatus === 'Paid' && hasRole(['Admin', 'Warehouse'])" (click)="openShippingModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm font-medium"><i class="fas fa-box-open mr-2"></i> จัดส่งสินค้า (ตัดสต๊อก)</button>
           
           <!-- Only Admin or Sales can cancel -->
           <button *ngIf="order.status === 'Pending' && hasRole(['Admin', 'Sales'])" (click)="cancelOrder()" class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md shadow-sm font-medium border border-red-200"><i class="fas fa-times mr-2"></i> ยกเลิกออเดอร์</button>
@@ -140,10 +163,59 @@ import { AuthService } from '../../../core/services/auth.service';
           </tfoot>
         </table>
       </div>
+    <!-- Shipping Modal -->
+    <div *ngIf="showShippingModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" (click)="closeShippingModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                <i class="fas fa-truck text-blue-600"></i>
+              </div>
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                <h3 class="text-lg leading-6 font-bold text-gray-900">ยืนยันการจัดส่งสินค้า</h3>
+                <div class="mt-4 space-y-4">
+                  <p class="text-sm text-gray-500">โปรดระบุบริษัทขนส่งและเลขพัสดุ (ถ้ามี) ข้อมูลนี้จะแสดงให้ลูกค้าเห็นในหน้าติดตามสถานะ</p>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1 text-left">บริษัทขนส่ง</label>
+                    <select [(ngModel)]="shippingCourier" class="w-full border-slate-300 rounded-md shadow-sm p-2 border">
+                      <option value="">-- ไม่ระบุ --</option>
+                      <option value="Kerry Express">Kerry Express</option>
+                      <option value="Flash Express">Flash Express</option>
+                      <option value="J&T Express">J&T Express</option>
+                      <option value="Thailand Post">ไปรษณีย์ไทย (Thailand Post)</option>
+                      <option value="Shopee Express">Shopee Express</option>
+                      <option value="Other">อื่นๆ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1 text-left">เลขพัสดุ (Tracking Number)</label>
+                    <input type="text" [(ngModel)]="trackingNumber" placeholder="เช่น TH123456789" class="w-full border-slate-300 rounded-md shadow-sm p-2 border">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button type="button" (click)="confirmShipOrder()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">
+              <i class="fas fa-check mr-2 mt-1"></i> ยืนยันจัดส่ง (ตัดสต๊อก)
+            </button>
+            <button type="button" (click)="closeShippingModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              ยกเลิก
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
+
   `
 })
 export class SalesOrderDetailComponent implements OnInit {
+  showShippingModal = false;
+  shippingCourier = '';
+  trackingNumber = '';
   order: any = null;
   companySettings: any = null;
   isLoading = true;
@@ -205,11 +277,23 @@ export class SalesOrderDetailComponent implements OnInit {
     }
   }
 
-  shipOrder() {
+  openShippingModal() {
+    this.shippingCourier = '';
+    this.trackingNumber = '';
+    this.showShippingModal = true;
+  }
+
+  closeShippingModal() {
+    this.showShippingModal = false;
+  }
+
+  confirmShipOrder() {
     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการจัดส่งสินค้านี้? (ระบบจะตัดสต๊อกทันที)')) {
       const giPayload = {
         salesOrderId: this.order.id,
         remarks: 'Shipped from SO Details',
+        courier: this.shippingCourier,
+        trackingNumber: this.trackingNumber,
         items: this.order.items.map((i: any) => ({
           productId: i.productId,
           quantity: i.quantity
@@ -219,6 +303,7 @@ export class SalesOrderDetailComponent implements OnInit {
       this.http.post('/api/GoodsIssues', giPayload).subscribe({
         next: (res: any) => {
           alert(res.message);
+          this.showShippingModal = false;
           this.loadOrder(this.order.id);
         },
         error: (err) => alert(err.error?.message || 'Failed to ship order')
