@@ -96,11 +96,19 @@ public class CustomersController : ControllerBase
             dto.CreditTermDays = 0;
         }
 
+        // Handle unique constraint for B2C names by appending phone
+        var companyName = dto.CompanyName;
+        if (dto.CustomerType == "B2C" && !string.IsNullOrWhiteSpace(dto.Phone))
+        {
+            var existingName = await _context.Customers.AnyAsync(c => c.CompanyName == companyName && !c.IsDeleted);
+            if (existingName) companyName = $"{dto.CompanyName} ({dto.Phone})";
+        }
+
         var customer = new Customer
         {
             CustomerType = dto.CustomerType ?? "B2B",
-            CompanyName = dto.CompanyName,
-            TaxId = dto.TaxId ?? "",
+            CompanyName = companyName,
+            TaxId = string.IsNullOrWhiteSpace(dto.TaxId) ? null : dto.TaxId,
             CreditTermDays = dto.CreditTermDays,
             CreditLimit = dto.CreditLimit,
             Address = dto.Address ?? "",
@@ -140,7 +148,7 @@ public class CustomersController : ControllerBase
 
         customer.CustomerType = dto.CustomerType ?? "B2B";
         customer.CompanyName = dto.CompanyName;
-        customer.TaxId = dto.TaxId ?? "";
+        customer.TaxId = string.IsNullOrWhiteSpace(dto.TaxId) ? null : dto.TaxId;
         customer.CreditTermDays = dto.CreditTermDays;
         customer.CreditLimit = dto.CreditLimit;
         customer.Address = dto.Address ?? "";

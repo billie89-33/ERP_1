@@ -32,6 +32,7 @@ export class SalesOrderFormComponent implements OnInit {
       customerId: ['', Validators.required],
       items: this.fb.array([])
     });
+      
       this.quickCustomerForm = this.fb.group({
         customerType: ['B2B', Validators.required],
         companyName: ['', Validators.required],
@@ -39,6 +40,17 @@ export class SalesOrderFormComponent implements OnInit {
         phone: [''],
         address: ['']
       });
+
+      this.quickCustomerForm.get('customerType')?.valueChanges.subscribe(type => {
+        const taxIdControl = this.quickCustomerForm.get('taxId');
+        if (type === 'B2B') {
+          taxIdControl?.setValidators([Validators.required, Validators.minLength(13), Validators.maxLength(13)]);
+        } else {
+          taxIdControl?.clearValidators();
+        }
+        taxIdControl?.updateValueAndValidity();
+      });
+
 
     // Handle customer search filtering natively
     this.customerSearchCtrl.valueChanges.subscribe((val: string | null) => {
