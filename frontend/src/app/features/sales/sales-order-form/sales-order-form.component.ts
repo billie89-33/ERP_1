@@ -13,6 +13,9 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class SalesOrderFormComponent implements OnInit {
   soForm: FormGroup;
+  quickCustomerForm: FormGroup;
+  showQuickCustomerModal = false;
+  isSavingCustomer = false;
   customers: any[] = [];
   products: any[] = [];
   isLoading = false;
@@ -29,6 +32,13 @@ export class SalesOrderFormComponent implements OnInit {
       customerId: ['', Validators.required],
       items: this.fb.array([])
     });
+      this.quickCustomerForm = this.fb.group({
+        customerType: ['B2B', Validators.required],
+        companyName: ['', Validators.required],
+        taxId: [''],
+        phone: [''],
+        address: ['']
+      });
 
     // Handle customer search filtering natively
     this.customerSearchCtrl.valueChanges.subscribe((val: string | null) => {
@@ -78,6 +88,49 @@ export class SalesOrderFormComponent implements OnInit {
       const price = item.get('unitPrice')?.value || 0;
       return sum + (qty * price);
     }, 0);
+  }
+
+  
+  openQuickCustomerModal() {
+    this.quickCustomerForm.reset({ customerType: 'B2B' });
+    this.showQuickCustomerModal = true;
+  }
+
+  closeQuickCustomerModal() {
+    this.showQuickCustomerModal = false;
+  }
+
+  saveQuickCustomer() {
+    if (this.quickCustomerForm.invalid) {
+      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
+      return;
+    }
+
+    this.isSavingCustomer = true;
+    const data = this.quickCustomerForm.value;
+
+    this.http.post('/api/Customers', data).subscribe({
+      next: (res: any) => {
+        alert('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
+        this.isSavingCustomer = false;
+        this.showQuickCustomerModal = false;
+        
+        // Reload customers and auto-select
+        this.http.get<any[]>('/api/Customers').subscribe({
+          next: (customersRes: any) => {
+            this.customers = customersRes.data || customersRes;
+            const newCustomer = this.customers.find(c => c.id === res.id);
+            if (newCustomer) {
+              this.selectCustomer(newCustomer);
+            }
+          }
+        });
+      },
+      error: (err) => {
+        this.isSavingCustomer = false;
+        alert(err.error?.message || 'Failed to save customer');
+      }
+    });
   }
 
   loadCustomers() {
