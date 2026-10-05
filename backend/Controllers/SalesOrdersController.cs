@@ -102,11 +102,16 @@ public class SalesOrdersController : ControllerBase
         return Ok(new {
             so.Id,
             so.OrderNumber,
+            so.OrderDate,
             so.Status,
+            PaymentStatus = so.PaymentStatus,
+            PaymentSlipUrl = so.PaymentSlipUrl,
             CustomerName = so.Customer.CompanyName,
+            CustomerEmail = so.Customer.TaxId, // B2C customers store email here
             Items = so.SalesOrderItems.Select(i => new {
                 i.ProductId,
                 ProductName = i.Product.Name,
+                ProductImage = i.Product.Image.Url,
                 i.Quantity,
                 i.UnitPrice
             })
@@ -233,12 +238,27 @@ public class SalesOrdersController : ControllerBase
         var so = await _context.SalesOrders.FindAsync(id);
         if (so == null || so.IsDeleted) return NotFound();
 
-        if (so.PaymentStatus != "Checking")
-            return BadRequest(new { message = "Order is not waiting for payment verification." });
-
         so.PaymentStatus = "Paid";
+        so.Status = "Pending"; // Ensure it is ready for goods issue
         await _context.SaveChangesAsync();
-        return Ok(new { message = "Payment verified successfully." });
+        return Ok(new { message = "ตรวจสอบสลิปและยืนยันการชำระเงินเรียบร้อยแล้ว" });
+    }
+
+    [HttpPost("{id}/reject-payment")]
+    [Authorize(Roles = "Admin,Sales")]
+    public async Task<IActionResult> RejectPayment(Guid id)
+    {
+        var so = await _context.SalesOrders.FindAsync(id);
+        if (so == null || so.IsDeleted) return NotFound();
+
+        if (so.PaymentStatus != "Checking")
+            return BadRequest(new { message = "บิลนี้ไม่ได้อยู่ในสถานะรอตรวจสอบสลิป" });
+
+        so.PaymentStatus = "Pending";
+        so.PaymentSlipUrl = "";
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "ปฏิเสธสลิปเรียบร้อยแล้ว ลูกค้าจะต้องอัปโหลดใหม่" });
     }
 
     [HttpGet("export")]
