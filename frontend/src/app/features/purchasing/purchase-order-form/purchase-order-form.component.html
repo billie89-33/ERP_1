@@ -50,7 +50,7 @@
           <div class="flex gap-4">
             <div class="flex-1">
               <label class="text-xs text-slate-500 mb-1 block">วันที่คาดว่าจะได้รับของ</label>
-              <input type="date" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
+              <input type="date" formControlName="expectedDeliveryDate" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 bg-white border">
             </div>
             <div class="flex-1">
               <label class="text-xs text-slate-500 mb-1 block">หมายเหตุ</label>
@@ -76,10 +76,15 @@
           <tbody formArrayName="items" class="bg-white divide-y divide-slate-200">
             <tr *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="hover:bg-slate-50 transition-colors">
               <td class="px-4 py-3">
-                <select formControlName="productId" (change)="onProductSelected(i)" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
-                  <option value="">เลือกสินค้า...</option>
-                  <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (SKU: {{ p.sku }})</option>
-                </select>
+                <div class="flex gap-2">
+                  <select formControlName="productId" (change)="onProductSelected(i)" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white">
+                    <option value="">เลือกสินค้า...</option>
+                    <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (SKU: {{ p.sku }})</option>
+                  </select>
+                  <button type="button" (click)="openProductModal(i)" class="px-3 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded text-sm font-medium whitespace-nowrap transition-colors" title="เพิ่มสินค้าใหม่">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
               </td>
               <td class="px-4 py-3 text-right">
                 <input type="number" formControlName="quantity" min="1" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border text-right bg-white">
@@ -163,6 +168,20 @@
               <input type="text" formControlName="phone" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
             </div>
           </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">อีเมล</label>
+              <input type="email" formControlName="email" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">เงื่อนไขการชำระเงิน (Credit Terms)</label>
+              <input type="text" formControlName="paymentTerms" placeholder="เช่น Net 30, Cash" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">ที่อยู่ (Address)</label>
+            <textarea formControlName="address" rows="2" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50"></textarea>
+          </div>
         </div>
         
         <div class="mt-6 sm:flex sm:flex-row-reverse border-t pt-4">
@@ -170,6 +189,81 @@
             <i class="fas fa-save mr-2 mt-1"></i> {{ isSavingSupplier ? 'กำลังบันทึก...' : 'บันทึกซัพพลายเออร์' }}
           </button>
           <button type="button" (click)="closeSupplierModal()" class="mt-3 w-full inline-flex justify-center rounded border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm transition">
+            ยกเลิก
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Product Quick Add Modal -->
+<div *ngIf="isProductModalOpen" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-slate-800 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeProductModal()"></div>
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6 border border-slate-200">
+      
+      <div class="sm:flex sm:items-start mb-5">
+        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+          <i class="fas fa-box text-blue-600 text-lg"></i>
+        </div>
+        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+          <h3 class="text-lg leading-6 font-bold text-slate-900" id="modal-title">เพิ่มสินค้าใหม่ (Quick Add)</h3>
+          <p class="text-sm text-slate-500 mt-1">เพิ่มข้อมูลสินค้าเข้าระบบ Master Data อย่างรวดเร็ว</p>
+        </div>
+      </div>
+      
+      <!-- Error Alert -->
+      <div *ngIf="productError" class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-r">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-red-500"></i>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-red-700 font-medium">{{ productError }}</p>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="productForm" (ngSubmit)="submitProduct()">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อสินค้า <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="name" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">รหัสสินค้า (SKU) <span class="text-red-500">*</span></label>
+            <input type="text" formControlName="sku" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">แบรนด์</label>
+              <input type="text" formControlName="brand" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อรุ่น (Model)</label>
+              <input type="text" formControlName="modelName" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">ราคาทุน (ต่อหน่วย) <span class="text-red-500">*</span></label>
+              <input type="number" formControlName="cost" min="0" step="0.01" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1">ราคาขาย <span class="text-red-500">*</span></label>
+              <input type="number" formControlName="price" min="0" step="0.01" class="block w-full rounded border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-slate-50">
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-6 sm:flex sm:flex-row-reverse border-t pt-4">
+          <button type="submit" [disabled]="productForm.invalid || isSavingProduct" class="w-full inline-flex justify-center rounded border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-slate-400 transition">
+            <i class="fas fa-save mr-2 mt-1"></i> {{ isSavingProduct ? 'กำลังบันทึก...' : 'บันทึกสินค้า' }}
+          </button>
+          <button type="button" (click)="closeProductModal()" class="mt-3 w-full inline-flex justify-center rounded border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm transition">
             ยกเลิก
           </button>
         </div>

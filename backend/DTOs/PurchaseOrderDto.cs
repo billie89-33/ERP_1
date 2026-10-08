@@ -7,6 +7,11 @@ public class CreatePurchaseOrderDto
 {
     public Guid SupplierId { get; set; }
     public List<CreatePurchaseOrderItemDto> Items { get; set; } = new();
+    public DateTime? ExpectedDeliveryDate { get; set; }
+    public string? Remarks { get; set; }
+    public string? ReferenceNumber { get; set; }
+    public string? PaymentTerms { get; set; }
+    public decimal VatRate { get; set; }
 }
 
 public class CreatePurchaseOrderItemDto

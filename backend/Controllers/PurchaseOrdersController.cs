@@ -110,7 +110,9 @@ public class PurchaseOrdersController : ControllerBase
         var poNumber = $"PO{today:yyyyMMdd}-{poCount + 1:D3}";
 
         // Calculate Total
-        decimal totalAmount = dto.Items.Sum(i => i.Quantity * i.UnitCost);
+        decimal subTotal = dto.Items.Sum(i => i.Quantity * i.UnitCost);
+        decimal taxAmount = subTotal * (dto.VatRate / 100m);
+        decimal totalAmount = subTotal + taxAmount;
 
         // Dummy User for now (Admin)
         var user = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found in DB for assignment.");
@@ -121,6 +123,13 @@ public class PurchaseOrdersController : ControllerBase
             OrderDate = today,
             Status = "Pending", // สถานะเริ่มต้นคือรอรับของ
             TotalAmount = totalAmount,
+            SubTotal = subTotal,
+            TaxAmount = taxAmount,
+            VatRate = dto.VatRate,
+            ExpectedDeliveryDate = dto.ExpectedDeliveryDate,
+            Remarks = dto.Remarks,
+            ReferenceNumber = dto.ReferenceNumber,
+            PaymentTerms = dto.PaymentTerms,
             SupplierId = dto.SupplierId,
             CreatedByUserId = user.Id
         };

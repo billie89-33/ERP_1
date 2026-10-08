@@ -9,6 +9,13 @@ public class PurchaseOrder : BaseEntity
     public DateTime OrderDate { get; set; }
     public string Status { get; set; } = string.Empty; // "Pending, Received"
     public decimal TotalAmount { get; set; }
+    public DateTime? ExpectedDeliveryDate { get; set; }
+    public string? Remarks { get; set; }
+    public string? ReferenceNumber { get; set; }
+    public string? PaymentTerms { get; set; }
+    public decimal VatRate { get; set; } // e.g. 7 for 7%
+    public decimal TaxAmount { get; set; }
+    public decimal SubTotal { get; set; }
 
     public Guid SupplierId { get; set; }
     public Supplier Supplier { get; set; } = null!;

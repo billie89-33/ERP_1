@@ -25,6 +25,12 @@ export class PurchaseOrderFormComponent implements OnInit {
   isSavingSupplier = false;
   supplierError = '';
   supplierForm: FormGroup;
+  
+  isProductModalOpen = false;
+  isSavingProduct = false;
+  productError = '';
+  productForm: FormGroup;
+  currentProductIndex = 0; // to know which row we are adding the product to
 
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
@@ -33,6 +39,8 @@ export class PurchaseOrderFormComponent implements OnInit {
   constructor() {
     this.poForm = this.fb.group({
       supplierId: ['', Validators.required],
+      expectedDeliveryDate: [''],
+      remarks: [''],
       items: this.fb.array([])
     });
 
@@ -49,7 +57,18 @@ export class PurchaseOrderFormComponent implements OnInit {
       contactName: [''],
       phone: [''],
       email: [''],
-      address: ['']
+      address: [''],
+      paymentTerms: [''] // CRM enhancement
+    });
+
+    this.productForm = this.fb.group({
+      name: ['', Validators.required],
+      sku: ['', Validators.required],
+      brand: [''],
+      modelName: [''],
+      price: [0, [Validators.required, Validators.min(0)]],
+      cost: [0, [Validators.required, Validators.min(0)]],
+      categoryId: [null]
     });
   }
 
@@ -174,6 +193,50 @@ export class PurchaseOrderFormComponent implements OnInit {
         this.isSavingSupplier = false;
         // The API returns { message: "..." } on 400 Bad Request
         this.supplierError = err.error?.message || 'Failed to create supplier. It might already exist.';
+      }
+    });
+  }
+
+  // --- Product Modal Logic ---
+  openProductModal(index: number) {
+    this.currentProductIndex = index;
+    this.productError = '';
+    this.productForm.reset({ price: 0, cost: 0 });
+    this.isProductModalOpen = true;
+  }
+
+  closeProductModal() {
+    this.isProductModalOpen = false;
+  }
+
+  submitProduct() {
+    if (this.productForm.invalid) {
+      this.productForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingProduct = true;
+    this.productError = '';
+
+    this.http.post('/api/Products', this.productForm.value).subscribe({
+      next: (res: any) => {
+        this.isSavingProduct = false;
+        const newProduct = res.data || res;
+        
+        // Add to local list
+        this.products = [newProduct, ...this.products];
+        
+        // Auto-select in the row
+        this.items.at(this.currentProductIndex).patchValue({
+          productId: newProduct.id,
+          unitCost: newProduct.cost
+        });
+        
+        this.closeProductModal();
+      },
+      error: (err) => {
+        this.isSavingProduct = false;
+        this.productError = err.error?.message || 'Failed to create product. SKU might already exist.';
       }
     });
   }
