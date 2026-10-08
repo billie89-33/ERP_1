@@ -81,8 +81,8 @@
                     <option value="">เลือกสินค้า...</option>
                     <option *ngFor="let p of products" [value]="p.id">{{ p.brand }} {{ p.modelName }} (SKU: {{ p.sku }})</option>
                   </select>
-                  <button type="button" (click)="openProductModal(i)" class="px-3 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded text-sm font-medium whitespace-nowrap transition-colors" title="เพิ่มสินค้าใหม่">
-                    <i class="fas fa-plus"></i>
+                  <button type="button" (click)="openProductModal(i)" class="px-4 py-2 border border-slate-300 shadow-sm text-sm font-bold rounded text-slate-700 bg-white hover:bg-slate-50 focus:outline-none transition whitespace-nowrap">
+                    <i class="fas fa-plus mr-1 text-blue-600"></i> เพิ่มใหม่
                   </button>
                 </div>
               </td>
