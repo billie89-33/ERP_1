@@ -118,8 +118,8 @@ import { AuthService } from '../../../core/services/auth.service';
             <tr *ngFor="let item of order.items" class="hover:bg-slate-50 transition-colors">
               <td class="p-4 w-20">
                 <div class="h-12 w-12 rounded bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
-                  <img *ngIf="item.productImageUrl" [src]="item.productImageUrl" alt="{{item.productName}}" class="h-full w-full object-cover">
-                  <i *ngIf="!item.productImageUrl" class="fas fa-box text-slate-300"></i>
+                  <img *ngIf="(item.productImage || item.productImageUrl)" [src]="(item.productImage || item.productImageUrl)" alt="{{item.productName}}" class="h-full w-full object-cover">
+                  <i *ngIf="!(item.productImage || item.productImageUrl)" class="fas fa-box text-slate-300"></i>
                 </div>
               </td>
               <td class="p-4 font-medium text-slate-800">{{ item.productName }}</td>
