@@ -15,6 +15,7 @@ export class PurchaseOrderFormComponent implements OnInit {
   poForm: FormGroup;
   suppliers: any[] = [];
   products: any[] = [];
+  categories: any[] = [];
   isLoading = false;
 
   supplierSearchCtrl = new FormControl('');
@@ -68,13 +69,14 @@ export class PurchaseOrderFormComponent implements OnInit {
       modelName: [''],
       price: [0, [Validators.required, Validators.min(0)]],
       cost: [0, [Validators.required, Validators.min(0)]],
-      categoryId: [null]
+      categoryId: ['', Validators.required]
     });
   }
 
   ngOnInit() {
     this.loadSuppliers();
     this.loadProducts();
+    this.loadCategories();
     this.addItem(); // Add at least one empty item
   }
 
@@ -149,6 +151,13 @@ export class PurchaseOrderFormComponent implements OnInit {
         if (s) this.supplierSearchCtrl.setValue(s.companyName, { emitEvent: false });
       }
     }, 200);
+  }
+
+  loadCategories() {
+    this.http.get<any>('/api/Categories').subscribe({
+      next: (res) => this.categories = res.data || res,
+      error: () => console.error('Failed to load categories')
+    });
   }
 
   loadProducts() {
