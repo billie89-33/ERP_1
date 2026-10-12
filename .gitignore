@@ -381,6 +381,8 @@ dist/
 # Environment Variables
 .env.local
 *.rest
-*.http 
-d o c s /  
- 
+*.http
+
+# Ignored from public repo
+docs/
+.env.example
