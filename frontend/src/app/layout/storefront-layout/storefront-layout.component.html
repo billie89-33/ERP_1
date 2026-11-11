@@ -4,10 +4,10 @@
     <div class="container mx-auto flex items-center justify-between">
       
       <!-- Logo -->
-      <div class="flex items-center gap-2">
-        <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-xl">J</div>
-        <a routerLink="/" class="text-xl font-bold text-white tracking-wide">Jamine IT</a>
-      </div>
+      <a routerLink="/" class="flex items-center gap-2.5 group">
+        <img src="/logo.png" alt="Jamine IT Logo" class="w-10 h-10 object-contain group-hover:scale-105 transition-transform">
+        <span class="text-xl font-bold text-white tracking-wide">Jamine IT</span>
+      </a>
 
       <!-- Center Links (Hidden on small screens) -->
       <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
@@ -37,7 +37,7 @@
         
         <a *ngIf="authService.currentUser()" routerLink="/shop/profile" class="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition ml-2 bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-600">
           <div class="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
-            {{ authService.currentUser().firstName?.charAt(0) || 'U' }}
+            {{ authService.currentUser()?.firstName?.charAt(0) || 'U' }}
           </div>
           <span>บัญชีของฉัน</span>
         </a>

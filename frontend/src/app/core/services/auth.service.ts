@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 import { throwError, Observable, of } from 'rxjs';
+import { AuthUser, LoginCredentials, AuthLoginResponse } from '../models/erp.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,14 +11,14 @@ export class AuthService {
   private http = inject(HttpClient);
   private apiUrl = '/api/auth';
 
-  currentUser = signal<{id: string, username: string, role: string} | null>(null);
+  currentUser = signal<AuthUser | null>(null);
 
   constructor() {
     this.loadUserFromStorage();
   }
 
-  login(credentials: any) {
-    return this.http.post<any>(`${this.apiUrl}/login`, credentials).pipe(
+  login(credentials: LoginCredentials) {
+    return this.http.post<AuthLoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
       tap(res => {
         this.currentUser.set(res.user);
         localStorage.setItem('user', JSON.stringify(res.user));
@@ -45,8 +46,8 @@ export class AuthService {
     ).subscribe();
   }
 
-  checkSession(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/me`).pipe(
+  checkSession(): Observable<AuthUser | null> {
+    return this.http.get<AuthUser>(`${this.apiUrl}/me`).pipe(
       tap(user => {
         this.currentUser.set(user);
         localStorage.setItem('user', JSON.stringify(user));

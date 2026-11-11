@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ApiMessageResponse, GoodsIssueItemForm, SalesOrderDto, SalesOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-goods-issue',
@@ -71,8 +72,8 @@ export class GoodsIssueComponent implements OnInit {
   private router = inject(Router);
 
   soId: string = '';
-  so: any = null;
-  itemsToIssue: any[] = [];
+  so: SalesOrderDto | null = null;
+  itemsToIssue: GoodsIssueItemForm[] = [];
   remarks: string = '';
   
   isLoading = true;
@@ -86,11 +87,11 @@ export class GoodsIssueComponent implements OnInit {
   }
 
   loadSO() {
-    this.http.get<any>(`/api/SalesOrders/${this.soId}`).subscribe({
+    this.http.get<SalesOrderDto>(`/api/SalesOrders/${this.soId}`).subscribe({
       next: (data) => {
         this.so = data;
         // Map items
-        this.itemsToIssue = data.items.map((i: any) => ({
+        this.itemsToIssue = data.items.map((i: SalesOrderItemDto) => ({
           productId: i.productId,
           productName: i.productName,
           orderedQuantity: i.quantity,
@@ -98,7 +99,7 @@ export class GoodsIssueComponent implements OnInit {
         }));
         this.isLoading = false;
       },
-      error: (err) => {
+      error: () => {
         alert('Failed to load SO details');
         this.router.navigate(['/admin/sales-orders']);
       }
@@ -125,8 +126,8 @@ export class GoodsIssueComponent implements OnInit {
       items: items
     };
 
-    this.http.post('/api/GoodsIssues', payload).subscribe({
-      next: (res: any) => {
+    this.http.post<ApiMessageResponse>('/api/GoodsIssues', payload).subscribe({
+      next: () => {
         alert('Goods Issue created successfully! Stock has been deducted.');
         this.router.navigate(['/admin/sales-orders']);
       },

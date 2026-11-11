@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JamineERP.Backend.Controllers;
@@ -23,7 +24,7 @@ public class SalesOrdersController : ControllerBase
     }
 
     // GET: api/SalesOrders
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin")]
     [HttpGet("debug-count")]
     public async Task<IActionResult> DebugCount()
     {
@@ -31,10 +32,11 @@ public class SalesOrdersController : ControllerBase
         return Ok(new { Count = count });
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("debug-user")]
     public IActionResult DebugUser()
     {
-        var roles = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+        var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
         var allClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
         return Ok(new { Roles = roles, AllClaims = allClaims, IdentityName = User.Identity?.Name, IsAuthenticated = User.Identity?.IsAuthenticated });
     }
@@ -131,15 +133,27 @@ public class SalesOrdersController : ControllerBase
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Generate SO Number
+            // 1. Generate SO Number using safe UTC day boundaries
             var today = DateTime.UtcNow;
-            var soCount = await _context.SalesOrders.CountAsync(so => so.OrderDate.Date == today.Date);
+            var startOfDay = DateTime.SpecifyKind(today.Date, DateTimeKind.Utc);
+            var endOfDay = startOfDay.AddDays(1);
+            var soCount = await _context.SalesOrders.CountAsync(so => so.OrderDate >= startOfDay && so.OrderDate < endOfDay);
             var OrderNumber = $"SO{today:yyyyMMdd}-{soCount + 1:D3}";
 
             decimal totalAmount = dto.Items.Sum(i => i.Quantity * i.UnitPrice);
 
-            // Dummy User (Admin)
-            var user = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
+            // Resolve authenticated user from JWT Claims first, fallback to first DB user
+            Guid createdByUserId;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedUserId))
+            {
+                createdByUserId = parsedUserId;
+            }
+            else
+            {
+                var fallbackUser = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
+                createdByUserId = fallbackUser.Id;
+            }
 
             var so = new SalesOrder
             {
@@ -148,7 +162,7 @@ public class SalesOrdersController : ControllerBase
                 Status = "Pending", // เปลี่ยนเป็น Pending เพราะต้องรอส่งของผ่าน GI
                 TotalAmount = totalAmount,
                 CustomerId = dto.CustomerId,
-                CreatedByUserId = user.Id
+                CreatedByUserId = createdByUserId
             };
 
             foreach (var item in dto.Items)

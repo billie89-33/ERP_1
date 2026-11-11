@@ -4,7 +4,8 @@ import { RouterLink, Router } from '@angular/router';
 import { CartService, CheckoutPayload } from '../../../core/services/cart.service';
 import { StorefrontAuthService } from '../../../core/services/storefront-auth.service';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { CheckoutResponse, StorefrontUser } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-cart',
@@ -37,7 +38,7 @@ export class CartComponent implements OnInit {
   ngOnInit() {
     const customer = this.authService.currentUser();
     if (customer) {
-      this.http.get<any>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
+      this.http.get<StorefrontUser>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
         next: (data) => {
           this.checkoutForm.patchValue({
             firstName: data.firstName || '',
@@ -97,7 +98,7 @@ export class CartComponent implements OnInit {
         }))
       };
 
-      const response: any = await this.cartService.submitCheckout(payload);
+      const response: CheckoutResponse = await this.cartService.submitCheckout(payload);
       
       // Navigate to Payment / Order Tracking page instead of home!
       if (response && response.orderId) {
@@ -106,8 +107,9 @@ export class CartComponent implements OnInit {
         alert(`Checkout successful! Order Number: ${response.orderNumber}`);
         this.router.navigate(['/']);
       }
-    } catch (error: any) {
-      alert(`Checkout failed: ${error.error?.error || error.error?.message || error.message}`);
+    } catch (err: unknown) {
+      const httpErr = err as HttpErrorResponse;
+      alert(`Checkout failed: ${httpErr.error?.error || httpErr.error?.message || httpErr.message}`);
     } finally {
       this.isSubmitting = false;
     }

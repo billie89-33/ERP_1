@@ -3,6 +3,7 @@ import { RouterOutlet, RouterLink, Router, RouterLinkActive } from '@angular/rou
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { DashboardStatsDto } from '../../core/models/erp.model';
 
 @Component({
   selector: 'app-admin-layout',
@@ -24,7 +25,7 @@ export class AdminLayoutComponent implements OnInit {
   }
 
   fetchNotifications() {
-    this.http.get<any>('/api/Dashboard/stats', { withCredentials: true }).subscribe({
+    this.http.get<DashboardStatsDto>('/api/Dashboard/stats', { withCredentials: true }).subscribe({
       next: (data) => {
         this.pendingSlipCount = data.pendingSlipVerifications || 0;
       },

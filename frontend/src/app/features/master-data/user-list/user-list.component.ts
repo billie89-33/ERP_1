@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { UserDto, PaginatedResult } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-user-list',
@@ -87,14 +88,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   `
 })
 export class UserListComponent implements OnInit {
-  users: any[] = [];
+  users: UserDto[] = [];
   isLoading = true;
 
   totalCount = 0;
   page = 1;
   pageSize = 10;
   searchQuery = '';
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private http = inject(HttpClient);
 
@@ -104,7 +105,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers() {
     this.isLoading = true;
-    this.http.get<any>(`/api/Users?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<PaginatedResult<UserDto>>(`/api/Users?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.users = data.items;
         this.totalCount = data.totalCount;

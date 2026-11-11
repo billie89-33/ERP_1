@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ProductDto } from '../models/product.model';
+import { CheckoutResponse } from '../models/erp.model';
 import { firstValueFrom } from 'rxjs';
 
 export interface CartItem {
@@ -122,8 +123,8 @@ export class CartService {
     }
   }
 
-  async submitCheckout(payload: CheckoutPayload) {
-    const response = await firstValueFrom(this.http.post<any>(`/api/storefront/checkout`, payload));
+  async submitCheckout(payload: CheckoutPayload): Promise<CheckoutResponse> {
+    const response = await firstValueFrom(this.http.post<CheckoutResponse>(`/api/storefront/checkout`, payload));
     this.clearCart();
     return response;
   }

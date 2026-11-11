@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
+import { StorefrontUser, LoginCredentials, StorefrontRegisterData, StorefrontAuthResponse } from '../models/erp.model';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,7 @@ import { tap } from 'rxjs';
 export class StorefrontAuthService {
   private http = inject(HttpClient);
   
-  currentUser = signal<any>(null);
+  currentUser = signal<StorefrontUser | null>(null);
   
   constructor() {
     this.checkSession();
@@ -25,8 +26,8 @@ export class StorefrontAuthService {
     }
   }
 
-  login(credentials: any) {
-    return this.http.post<any>('/api/StorefrontAuth/login', credentials, { withCredentials: true }).pipe(
+  login(credentials: LoginCredentials) {
+    return this.http.post<StorefrontAuthResponse>('/api/StorefrontAuth/login', credentials, { withCredentials: true }).pipe(
       tap(res => {
         localStorage.setItem('storefront_user', JSON.stringify(res.user));
         if (res.token) localStorage.setItem('jamine_token', res.token);
@@ -35,8 +36,8 @@ export class StorefrontAuthService {
     );
   }
 
-  register(data: any) {
-    return this.http.post<any>('/api/StorefrontAuth/register', data, { withCredentials: true }).pipe(
+  register(data: StorefrontRegisterData) {
+    return this.http.post<StorefrontAuthResponse>('/api/StorefrontAuth/register', data, { withCredentials: true }).pipe(
       tap(res => {
         localStorage.setItem('storefront_user', JSON.stringify(res.user));
         if (res.token) localStorage.setItem('jamine_token', res.token);

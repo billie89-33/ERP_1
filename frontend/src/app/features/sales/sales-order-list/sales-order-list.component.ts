@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { PaginatedResult, SalesOrderDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-sales-order-list',
@@ -15,7 +16,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 export class SalesOrderListComponent implements OnInit {
   private http = inject(HttpClient);
   
-  salesOrders: any[] = [];
+  salesOrders: SalesOrderDto[] = [];
   isLoading = true;
   
   // Pagination State
@@ -24,7 +25,7 @@ export class SalesOrderListComponent implements OnInit {
   pageSize = 10;
   searchQuery = '';
   statusFilter = ''; // 'Checking', 'Pending', etc.
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.loadSOs();
@@ -32,7 +33,7 @@ export class SalesOrderListComponent implements OnInit {
 
   loadSOs() {
     this.isLoading = true;
-    this.http.get<any>(`/api/SalesOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}&status=${this.statusFilter}`).subscribe({
+    this.http.get<PaginatedResult<SalesOrderDto>>(`/api/SalesOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}&status=${this.statusFilter}`).subscribe({
       next: (data) => {
         this.salesOrders = data.items;
         this.totalCount = data.totalCount;

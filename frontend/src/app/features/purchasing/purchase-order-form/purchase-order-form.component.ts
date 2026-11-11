@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { ApiMessageResponse, PaginatedResult, SupplierDto } from '../../../core/models/erp.model';
+import { CategoryDto, PaginatedResponse, ProductDto } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-purchase-order-form',
@@ -13,9 +15,9 @@ import { Router, RouterLink } from '@angular/router';
 })
 export class PurchaseOrderFormComponent implements OnInit {
   poForm: FormGroup;
-  suppliers: any[] = [];
-  products: any[] = [];
-  categories: any[] = [];
+  suppliers: SupplierDto[] = [];
+  products: ProductDto[] = [];
+  categories: CategoryDto[] = [];
   isLoading = false;
 
   supplierSearchCtrl = new FormControl('');
@@ -117,8 +119,14 @@ export class PurchaseOrderFormComponent implements OnInit {
   }
 
   loadSuppliers() {
-    this.http.get<any[]>('/api/Suppliers').subscribe({
-      next: (res: any) => this.suppliers = res.data || res,
+    this.http.get<PaginatedResult<SupplierDto> | SupplierDto[]>('/api/Suppliers').subscribe({
+      next: (res) => {
+        if (Array.isArray(res)) {
+          this.suppliers = res;
+        } else {
+          this.suppliers = res.items || res.data || [];
+        }
+      },
       error: () => console.error('Failed to load suppliers')
     });
   }
@@ -132,7 +140,7 @@ export class PurchaseOrderFormComponent implements OnInit {
     );
   }
 
-  selectSupplier(supplier: any) {
+  selectSupplier(supplier: SupplierDto) {
     this.supplierSearchCtrl.setValue(supplier.companyName, { emitEvent: false });
     this.poForm.patchValue({ supplierId: supplier.id });
     this.showSupplierDropdown = false;
@@ -154,16 +162,18 @@ export class PurchaseOrderFormComponent implements OnInit {
   }
 
   loadCategories() {
-    this.http.get<any>('/api/Categories').subscribe({
-      next: (res) => this.categories = res.data || res,
+    this.http.get<PaginatedResponse<CategoryDto> | CategoryDto[]>('/api/Categories').subscribe({
+      next: (res) => {
+        this.categories = Array.isArray(res) ? res : (res.data || []);
+      },
       error: () => console.error('Failed to load categories')
     });
   }
 
   loadProducts() {
-    this.http.get<any>('/api/Products?limit=100').subscribe({
+    this.http.get<PaginatedResponse<ProductDto> | ProductDto[]>('/api/Products?limit=100').subscribe({
       next: (res) => {
-        this.products = res.data || res;
+        this.products = Array.isArray(res) ? res : (res.data || []);
       },
       error: () => console.error('Failed to load products')
     });
@@ -186,10 +196,10 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.isSavingSupplier = true;
     this.supplierError = '';
 
-    this.http.post('/api/Suppliers', this.supplierForm.value).subscribe({
-      next: (res: any) => {
+    this.http.post<SupplierDto | { data: SupplierDto }>('/api/Suppliers', this.supplierForm.value).subscribe({
+      next: (res) => {
         this.isSavingSupplier = false;
-        const newSupplier = res.data || res;
+        const newSupplier = 'data' in res ? res.data : res;
         
         // Add to local list and select it
         this.suppliers = [newSupplier, ...this.suppliers];
@@ -227,10 +237,10 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.isSavingProduct = true;
     this.productError = '';
 
-    this.http.post('/api/Products', this.productForm.value).subscribe({
-      next: (res: any) => {
+    this.http.post<ProductDto | { data: ProductDto }>('/api/Products', this.productForm.value).subscribe({
+      next: (res) => {
         this.isSavingProduct = false;
-        const newProduct = res.data || res;
+        const newProduct = 'data' in res ? res.data : res;
         
         // Add to local list
         this.products = [newProduct, ...this.products];
@@ -258,8 +268,8 @@ export class PurchaseOrderFormComponent implements OnInit {
     }
     
     this.isLoading = true;
-    this.http.post('/api/PurchaseOrders', this.poForm.value).subscribe({
-      next: (res: any) => {
+    this.http.post<ApiMessageResponse>('/api/PurchaseOrders', this.poForm.value).subscribe({
+      next: (res) => {
         alert(res.message || 'Purchase Order created successfully!');
         this.router.navigate(['/admin/purchase-orders']);
       },
@@ -270,4 +280,3 @@ export class PurchaseOrderFormComponent implements OnInit {
     });
   }
 }
-

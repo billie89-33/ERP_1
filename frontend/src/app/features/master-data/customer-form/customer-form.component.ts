@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CustomerDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-customer-form',
@@ -108,7 +109,7 @@ import { FormsModule } from '@angular/forms';
   `
 })
 export class CustomerFormComponent implements OnInit {
-  customer: any = { customerType: 'B2B', companyName: '', taxId: '', address: '', phone: '', email: '', creditTermDays: 30, creditLimit: 0 };
+  customer: CustomerDto = { customerType: 'B2B', companyName: '', taxId: '', address: '', phone: '', email: '', creditTermDays: 30, creditLimit: 0 };
   isEditMode = false;
   isSaving = false;
   errorMessage = '';
@@ -127,7 +128,7 @@ export class CustomerFormComponent implements OnInit {
   }
 
   loadCustomer() {
-    this.http.get<any>(`/api/Customers/${this.customerId}`).subscribe({
+    this.http.get<CustomerDto>(`/api/Customers/${this.customerId}`).subscribe({
       next: (data) => this.customer = data,
       error: () => this.errorMessage = 'ไม่สามารถโหลดข้อมูลลูกค้าได้'
     });

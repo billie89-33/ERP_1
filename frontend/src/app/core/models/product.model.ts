@@ -1,3 +1,8 @@
+export interface ProductImageDto {
+  url: string;
+  publicId: string;
+}
+
 export interface ProductDto {
   id: string;
   sku: string;
@@ -21,7 +26,7 @@ export interface ProductDto {
   isFeatured: boolean;
   soldCount: number;
   viewCount: number;
-  specifications?: Record<string, any>;
+  specifications?: Record<string, unknown>;
 }
 
 export interface PaginatedResponse<T> {

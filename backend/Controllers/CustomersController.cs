@@ -30,7 +30,7 @@ public class CustomersController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             search = search.ToLower();
-            query = query.Where(c => c.CompanyName.ToLower().Contains(search) || c.TaxId.ToLower().Contains(search) || c.Phone.ToLower().Contains(search));
+            query = query.Where(c => c.CompanyName.ToLower().Contains(search) || (c.TaxId != null && c.TaxId.ToLower().Contains(search)) || (c.Phone != null && c.Phone.ToLower().Contains(search)));
         }
 
         int totalCount = await query.CountAsync();

@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ApiMessageResponse, CompanySettingsDto } from '../../core/models/erp.model';
 
 @Component({
   selector: 'app-settings',
@@ -34,7 +35,7 @@ export class SettingsComponent implements OnInit {
 
   loadSettings() {
     this.isLoading = true;
-    this.http.get<any>('/api/Settings/company').subscribe({
+    this.http.get<CompanySettingsDto>('/api/Settings/company').subscribe({
       next: (data) => {
         this.settingsForm.patchValue({
           companyName: data.companyName,
@@ -44,7 +45,7 @@ export class SettingsComponent implements OnInit {
           email: data.email,
           logoUrl: data.logoUrl
         });
-        this.logoPreview = data.logoUrl;
+        this.logoPreview = data.logoUrl || '';
         this.isLoading = false;
       },
       error: () => {
@@ -54,8 +55,9 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  onFileChange(event: any) {
-    const file = event.target.files[0];
+  onFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
         alert('File size must be less than 2MB');
@@ -79,8 +81,8 @@ export class SettingsComponent implements OnInit {
     this.isSaving = true;
     this.successMessage = '';
 
-    this.http.put('/api/Settings/company', this.settingsForm.value, { withCredentials: true }).subscribe({
-      next: (res: any) => {
+    this.http.put<ApiMessageResponse>('/api/Settings/company', this.settingsForm.value, { withCredentials: true }).subscribe({
+      next: () => {
         this.isSaving = false;
         this.successMessage = 'Company settings saved successfully!';
         setTimeout(() => this.successMessage = '', 3000);

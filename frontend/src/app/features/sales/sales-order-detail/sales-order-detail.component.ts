@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiMessageResponse, CompanySettingsDto, SalesOrderDto, SalesOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-sales-order-detail',
@@ -192,8 +193,8 @@ export class SalesOrderDetailComponent implements OnInit {
   showShippingModal = false;
   shippingCourier = '';
   trackingNumber = '';
-  order: any = null;
-  companySettings: any = null;
+  order: SalesOrderDto | null = null;
+  companySettings: CompanySettingsDto | null = null;
   isLoading = true;
 
   private route = inject(ActivatedRoute);
@@ -210,7 +211,7 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   loadCompanySettings() {
-    this.http.get('/api/Settings/company').subscribe({
+    this.http.get<CompanySettingsDto>('/api/Settings/company').subscribe({
       next: (data) => this.companySettings = data,
       error: (err) => console.error('Failed to load company settings', err)
     });
@@ -223,12 +224,12 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   loadOrder(id: string) {
-    this.http.get(`/api/SalesOrders/${id}`).subscribe({
+    this.http.get<SalesOrderDto>(`/api/SalesOrders/${id}`).subscribe({
       next: (data) => {
         this.order = data;
         this.isLoading = false;
       },
-      error: (err) => {
+      error: () => {
         alert('Failed to load order details');
         this.isLoading = false;
         this.router.navigate(['/admin/sales-orders']);
@@ -238,15 +239,17 @@ export class SalesOrderDetailComponent implements OnInit {
 
   getTotal(): number {
     if (!this.order || !this.order.items) return 0;
-    return this.order.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
+    return this.order.items.reduce((sum: number, item: SalesOrderItemDto) => sum + (item.quantity * item.unitPrice), 0);
   }
 
   cancelOrder() {
+    if (!this.order) return;
+    const orderId = this.order.id;
     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการยกเลิกออเดอร์นี้? (ระบบจะคืนสต๊อกที่จองไว้ทั้งหมด)')) {
-      this.http.put(`/api/SalesOrders/${this.order.id}/cancel`, {}).subscribe({
-        next: (res: any) => {
+      this.http.put<ApiMessageResponse>(`/api/SalesOrders/${orderId}/cancel`, {}).subscribe({
+        next: (res) => {
           alert(res.message);
-          this.loadOrder(this.order.id);
+          this.loadOrder(orderId);
         },
         error: (err) => alert(err.error?.message || 'Failed to cancel order')
       });
@@ -264,23 +267,25 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   confirmShipOrder() {
+    if (!this.order) return;
+    const orderId = this.order.id;
     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการจัดส่งสินค้านี้? (ระบบจะตัดสต๊อกทันที)')) {
       const giPayload = {
-        salesOrderId: this.order.id,
+        salesOrderId: orderId,
         remarks: 'Shipped from SO Details',
         courier: this.shippingCourier,
         trackingNumber: this.trackingNumber,
-        items: this.order.items.map((i: any) => ({
+        items: this.order.items.map((i: SalesOrderItemDto) => ({
           productId: i.productId,
           quantity: i.quantity
         }))
       };
 
-      this.http.post('/api/GoodsIssues', giPayload).subscribe({
-        next: (res: any) => {
+      this.http.post<ApiMessageResponse>('/api/GoodsIssues', giPayload).subscribe({
+        next: (res) => {
           alert(res.message);
           this.showShippingModal = false;
-          this.loadOrder(this.order.id);
+          this.loadOrder(orderId);
         },
         error: (err) => alert(err.error?.message || 'Failed to ship order')
       });
@@ -288,11 +293,13 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   verifyPayment() {
+    if (!this.order) return;
+    const orderId = this.order.id;
     if (confirm('คุณแน่ใจหรือไม่ว่ายอดเงินเข้าบัญชีถูกต้องแล้ว? (กดตกลงเพื่ออนุมัติ)')) {
-      this.http.post(`/api/SalesOrders/${this.order.id}/verify-payment`, {}, { withCredentials: true }).subscribe({
-        next: (res: any) => {
+      this.http.post<ApiMessageResponse>(`/api/SalesOrders/${orderId}/verify-payment`, {}, { withCredentials: true }).subscribe({
+        next: (res) => {
           alert(res.message);
-          this.loadOrder(this.order.id);
+          this.loadOrder(orderId);
         },
         error: (err) => alert(err.error?.message || 'Failed to verify payment')
       });
@@ -300,11 +307,13 @@ export class SalesOrderDetailComponent implements OnInit {
   }
 
   rejectPayment() {
+    if (!this.order) return;
+    const orderId = this.order.id;
     if (confirm('คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธสลิปนี้? ระบบจะแจ้งให้ลูกค้าอัปโหลดสลิปใหม่')) {
-      this.http.post(`/api/SalesOrders/${this.order.id}/reject-payment`, {}, { withCredentials: true }).subscribe({
-        next: (res: any) => {
+      this.http.post<ApiMessageResponse>(`/api/SalesOrders/${orderId}/reject-payment`, {}, { withCredentials: true }).subscribe({
+        next: (res) => {
           alert(res.message);
-          this.loadOrder(this.order.id);
+          this.loadOrder(orderId);
         },
         error: (err) => alert(err.error?.message || 'Failed to reject payment')
       });

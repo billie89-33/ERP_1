@@ -2,6 +2,7 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { SalesOrderDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-order-tracking',
@@ -14,14 +15,14 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
 
   orderId: string | null = null;
-  order: any = null;
+  order: SalesOrderDto | null = null;
   isLoading = true;
   isUploading = false;
   uploadSuccess = false;
 
   countdownText = '';
   isExpired = false;
-  private timerInterval: any;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     this.orderId = this.route.snapshot.paramMap.get('id');
@@ -35,7 +36,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
   }
 
   fetchOrderDetails() {
-    this.http.get<any>(`/api/Storefront/orders/${this.orderId}`, { withCredentials: true }).subscribe({
+    this.http.get<SalesOrderDto>(`/api/Storefront/orders/${this.orderId}`, { withCredentials: true }).subscribe({
       next: (data) => {
         this.order = data;
         this.isLoading = false;
@@ -65,7 +66,7 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
       const distance = expiry - now;
 
       if (distance <= 0) {
-        clearInterval(this.timerInterval);
+        if (this.timerInterval) clearInterval(this.timerInterval);
         this.isExpired = true;
         this.countdownText = '00:00';
         this.fetchOrderDetails();
@@ -77,15 +78,18 @@ export class OrderTrackingComponent implements OnInit, OnDestroy {
     }, 1000);
   }
 
-  onFileSelected(event: any) {
+  onFileSelected(event: Event) {
     if (this.isExpired || this.order?.status === 'Cancelled') return;
 
-    const file: File = event.target.files[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const base64Image = e.target.result;
-        this.uploadSlip(base64Image);
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const base64Image = e.target?.result as string;
+        if (base64Image) {
+          this.uploadSlip(base64Image);
+        }
       };
       reader.readAsDataURL(file);
     }

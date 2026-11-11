@@ -26,7 +26,7 @@ public class SuppliersController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             search = search.ToLower();
-            query = query.Where(s => s.CompanyName.ToLower().Contains(search) || s.TaxId.ToLower().Contains(search));
+            query = query.Where(s => s.CompanyName.ToLower().Contains(search) || (s.TaxId != null && s.TaxId.ToLower().Contains(search)));
         }
 
         int totalCount = await query.CountAsync();

@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { PaginatedResult, PurchaseOrderDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-purchase-order-list',
@@ -15,14 +16,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 export class PurchaseOrderListComponent implements OnInit {
   private http = inject(HttpClient);
 
-  purchaseOrders: any[] = [];
+  purchaseOrders: PurchaseOrderDto[] = [];
   isLoading = true;
 
   totalCount = 0;
   page = 1;
   pageSize = 10;
   searchQuery = '';
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit() {
     this.loadPOs();
@@ -30,7 +31,7 @@ export class PurchaseOrderListComponent implements OnInit {
 
   loadPOs() {
     this.isLoading = true;
-    this.http.get<any>(`/api/PurchaseOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<PaginatedResult<PurchaseOrderDto>>(`/api/PurchaseOrders?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.purchaseOrders = data.items;
         this.totalCount = data.totalCount;

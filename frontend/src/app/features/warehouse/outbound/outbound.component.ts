@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { PaginatedResult, SalesOrderDto, SalesOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-warehouse-outbound',
@@ -62,7 +63,7 @@ export class WarehouseOutboundComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   
-  pendingSOs: any[] = [];
+  pendingSOs: SalesOrderDto[] = [];
   isLoading = true;
 
   ngOnInit() {
@@ -70,10 +71,10 @@ export class WarehouseOutboundComponent implements OnInit {
   }
 
   loadPendingSOs() {
-    this.http.get<any>('/api/SalesOrders?page=1&pageSize=100').subscribe({
+    this.http.get<PaginatedResult<SalesOrderDto>>('/api/SalesOrders?page=1&pageSize=100').subscribe({
       next: (data) => {
         // Filter only Paid and Pending SOs
-        this.pendingSOs = data.items.filter((so: any) => so.status === 'Pending' && so.paymentStatus === 'Paid');
+        this.pendingSOs = data.items.filter((so: SalesOrderDto) => so.status === 'Pending' && so.paymentStatus === 'Paid');
         this.isLoading = false;
       },
       error: (err) => {
@@ -86,12 +87,12 @@ export class WarehouseOutboundComponent implements OnInit {
   shipItems(soId: string) {
     if (confirm('คุณแพ็คสินค้าและจัดส่งเรียบร้อยแล้ว ต้องการตัดสต๊อกใช่หรือไม่?')) {
       // Fetch SO items first
-      this.http.get<any>(`/api/SalesOrders/${soId}`).subscribe({
+      this.http.get<SalesOrderDto>(`/api/SalesOrders/${soId}`).subscribe({
         next: (so) => {
           const giPayload = {
             salesOrderId: soId,
             remarks: 'Auto-shipped from Warehouse Outbound',
-            items: so.items.map((i: any) => ({
+            items: so.items.map((i: SalesOrderItemDto) => ({
               productId: i.productId,
               quantity: i.quantity
             }))

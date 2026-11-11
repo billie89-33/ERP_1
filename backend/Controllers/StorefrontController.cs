@@ -49,7 +49,7 @@ public class StorefrontController : ControllerBase
         {
             // 1. Create or Find Customer (B2C)
             // For now, we just create a new customer record for each checkout or match by Email
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId.ToLower() == dto.Email.ToLower().Trim()); // Using TaxId to store email for B2C temporarily
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId != null && c.TaxId.ToLower() == dto.Email.ToLower().Trim()); // Using TaxId to store email for B2C temporarily
             if (customer == null)
             {
                 customer = new Customer

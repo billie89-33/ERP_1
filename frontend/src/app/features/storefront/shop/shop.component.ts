@@ -190,11 +190,11 @@ export class ShopComponent implements OnInit {
   }
 
   // --- UI Helpers ---
-  getSpecPreview(specs: any): string[] {
+  getSpecPreview(specs: Record<string, unknown> | null | undefined): string[] {
     if (!specs) return [];
     
     // บางสินค้าจาก Mongo มี object ย่อยชื่อ specifications ซ้อนอยู่ข้างใน
-    const targetSpecs = specs.specifications || specs;
+    const targetSpecs = (specs['specifications'] as Record<string, unknown>) || specs;
     
     const ignoredKeys = ['__v', 'tags', 'brand', 'brands', 'image', 'status', 'createdAt', 'updatedAt', 'category', 'description', 'modelName', 'isFeatured', 'soldCount', 'viewCount'];
     

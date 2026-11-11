@@ -21,7 +21,7 @@ export class ProductListComponent implements OnInit {
   limit = 10;
   total = 0;
   search = '';
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
   
   private productService = inject(ProductService);
 
@@ -49,7 +49,7 @@ export class ProductListComponent implements OnInit {
     this.loadProducts();
   }
 
-  toggleFeatured(product: any) {
+  toggleFeatured(product: ProductDto) {
     const originalState = product.isFeatured;
     product.isFeatured = !product.isFeatured; // Optimistic update
     

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApiMessageResponse, CompanySettingsDto, PurchaseOrderDto, PurchaseOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-purchase-order-detail',
@@ -141,8 +142,8 @@ import { AuthService } from '../../../core/services/auth.service';
   `
 })
 export class PurchaseOrderDetailComponent implements OnInit {
-  order: any = null;
-  companySettings: any = null;
+  order: PurchaseOrderDto | null = null;
+  companySettings: CompanySettingsDto | null = null;
   isLoading = true;
   isSubmitting = false;
 
@@ -160,7 +161,7 @@ export class PurchaseOrderDetailComponent implements OnInit {
   }
 
   loadCompanySettings() {
-    this.http.get('/api/Settings/company').subscribe({
+    this.http.get<CompanySettingsDto>('/api/Settings/company').subscribe({
       next: (data) => this.companySettings = data,
       error: (err) => console.error('Failed to load company settings', err)
     });
@@ -174,11 +175,11 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   loadOrder(id: string) {
     this.isLoading = true;
-    this.http.get(`/api/PurchaseOrders/${id}`).subscribe({
-      next: (data: any) => {
+    this.http.get<PurchaseOrderDto>(`/api/PurchaseOrders/${id}`).subscribe({
+      next: (data: PurchaseOrderDto) => {
         // Initialize actualReceivedQty for Goods Receipt UI
         if (data && data.items) {
-          data.items = data.items.map((i: any) => ({
+          data.items = data.items.map((i: PurchaseOrderItemDto) => ({
             ...i,
             actualReceivedQty: i.quantity // Default to full amount
           }));
@@ -196,15 +197,17 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   getTotal(): number {
     if (!this.order || !this.order.items) return 0;
-    return this.order.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitCost), 0);
+    return this.order.items.reduce((sum: number, item: PurchaseOrderItemDto) => sum + (item.quantity * item.unitCost), 0);
   }
 
   cancelOrder() {
     if (confirm('Are you sure you want to cancel this Purchase Order?')) {
-      this.http.put(`/api/PurchaseOrders/${this.order.id}/cancel`, {}).subscribe({
-        next: (res: any) => {
+      if (!this.order) return;
+      const orderId = this.order.id;
+      this.http.put<ApiMessageResponse>(`/api/PurchaseOrders/${orderId}/cancel`, {}).subscribe({
+        next: (res: ApiMessageResponse) => {
           alert(res.message);
-          this.loadOrder(this.order.id);
+          this.loadOrder(orderId);
         },
         error: (err) => alert(err.error?.message || 'Failed to cancel order')
       });
@@ -213,21 +216,23 @@ export class PurchaseOrderDetailComponent implements OnInit {
 
   receiveOrder() {
     if (confirm('ยืนยันการรับสินค้า? ระบบจะนำ "จำนวนที่รับจริง" ไปเพิ่มในสต๊อกทันที')) {
+      if (!this.order) return;
+      const orderId = this.order.id;
       this.isSubmitting = true;
       const grPayload = {
-        purchaseOrderId: this.order.id,
+        purchaseOrderId: orderId,
         remarks: 'Received via Goods Receipt Flow',
-        items: this.order.items.map((i: any) => ({
+        items: this.order.items.map((i: PurchaseOrderItemDto) => ({
           productId: i.productId,
           quantity: i.actualReceivedQty // Fix: API expects 'quantity'
         }))
       };
 
-      this.http.post('/api/GoodsReceipts', grPayload).subscribe({
-        next: (res: any) => {
+      this.http.post<ApiMessageResponse>('/api/GoodsReceipts', grPayload).subscribe({
+        next: (res: ApiMessageResponse) => {
           alert(res.message || 'บันทึกรับสินค้าสำเร็จ!');
           this.isSubmitting = false;
-          this.loadOrder(this.order.id); // Reload to show new status
+          this.loadOrder(orderId); // Reload to show new status
         },
         error: (err) => {
           this.isSubmitting = false;

@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -17,6 +18,7 @@ export class ProductDetailComponent implements OnInit {
   private router = inject(Router);
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private titleService = inject(Title);
 
   // State Signals
   product = signal<ProductDto | null>(null);
@@ -73,7 +75,7 @@ export class ProductDetailComponent implements OnInit {
     if (!p || !p.specifications) return [];
 
     // Unwrap nested specifications if exists
-    const targetSpecs = p.specifications['specifications'] || p.specifications;
+    const targetSpecs = (p.specifications['specifications'] as Record<string, unknown>) || p.specifications;
 
     const ignoredKeys = ['__v', 'tags', 'brand', 'brands', 'image', 'status', 'createdAt', 'updatedAt', 'category', 'description', 'modelName', 'isFeatured', 'soldCount', 'viewCount'];
 
@@ -101,6 +103,10 @@ export class ProductDetailComponent implements OnInit {
       next: (res) => {
         this.product.set(res);
         this.isLoading.set(false);
+        const cleanName = this.parsedProductInfo().name || res.name;
+        if (cleanName) {
+          this.titleService.setTitle(`${cleanName} | Jamine IT`);
+        }
       },
       error: (err) => {
         this.error.set('Failed to load product details.');

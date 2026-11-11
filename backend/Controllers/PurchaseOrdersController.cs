@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JamineERP.Backend.Controllers;
@@ -84,8 +85,18 @@ public class PurchaseOrdersController : ControllerBase
         return Ok(new {
             po.Id,
             po.PoNumber,
+            po.OrderDate,
             po.Status,
+            po.SupplierId,
             SupplierName = po.Supplier.CompanyName,
+            po.ExpectedDeliveryDate,
+            po.Remarks,
+            po.ReferenceNumber,
+            po.PaymentTerms,
+            po.SubTotal,
+            po.VatRate,
+            po.TaxAmount,
+            po.TotalAmount,
             Items = po.PurchaseOrderItems.Select(i => new {
                 i.ProductId,
                 ProductName = i.Product.Name,
@@ -104,9 +115,11 @@ public class PurchaseOrdersController : ControllerBase
             return BadRequest(new { message = "กรุณาระบุสินค้าที่ต้องการสั่งซื้ออย่างน้อย 1 รายการ" });
         }
 
-        // Generate PO Number
+        // Generate PO Number using safe UTC day boundaries
         var today = DateTime.UtcNow;
-        var poCount = await _context.PurchaseOrders.CountAsync(po => po.OrderDate.Date == today.Date);
+        var startOfDay = DateTime.SpecifyKind(today.Date, DateTimeKind.Utc);
+        var endOfDay = startOfDay.AddDays(1);
+        var poCount = await _context.PurchaseOrders.CountAsync(po => po.OrderDate >= startOfDay && po.OrderDate < endOfDay);
         var poNumber = $"PO{today:yyyyMMdd}-{poCount + 1:D3}";
 
         // Calculate Total
@@ -114,8 +127,18 @@ public class PurchaseOrdersController : ControllerBase
         decimal taxAmount = subTotal * (dto.VatRate / 100m);
         decimal totalAmount = subTotal + taxAmount;
 
-        // Dummy User for now (Admin)
-        var user = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found in DB for assignment.");
+        // Resolve authenticated user from JWT Claims first, fallback to first DB user
+        Guid createdByUserId;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userIdClaim) && Guid.TryParse(userIdClaim, out var parsedUserId))
+        {
+            createdByUserId = parsedUserId;
+        }
+        else
+        {
+            var fallbackUser = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found in DB for assignment.");
+            createdByUserId = fallbackUser.Id;
+        }
 
         var po = new PurchaseOrder
         {
@@ -131,7 +154,7 @@ public class PurchaseOrdersController : ControllerBase
             ReferenceNumber = dto.ReferenceNumber,
             PaymentTerms = dto.PaymentTerms,
             SupplierId = dto.SupplierId,
-            CreatedByUserId = user.Id
+            CreatedByUserId = createdByUserId
         };
 
         foreach (var item in dto.Items)

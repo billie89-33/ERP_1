@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { ApiMessageResponse, GoodsReceiptItemForm, PurchaseOrderDto, PurchaseOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-goods-receipt',
@@ -71,8 +72,8 @@ export class GoodsReceiptComponent implements OnInit {
   private router = inject(Router);
 
   poId: string = '';
-  po: any = null;
-  itemsToReceive: any[] = [];
+  po: PurchaseOrderDto | null = null;
+  itemsToReceive: GoodsReceiptItemForm[] = [];
   remarks: string = '';
   
   isLoading = true;
@@ -86,11 +87,11 @@ export class GoodsReceiptComponent implements OnInit {
   }
 
   loadPO() {
-    this.http.get<any>(`/api/PurchaseOrders/${this.poId}`).subscribe({
+    this.http.get<PurchaseOrderDto>(`/api/PurchaseOrders/${this.poId}`).subscribe({
       next: (data) => {
         this.po = data;
         // Map items
-        this.itemsToReceive = data.items.map((i: any) => ({
+        this.itemsToReceive = data.items.map((i: PurchaseOrderItemDto) => ({
           productId: i.productId,
           productName: i.productName,
           orderedQuantity: i.quantity,
@@ -98,7 +99,7 @@ export class GoodsReceiptComponent implements OnInit {
         }));
         this.isLoading = false;
       },
-      error: (err) => {
+      error: () => {
         alert('Failed to load PO details');
         this.router.navigate(['/admin/purchase-orders']);
       }
@@ -126,8 +127,8 @@ export class GoodsReceiptComponent implements OnInit {
       items: items
     };
 
-    this.http.post('/api/GoodsReceipts', payload).subscribe({
-      next: (res: any) => {
+    this.http.post<ApiMessageResponse>('/api/GoodsReceipts', payload).subscribe({
+      next: () => {
         alert('Goods Receipt created successfully! Stock has been updated.');
         this.router.navigate(['/admin/purchase-orders']);
       },

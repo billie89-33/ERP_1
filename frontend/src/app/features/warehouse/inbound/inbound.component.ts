@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { PaginatedResult, PurchaseOrderDto, PurchaseOrderItemDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-warehouse-inbound',
@@ -62,7 +63,7 @@ export class WarehouseInboundComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   
-  pendingPOs: any[] = [];
+  pendingPOs: PurchaseOrderDto[] = [];
   isLoading = true;
 
   ngOnInit() {
@@ -70,10 +71,11 @@ export class WarehouseInboundComponent implements OnInit {
   }
 
   loadPendingPOs() {
-    this.http.get<any[]>('/api/PurchaseOrders').subscribe({
+    this.http.get<PaginatedResult<PurchaseOrderDto> | PurchaseOrderDto[]>('/api/PurchaseOrders?page=1&pageSize=100').subscribe({
       next: (data) => {
-        // Filter only Approved POs (ready to receive)
-        this.pendingPOs = data.filter(po => po.status === 'Approved');
+        const list = Array.isArray(data) ? data : (data.items || []);
+        // Filter Pending or Approved POs (ready to receive)
+        this.pendingPOs = list.filter((po: PurchaseOrderDto) => po.status === 'Pending' || po.status === 'Approved');
         this.isLoading = false;
       },
       error: (err) => {
@@ -87,12 +89,12 @@ export class WarehouseInboundComponent implements OnInit {
     if (confirm('คุณได้รับสินค้าเรียบร้อยแล้วและต้องการนำเข้าสต๊อกใช่หรือไม่?')) {
       // For simplicity, we create a full Goods Receipt with 1 click
       // We need to fetch the PO items first to know the quantities
-      this.http.get<any>(`/api/PurchaseOrders/${poId}`).subscribe({
+      this.http.get<PurchaseOrderDto>(`/api/PurchaseOrders/${poId}`).subscribe({
         next: (po) => {
           const grPayload = {
             purchaseOrderId: poId,
             remarks: 'Auto-received from Warehouse Inbound',
-            items: po.items.map((i: any) => ({
+            items: po.items.map((i: PurchaseOrderItemDto) => ({
               productId: i.productId,
               quantity: i.quantity
             }))

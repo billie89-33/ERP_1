@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule, Validators } 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { HttpClient } from '@angular/common/http';
+import { CategoryDto } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-product-form',
@@ -16,7 +17,7 @@ export class ProductFormComponent implements OnInit {
   productForm: FormGroup;
   isEditMode = false;
   productId: string | null = null;
-  categories: any[] = [];
+  categories: CategoryDto[] = [];
   
   // Dynamic Specs Array instead of raw text
   dynamicSpecs: { key: string, value: string }[] = [
@@ -98,8 +99,9 @@ export class ProductFormComponent implements OnInit {
 
   cloudinaryPublicId: string | null = null;
 
-  onFileSelected(event: any) {
-    const file: File = event.target.files[0];
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
 
     this.isUploadingImage = true;
@@ -108,7 +110,7 @@ export class ProductFormComponent implements OnInit {
       // Edit Mode
       this.productService.uploadProductImage(this.productId, file).subscribe({
         next: (res) => {
-          this.imageUrl = res.imageUrl;
+          this.imageUrl = res.imageUrl || res.image?.url || null;
           this.isUploadingImage = false;
         },
         error: (err) => {
@@ -121,9 +123,9 @@ export class ProductFormComponent implements OnInit {
       const formData = new FormData();
       formData.append('file', file);
       
-      this.http.post<any>('/api/products/upload-temp-image', formData).subscribe({
+      this.http.post<{ imageUrl: string; publicId: string; image?: { url: string } }>('/api/products/upload-temp-image', formData).subscribe({
         next: (res) => {
-          this.imageUrl = res.imageUrl;
+          this.imageUrl = res.imageUrl || res.image?.url || null;
           this.cloudinaryPublicId = res.publicId;
           this.isUploadingImage = false;
         },
@@ -137,7 +139,7 @@ export class ProductFormComponent implements OnInit {
 
   loadCategories() {
     // For now, call direct API or mock
-    this.http.get<any[]>('/api/categories').subscribe(
+    this.http.get<CategoryDto[]>('/api/categories').subscribe(
       res => this.categories = res,
       err => {
         // Fallback mock if category table is empty or api fails
@@ -153,7 +155,7 @@ export class ProductFormComponent implements OnInit {
     if (this.productForm.invalid) return;
 
     // Convert Dynamic Array back to JSON Object for backend
-    const specsObj: any = {};
+    const specsObj: Record<string, string> = {};
     for (const spec of this.dynamicSpecs) {
       if (spec.key.trim() !== '') {
         specsObj[spec.key.trim()] = spec.value.trim();

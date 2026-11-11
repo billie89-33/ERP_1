@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JamineERP.Backend.Controllers;
@@ -59,7 +61,7 @@ public class GoodsReceiptsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateGoodsReceipt(CreateGoodsReceiptDto dto)
     {
-        if (dto.Items == null || !dto.Items.Any())
+        if (dto.Items == null || !dto.Items.Any() || dto.Items.All(i => i.Quantity <= 0))
             return BadRequest(new { message = "กรุณาระบุสินค้าที่รับเข้าอย่างน้อย 1 รายการ" });
 
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -75,11 +77,19 @@ public class GoodsReceiptsController : ControllerBase
             if (po.Status == "Received")
                 return BadRequest(new { message = "ใบสั่งซื้อนี้รับของครบแล้ว" }); // Simplified for now
 
-            // Check if user is logged in (Dummy user for now)
-            var user = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            User? user = null;
+            if (Guid.TryParse(userIdClaim, out var parsedUserId))
+            {
+                user = await _context.Users.FindAsync(parsedUserId);
+            }
+            user ??= await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
 
             var today = DateTime.UtcNow;
-            var grCount = await _context.GoodsReceipts.CountAsync(gr => gr.ReceiptDate.Date == today.Date);
+            var startOfDay = today.Date;
+            var endOfDay = startOfDay.AddDays(1);
+            var grCount = await _context.GoodsReceipts.CountAsync(gr => gr.ReceiptDate >= startOfDay && gr.ReceiptDate < endOfDay);
             var grNumber = $"GR{today:yyyyMMdd}-{grCount + 1:D3}";
 
             var gr = new GoodsReceipt
@@ -94,12 +104,15 @@ public class GoodsReceiptsController : ControllerBase
 
             foreach (var itemDto in dto.Items)
             {
+                if (itemDto.Quantity < 0)
+                    throw new Exception("จำนวนรับเข้าต้องไม่ติดลบ");
+
+                if (itemDto.Quantity == 0)
+                    continue;
+
                 var poItem = po.PurchaseOrderItems.FirstOrDefault(i => i.ProductId == itemDto.ProductId);
                 if (poItem == null)
                     throw new Exception($"สินค้ารหัส {itemDto.ProductId} ไม่มีในใบสั่งซื้อ {po.PoNumber}");
-
-                if (itemDto.Quantity <= 0)
-                    throw new Exception("จำนวนรับเข้าต้องมากกว่า 0");
 
                 var product = await _context.Products.FindAsync(itemDto.ProductId);
                 if (product == null)

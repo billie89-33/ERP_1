@@ -9,6 +9,7 @@ export const routes: Routes = [
   // 🔐 Auth Module
   {
     path: 'login',
+    title: 'Admin Login | Jamine ERP',
     component: LoginComponent
   },
 
@@ -17,34 +18,36 @@ export const routes: Routes = [
     path: '',
     component: StorefrontLayoutComponent,
     children: [
-      { path: '', loadComponent: () => import('./features/storefront/home/home.component').then(m => m.HomeComponent) },
-      { path: 'shop', loadComponent: () => import('./features/storefront/shop/shop.component').then(m => m.ShopComponent) },
-      { path: 'product/:id', loadComponent: () => import('./features/storefront/product-detail/product-detail.component').then(m => m.ProductDetailComponent) },
-      { path: 'cart', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) },
-      { path: 'shop/profile', loadComponent: () => import('./features/storefront/customer-portal/customer-portal.component').then(m => m.CustomerPortalComponent) },
-      { path: 'shop/orders/:id', loadComponent: () => import('./features/storefront/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent) }
+      { path: '', title: 'Home | Jamine IT', loadComponent: () => import('./features/storefront/home/home.component').then(m => m.HomeComponent) },
+      { path: 'shop', title: 'Products | Jamine IT', loadComponent: () => import('./features/storefront/shop/shop.component').then(m => m.ShopComponent) },
+      { path: 'product/:id', title: 'Product Details | Jamine IT', loadComponent: () => import('./features/storefront/product-detail/product-detail.component').then(m => m.ProductDetailComponent) },
+      { path: 'cart', title: 'Shopping Cart | Jamine IT', loadComponent: () => import('./features/storefront/cart/cart.component').then(m => m.CartComponent) },
+      { path: 'shop/profile', title: 'My Account | Jamine IT', loadComponent: () => import('./features/storefront/customer-portal/customer-portal.component').then(m => m.CustomerPortalComponent) },
+      { path: 'shop/orders/:id', title: 'Order Tracking | Jamine IT', loadComponent: () => import('./features/storefront/order-tracking/order-tracking.component').then(m => m.OrderTrackingComponent) }
     ]
   },
 
   // Customer Login (No Navbar)
   { 
     path: 'shop/login', 
+    title: 'Sign In | Jamine IT',
     loadComponent: () => import('./features/storefront/auth/auth.component').then(m => m.AuthComponent) 
   },
 
   // 👨‍💼 โซน B: Admin / ERP Back-Office (หลังบ้านพนักงาน)
   {
     path: 'admin',
+    title: 'Admin Portal | Jamine ERP',
     component: AdminLayoutComponent,
     canActivate: [authGuard], 
     children: [
-      { path: 'dashboard', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'dashboard', title: 'Dashboard | Jamine ERP', loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       
       // 📦 Product & Inventory
-      { path: 'products', loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent) },
-      { path: 'products/create', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
-      { path: 'products/edit/:id', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
+      { path: 'products', title: 'Products | Jamine ERP', loadComponent: () => import('./features/products/product-list/product-list.component').then(m => m.ProductListComponent) },
+      { path: 'products/create', title: 'Create Product | Jamine ERP', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
+      { path: 'products/edit/:id', title: 'Edit Product | Jamine ERP', loadComponent: () => import('./features/products/product-form/product-form.component').then(m => m.ProductFormComponent) },
       
       // 💰 Sales & CRM
       { 

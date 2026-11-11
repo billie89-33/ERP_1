@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { UserDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-user-form',
@@ -87,7 +88,7 @@ import { FormsModule } from '@angular/forms';
   `
 })
 export class UserFormComponent implements OnInit {
-  user: any = { username: '', password: '', role: 'Sales', firstName: '', lastName: '', email: '' };
+  user: UserDto = { username: '', password: '', role: 'Sales', firstName: '', lastName: '', email: '' };
   isEditMode = false;
   isSaving = false;
   errorMessage = '';
@@ -106,7 +107,7 @@ export class UserFormComponent implements OnInit {
   }
 
   loadUser() {
-    this.http.get<any>(`/api/Users/${this.userId}`).subscribe({
+    this.http.get<UserDto>(`/api/Users/${this.userId}`).subscribe({
       next: (data) => {
         this.user.username = data.username;
         this.user.role = data.role;
@@ -123,7 +124,7 @@ export class UserFormComponent implements OnInit {
     this.isSaving = true;
     this.errorMessage = '';
 
-    let payload: any;
+    let payload: Partial<UserDto>;
     if (this.isEditMode) {
       payload = { 
         username: this.user.username, 
@@ -136,7 +137,7 @@ export class UserFormComponent implements OnInit {
         payload.newPassword = this.user.password;
       }
     } else {
-      payload = this.user;
+      payload = { ...this.user };
     }
 
     const req = this.isEditMode 

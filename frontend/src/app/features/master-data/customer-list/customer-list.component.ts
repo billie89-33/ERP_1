@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { CustomerDto, PaginatedResult } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-customer-list',
@@ -84,14 +85,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   `
 })
 export class CustomerListComponent implements OnInit {
-  customers: any[] = [];
+  customers: CustomerDto[] = [];
   isLoading = true;
 
   totalCount = 0;
   page = 1;
   pageSize = 10;
   searchQuery = '';
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private http = inject(HttpClient);
 
@@ -101,7 +102,7 @@ export class CustomerListComponent implements OnInit {
 
   loadCustomers() {
     this.isLoading = true;
-    this.http.get<any>(`/api/Customers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<PaginatedResult<CustomerDto>>(`/api/Customers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.customers = data.items;
         this.totalCount = data.totalCount;

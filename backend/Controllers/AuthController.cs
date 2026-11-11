@@ -4,6 +4,7 @@ using System.Text;
 using JamineERP.Backend.Data;
 using JamineERP.Backend.DTOs;
 using JamineERP.Backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -25,6 +26,7 @@ public class AuthController : ControllerBase
         _env = env;
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
@@ -82,20 +84,21 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
-    [Microsoft.AspNetCore.Authorization.Authorize]
+    [Authorize]
     [HttpGet("me")]
     public IActionResult GetCurrentUser()
     {
         // Read from JWT Claims
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
-        var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-        var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var username = User.FindFirst(ClaimTypes.Name)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
         if (userId == null) return Unauthorized();
 
         return Ok(new { Id = userId, Username = username, Role = role });
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpGet("reset-admin")]
     public async Task<IActionResult> ResetAdmin()
     {

@@ -74,7 +74,7 @@ public class StorefrontAuthController : ControllerBase
 
             // 3. Create or Update Customer Profile (B2C)
             // Sometimes they checked out as guest before, so a Customer might exist with TaxId = Email
-            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId.ToLower() == dto.Email.ToLower());
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.TaxId != null && c.TaxId.ToLower() == dto.Email.ToLower());
             if (customer == null)
             {
                 customer = new Customer

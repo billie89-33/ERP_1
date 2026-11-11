@@ -1,8 +1,9 @@
-import { Component, inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
+import { DashboardStatsDto, DashboardChartPointDto } from '../../core/models/erp.model';
 
 Chart.register(...registerables);
 
@@ -14,14 +15,14 @@ Chart.register(...registerables);
 })
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
-  stats: any = null;
+  stats: DashboardStatsDto | null = null;
   isLoading = true;
-  chart: any;
+  chart: Chart | null = null;
 
-  @ViewChild('salesChart') salesChartRef!: ElementRef;
+  @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
 
   ngOnInit() {
-    this.http.get('/api/Dashboard/stats').subscribe({
+    this.http.get<DashboardStatsDto>('/api/Dashboard/stats').subscribe({
       next: (data) => {
         this.stats = data;
         this.isLoading = false;
@@ -40,9 +41,10 @@ export class DashboardComponent implements OnInit {
     if (!this.salesChartRef || !this.stats?.chartData) return;
 
     const ctx = this.salesChartRef.nativeElement.getContext('2d');
+    if (!ctx) return;
     
-    const labels = this.stats.chartData.map((d: any) => d.date);
-    const dataPoints = this.stats.chartData.map((d: any) => d.amount);
+    const labels = this.stats.chartData.map((d: DashboardChartPointDto) => d.date);
+    const dataPoints = this.stats.chartData.map((d: DashboardChartPointDto) => d.amount);
 
     this.chart = new Chart(ctx, {
       type: 'line',

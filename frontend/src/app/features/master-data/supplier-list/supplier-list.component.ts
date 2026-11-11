@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { SupplierDto, PaginatedResult } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-supplier-list',
@@ -79,14 +80,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   `
 })
 export class SupplierListComponent implements OnInit {
-  suppliers: any[] = [];
+  suppliers: SupplierDto[] = [];
   isLoading = true;
 
   totalCount = 0;
   page = 1;
   pageSize = 10;
   searchQuery = '';
-  searchTimeout: any;
+  searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private http = inject(HttpClient);
 
@@ -96,7 +97,7 @@ export class SupplierListComponent implements OnInit {
 
   loadSuppliers() {
     this.isLoading = true;
-    this.http.get<any>(`/api/Suppliers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
+    this.http.get<PaginatedResult<SupplierDto>>(`/api/Suppliers?page=${this.page}&pageSize=${this.pageSize}&search=${this.searchQuery}`).subscribe({
       next: (data) => {
         this.suppliers = data.items;
         this.totalCount = data.totalCount;

@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ProductDto, PaginatedResponse, FilterOptionsDto, CategoryDto, FilterState } from '../models/product.model';
+import { ProductDto, PaginatedResponse, FilterOptionsDto, CategoryDto, FilterState, ProductImageDto } from '../models/product.model';
+import { FeaturedProductDto } from '../models/erp.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +12,8 @@ export class ProductService {
   private apiUrl = '/api/products';
   private catUrl = '/api/categories';
 
-  getFeaturedProducts() {
-    return this.http.get<any[]>(`${this.apiUrl}/featured`);
+  getFeaturedProducts(): Observable<FeaturedProductDto[]> {
+    return this.http.get<FeaturedProductDto[]>(`${this.apiUrl}/featured`);
   }
 
   getProducts(state: Partial<FilterState>): Observable<PaginatedResponse<ProductDto>> {
@@ -73,6 +74,6 @@ export class ProductService {
   uploadProductImage(id: string, file: File) {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post<any>(`${this.apiUrl}/${id}/image`, formData);
+    return this.http.post<{ imageUrl?: string; image?: ProductImageDto; message?: string }>(`${this.apiUrl}/${id}/image`, formData);
   }
 }

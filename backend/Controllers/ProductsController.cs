@@ -90,7 +90,7 @@ public class ProductsController : ControllerBase
         if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
 
         // Fetch to memory for complex JSONB filtering (brands and dynamic specs)
-        var productsList = await query.OrderByDescending(p => p.Id).ToListAsync();
+        var productsList = await query.AsNoTracking().OrderByDescending(p => p.Id).Select(p => new Product { Id = p.Id, Sku = p.Sku, Name = p.Name, Brand = p.Brand, ModelName = p.ModelName, Description = p.Description, Price = p.Price, Cost = p.Cost, OnHandQuantity = p.OnHandQuantity, ReservedQuantity = p.ReservedQuantity, Tags = p.Tags, Status = p.Status, IsFeatured = p.IsFeatured, SoldCount = p.SoldCount, ViewCount = p.ViewCount, Specifications = p.Specifications, CategoryId = p.CategoryId, Category = p.Category, Image = p.Image }).ToListAsync();
 
         // 1. Filter Brands
         if (brands != null && brands.Any())
@@ -100,6 +100,7 @@ public class ProductsController : ControllerBase
             {
                 if (p.Specifications == null) return false;
                 var root = p.Specifications.RootElement;
+                if (!string.IsNullOrEmpty(p.Brand) && brandSet.Contains(p.Brand.ToLower())) return true;
                 if (root.TryGetProperty("brand", out var b1)) return brandSet.Contains(b1.ToString().ToLower());
                 if (root.TryGetProperty("Brands", out var b2)) return brandSet.Contains(b2.ToString().ToLower());
                 return false;

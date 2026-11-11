@@ -3,6 +3,8 @@ import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
+import { FeaturedProductDto } from '../../../core/models/erp.model';
+import { ProductDto } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-home',
@@ -15,7 +17,7 @@ export class HomeComponent implements OnInit {
   
   productService = inject(ProductService);
   cartService = inject(CartService);
-  newProducts: any[] = [];
+  newProducts: FeaturedProductDto[] = [];
   isLoading = true;
 
   ngOnInit() {
@@ -37,10 +39,31 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  addToCart(event: Event, product: any) {
+  addToCart(event: Event, product: FeaturedProductDto) {
     event.preventDefault();
     event.stopPropagation();
-    this.cartService.addToCart({ id: product.id, name: product.name, price: product.price, availableQuantity: 99, image: { url: product.imageUrl } } as any, 1);
+    const cartProduct: ProductDto = {
+      id: product.id,
+      sku: '',
+      name: product.name,
+      brand: '',
+      modelName: '',
+      description: '',
+      price: product.price,
+      cost: 0,
+      onHandQuantity: 99,
+      reservedQuantity: 0,
+      availableQuantity: 99,
+      categoryId: '',
+      categoryName: product.categoryName,
+      image: { url: product.imageUrl || '', publicId: '' },
+      tags: [],
+      status: 'Active',
+      isFeatured: true,
+      soldCount: 0,
+      viewCount: 0
+    };
+    this.cartService.addToCart(cartProduct, 1);
     alert(product.name + ' ถูกเพิ่มลงตะกร้าแล้ว!');
   }
 

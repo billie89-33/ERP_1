@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace JamineERP.Backend.Controllers;
@@ -77,11 +79,19 @@ public class GoodsIssuesController : ControllerBase
             if (so.Status == "Shipped")
                 return BadRequest(new { message = "ใบสั่งขายนี้ถูกตัดสต็อกไปแล้ว" });
 
-            // Dummy user
-            var user = await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            User? user = null;
+            if (Guid.TryParse(userIdClaim, out var parsedUserId))
+            {
+                user = await _context.Users.FindAsync(parsedUserId);
+            }
+            user ??= await _context.Users.FirstOrDefaultAsync() ?? throw new Exception("No user found.");
 
             var today = DateTime.UtcNow;
-            var giCount = await _context.GoodsIssues.CountAsync(gi => gi.IssueDate.Date == today.Date);
+            var startOfDay = today.Date;
+            var endOfDay = startOfDay.AddDays(1);
+            var giCount = await _context.GoodsIssues.CountAsync(gi => gi.IssueDate >= startOfDay && gi.IssueDate < endOfDay);
             var giNumber = $"GI{today:yyyyMMdd}-{giCount + 1:D3}";
 
             var gi = new GoodsIssue
@@ -116,6 +126,7 @@ public class GoodsIssuesController : ControllerBase
 
                 product.OnHandQuantity -= itemDto.Quantity;
                 product.ReservedQuantity -= itemDto.Quantity;
+                product.SoldCount += itemDto.Quantity;
 
                 gi.GoodsIssueItems.Add(new GoodsIssueItem
                 {

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
+import { ApiMessageResponse, CustomerDto, PaginatedResult } from '../../../core/models/erp.model';
+import { PaginatedResponse, ProductDto } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-sales-order-form',
@@ -16,8 +18,8 @@ export class SalesOrderFormComponent implements OnInit {
   quickCustomerForm: FormGroup;
   showQuickCustomerModal = false;
   isSavingCustomer = false;
-  customers: any[] = [];
-  products: any[] = [];
+  customers: CustomerDto[] = [];
+  products: ProductDto[] = [];
   isLoading = false;
 
   customerSearchCtrl = new FormControl('');
@@ -33,24 +35,23 @@ export class SalesOrderFormComponent implements OnInit {
       items: this.fb.array([])
     });
       
-      this.quickCustomerForm = this.fb.group({
-        customerType: ['B2B', Validators.required],
-        companyName: ['', Validators.required],
-        taxId: [''],
-        phone: [''],
-        address: ['']
-      });
+    this.quickCustomerForm = this.fb.group({
+      customerType: ['B2B', Validators.required],
+      companyName: ['', Validators.required],
+      taxId: [''],
+      phone: [''],
+      address: ['']
+    });
 
-      this.quickCustomerForm.get('customerType')?.valueChanges.subscribe(type => {
-        const taxIdControl = this.quickCustomerForm.get('taxId');
-        if (type === 'B2B') {
-          taxIdControl?.setValidators([Validators.required, Validators.minLength(13), Validators.maxLength(13)]);
-        } else {
-          taxIdControl?.clearValidators();
-        }
-        taxIdControl?.updateValueAndValidity();
-      });
-
+    this.quickCustomerForm.get('customerType')?.valueChanges.subscribe(type => {
+      const taxIdControl = this.quickCustomerForm.get('taxId');
+      if (type === 'B2B') {
+        taxIdControl?.setValidators([Validators.required, Validators.minLength(13), Validators.maxLength(13)]);
+      } else {
+        taxIdControl?.clearValidators();
+      }
+      taxIdControl?.updateValueAndValidity();
+    });
 
     // Handle customer search filtering natively
     this.customerSearchCtrl.valueChanges.subscribe((val: string | null) => {
@@ -102,7 +103,6 @@ export class SalesOrderFormComponent implements OnInit {
     }, 0);
   }
 
-  
   openQuickCustomerModal() {
     this.quickCustomerForm.reset({ customerType: 'B2B' });
     this.showQuickCustomerModal = true;
@@ -121,16 +121,16 @@ export class SalesOrderFormComponent implements OnInit {
     this.isSavingCustomer = true;
     const data = this.quickCustomerForm.value;
 
-    this.http.post('/api/Customers', data).subscribe({
-      next: (res: any) => {
+    this.http.post<CustomerDto>('/api/Customers', data).subscribe({
+      next: (res) => {
         alert('เพิ่มลูกค้าใหม่เรียบร้อยแล้ว');
         this.isSavingCustomer = false;
         this.showQuickCustomerModal = false;
         
         // Reload customers and auto-select
-        this.http.get<any[]>('/api/Customers').subscribe({
-          next: (customersRes: any) => {
-            this.customers = customersRes.data || customersRes;
+        this.http.get<PaginatedResult<CustomerDto> | CustomerDto[]>('/api/Customers').subscribe({
+          next: (customersRes) => {
+            this.customers = Array.isArray(customersRes) ? customersRes : (customersRes.items || customersRes.data || []);
             const newCustomer = this.customers.find(c => c.id === res.id);
             if (newCustomer) {
               this.selectCustomer(newCustomer);
@@ -146,8 +146,10 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   loadCustomers() {
-    this.http.get<any[]>('/api/Customers').subscribe({
-      next: (res: any) => this.customers = res.data || res,
+    this.http.get<PaginatedResult<CustomerDto> | CustomerDto[]>('/api/Customers').subscribe({
+      next: (res) => {
+        this.customers = Array.isArray(res) ? res : (res.items || res.data || []);
+      },
       error: () => console.error('Failed to load customers')
     });
   }
@@ -162,8 +164,8 @@ export class SalesOrderFormComponent implements OnInit {
     );
   }
 
-  selectCustomer(customer: any) {
-    const displayName = customer.customerType === 'B2B' ? customer.companyName : (customer.companyName || customer.firstName + ' ' + customer.lastName);
+  selectCustomer(customer: CustomerDto) {
+    const displayName = customer.customerType === 'B2B' ? customer.companyName : (customer.companyName || (customer.firstName || '') + ' ' + (customer.lastName || ''));
     this.customerSearchCtrl.setValue(displayName, { emitEvent: false });
     this.soForm.patchValue({ customerId: customer.id });
     this.showCustomerDropdown = false;
@@ -177,7 +179,7 @@ export class SalesOrderFormComponent implements OnInit {
       } else {
         const c = this.customers.find(x => x.id === this.soForm.value.customerId);
         if (c) {
-          const displayName = c.customerType === 'B2B' ? c.companyName : (c.companyName || c.firstName + ' ' + c.lastName);
+          const displayName = c.customerType === 'B2B' ? c.companyName : (c.companyName || (c.firstName || '') + ' ' + (c.lastName || ''));
           this.customerSearchCtrl.setValue(displayName, { emitEvent: false });
         }
       }
@@ -185,9 +187,9 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   loadProducts() {
-    this.http.get<any>('/api/Products?limit=100').subscribe({
+    this.http.get<PaginatedResponse<ProductDto> | ProductDto[]>('/api/Products?limit=100').subscribe({
       next: (res) => {
-        this.products = res.data || res;
+        this.products = Array.isArray(res) ? res : (res.data || []);
       },
       error: () => console.error('Failed to load products')
     });
@@ -201,8 +203,8 @@ export class SalesOrderFormComponent implements OnInit {
     }
     
     this.isLoading = true;
-    this.http.post('/api/SalesOrders', this.soForm.value).subscribe({
-      next: (res: any) => {
+    this.http.post<ApiMessageResponse>('/api/SalesOrders', this.soForm.value).subscribe({
+      next: (res) => {
         alert(res.message || 'Sales Order created successfully!');
         this.router.navigate(['/admin/sales-orders']);
       },
@@ -213,4 +215,3 @@ export class SalesOrderFormComponent implements OnInit {
     });
   }
 }
-

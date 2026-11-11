@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { StorefrontAuthService } from '../../../core/services/storefront-auth.service';
+import { SalesOrderDto, StorefrontUser } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-customer-portal',
@@ -17,12 +18,12 @@ export class CustomerPortalComponent implements OnInit {
   router = inject(Router);
   fb = inject(FormBuilder);
 
-  orders: any[] = [];
+  orders: SalesOrderDto[] = [];
   isLoading = true;
   isSavingProfile = false;
   profileSaveSuccess = false;
   isEditMode = false;
-  profileData: any = null;
+  profileData: StorefrontUser | null = null;
 
   profileForm: FormGroup = this.fb.group({
     firstName: ['', Validators.required],
@@ -41,7 +42,7 @@ export class CustomerPortalComponent implements OnInit {
   }
 
   fetchProfile() {
-    this.http.get<any>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
+    this.http.get<StorefrontUser>('/api/StorefrontAuth/profile', { withCredentials: true }).subscribe({
       next: (data) => {
         this.profileData = data;
         this.profileForm.patchValue({
@@ -108,7 +109,7 @@ export class CustomerPortalComponent implements OnInit {
   }
 
   fetchOrders() {
-    this.http.get<any[]>('/api/Storefront/my-orders', { withCredentials: true }).subscribe({
+    this.http.get<SalesOrderDto[]>('/api/Storefront/my-orders', { withCredentials: true }).subscribe({
       next: (data) => {
         this.orders = data;
         this.isLoading = false;

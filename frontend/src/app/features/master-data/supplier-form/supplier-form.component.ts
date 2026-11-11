@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SupplierDto } from '../../../core/models/erp.model';
 
 @Component({
   selector: 'app-supplier-form',
@@ -79,7 +80,7 @@ import { FormsModule } from '@angular/forms';
   `
 })
 export class SupplierFormComponent implements OnInit {
-  supplier: any = { companyName: '', taxId: '', contactName: '', phone: '', address: '', creditTermDays: 30 };
+  supplier: SupplierDto = { companyName: '', taxId: '', contactName: '', phone: '', address: '', creditTermDays: 30 };
   isEditMode = false;
   isSaving = false;
   errorMessage = '';
@@ -98,7 +99,7 @@ export class SupplierFormComponent implements OnInit {
   }
 
   loadSupplier() {
-    this.http.get<any>(`/api/Suppliers/${this.supplierId}`).subscribe({
+    this.http.get<SupplierDto>(`/api/Suppliers/${this.supplierId}`).subscribe({
       next: (data) => this.supplier = data,
       error: () => this.errorMessage = 'ไม่สามารถโหลดข้อมูลซัพพลายเออร์ได้'
     });
