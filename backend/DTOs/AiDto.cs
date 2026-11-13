@@ -15,7 +15,7 @@ public class AiStatusDto
 {
     public bool ApiKeyConfigured { get; set; }
     public string EmbeddingModel { get; set; } = "gemini-embedding-001";
-    public string ChatModel { get; set; } = "gemini-2.5-flash";
+    public string ChatModel { get; set; } = "gemini-3-flash-preview";
     public AiModuleCountDto Products { get; set; } = new();
     public AiModuleCountDto SalesOrders { get; set; } = new();
     public AiModuleCountDto PurchaseOrders { get; set; } = new();

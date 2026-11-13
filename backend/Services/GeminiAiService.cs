@@ -99,7 +99,7 @@ public class GeminiAiService : IGeminiAiService
         var apiKey = GetApiKey();
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            return "ขณะนี้ยังไม่ได้ตั้งค่า GEMINI_API_KEY ในระบบ กรุณาตั้งค่าในไฟล์ .env เพื่อเปิดใช้งานผู้ช่วย AI ครับ";
+            return "ขออภัยครับ ขณะนี้ระบบผู้ช่วย AI กำลังปิดปรับปรุงชั่วคราว กรุณาลองใหม่อีกครั้งภายหลังครับ";
         }
 
         var contents = new List<object>();
@@ -123,7 +123,13 @@ public class GeminiAiService : IGeminiAiService
             parts = new[] { new { text = userPrompt } }
         });
 
-        var modelsToTry = new[] { "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash" };
+        var modelsToTry = new[]
+        {
+            "gemini-3-flash-preview",
+            "gemini-3.1-flash-lite-preview",
+            "gemini-3.8-flash",
+            "gemini-flash-latest"
+        };
         string lastError = string.Empty;
 
         foreach (var modelName in modelsToTry)
@@ -184,7 +190,7 @@ public class GeminiAiService : IGeminiAiService
         }
 
         _logger.LogError("All Gemini chat models failed. Last error: {Error}", lastError);
-        return "ขออภัยครับ ระบบ AI ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ Gemini ได้ในขณะนี้ (กรุณาตรวจสอบค่า GEMINI_API_KEY ใน .env ว่าเริ่มต้นด้วย AIzaSy... จาก Google AI Studio หรือไม่ครับ)";
+        return "ขออภัยครับ ขณะนี้ระบบผู้ช่วย AI มีผู้ใช้งานจำนวนมากหรือกำลังขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งในอีกสักครู่ครับ";
     }
 
     public double ComputeCosineSimilarity(float[]? vectorA, float[]? vectorB)

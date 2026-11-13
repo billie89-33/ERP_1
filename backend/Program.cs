@@ -7,8 +7,12 @@ using JamineERP.Backend.Data;
 using JamineERP.Backend.Middlewares;
 using JamineERP.Backend.Services;
 
-// Load .env file from the parent directory (root of the workspace)
-Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+// Load .env file reliably regardless of working directory
+Env.TraversePath().Load();
+var rootEnv = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+var parentEnv = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
+if (File.Exists(rootEnv)) Env.Load(rootEnv);
+else if (File.Exists(parentEnv)) Env.Load(parentEnv);
 
 var builder = WebApplication.CreateBuilder(args);
 

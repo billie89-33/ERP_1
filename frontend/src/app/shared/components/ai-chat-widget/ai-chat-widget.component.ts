@@ -119,8 +119,10 @@ export class AiChatWidgetComponent {
       error: (err: { error?: { message?: string } }) => {
         this.isSending.set(false);
         const errText =
-          err?.error?.message ||
-          'ขออภัยครับ ระบบ AI ไม่สามารถเชื่อมต่อได้ในขณะนี้ กรุณาตรวจสอบค่า GEMINI_API_KEY หรือลองใหม่อีกครั้งครับ';
+          this.mode === 'admin'
+            ? err?.error?.message ||
+              'ขออภัยครับ ระบบ AI ไม่สามารถเชื่อมต่อได้ในขณะนี้ กรุณาตรวจสอบ Environment Variable (GEMINI_API_KEY) หรือลองใหม่อีกครั้งครับ'
+            : 'ขออภัยครับ ขณะนี้ระบบผู้ช่วย AI กำลังขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้งในอีกสักครู่ครับ';
         this.messages.update((prev) => [
           ...prev,
           {
