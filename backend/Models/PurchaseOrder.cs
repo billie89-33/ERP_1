@@ -23,5 +23,10 @@ public class PurchaseOrder : BaseEntity
     public Guid CreatedByUserId { get; set; }
     public User CreatedByUser { get; set; } = null!;
 
+    // AI Vector Embedding (Expense / Purchase Order Semantic Search)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public float[]? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
+
     public ICollection<PurchaseOrderItem> PurchaseOrderItems { get; set; } = new List<PurchaseOrderItem>();
 }

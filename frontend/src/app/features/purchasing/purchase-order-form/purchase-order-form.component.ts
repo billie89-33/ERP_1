@@ -5,6 +5,8 @@ import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { ApiMessageResponse, PaginatedResult, SupplierDto } from '../../../core/models/erp.model';
 import { CategoryDto, PaginatedResponse, ProductDto } from '../../../core/models/product.model';
+import { AiService } from '../../../core/services/ai.service';
+import { SemanticProductMatchDto } from '../../../core/models/ai.model';
 
 @Component({
   selector: 'app-purchase-order-form',
@@ -35,9 +37,15 @@ export class PurchaseOrderFormComponent implements OnInit {
   productForm: FormGroup;
   currentProductIndex = 0; // to know which row we are adding the product to
 
+  // AI Duplicate Detection State
+  duplicateCandidates: SemanticProductMatchDto[] = [];
+  isCheckingDuplicate = false;
+  private duplicateCheckTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private router = inject(Router);
+  private aiService = inject(AiService);
 
   constructor() {
     this.poForm = this.fb.group({
@@ -220,12 +228,52 @@ export class PurchaseOrderFormComponent implements OnInit {
   openProductModal(index: number) {
     this.currentProductIndex = index;
     this.productError = '';
+    this.duplicateCandidates = [];
     this.productForm.reset({ price: 0, cost: 0 });
     this.isProductModalOpen = true;
   }
 
   closeProductModal() {
     this.isProductModalOpen = false;
+    this.duplicateCandidates = [];
+  }
+
+  onProductNameOrModelInput() {
+    if (this.duplicateCheckTimeout) clearTimeout(this.duplicateCheckTimeout);
+    const nameVal = (this.productForm.get('name')?.value as string | null) || '';
+    const brandVal = (this.productForm.get('brand')?.value as string | null) || '';
+    const modelVal = (this.productForm.get('modelName')?.value as string | null) || '';
+
+    if (nameVal.trim().length < 3) {
+      this.duplicateCandidates = [];
+      return;
+    }
+
+    this.duplicateCheckTimeout = setTimeout(() => {
+      this.isCheckingDuplicate = true;
+      this.aiService.checkDuplicate({
+        name: nameVal,
+        brand: brandVal,
+        modelName: modelVal
+      }).subscribe({
+        next: (res) => {
+          this.isCheckingDuplicate = false;
+          this.duplicateCandidates = res.matches || [];
+        },
+        error: () => {
+          this.isCheckingDuplicate = false;
+        }
+      });
+    }, 600);
+  }
+
+  useExistingDuplicateProduct(candidate: SemanticProductMatchDto) {
+    const existing = this.products.find(p => p.id === candidate.id);
+    this.items.at(this.currentProductIndex).patchValue({
+      productId: candidate.id,
+      unitCost: existing ? existing.cost : candidate.price
+    });
+    this.closeProductModal();
   }
 
   submitProduct() {
@@ -237,20 +285,10 @@ export class PurchaseOrderFormComponent implements OnInit {
     this.isSavingProduct = true;
     this.productError = '';
 
-    this.http.post<ProductDto | { data: ProductDto }>('/api/Products', this.productForm.value).subscribe({
-      next: (res) => {
+    this.http.post<ProductDto | { data: ProductDto } | { id?: string; message?: string }>('/api/Products', this.productForm.value).subscribe({
+      next: () => {
         this.isSavingProduct = false;
-        const newProduct = 'data' in res ? res.data : res;
-        
-        // Add to local list
-        this.products = [newProduct, ...this.products];
-        
-        // Auto-select in the row
-        this.items.at(this.currentProductIndex).patchValue({
-          productId: newProduct.id,
-          unitCost: newProduct.cost
-        });
-        
+        this.loadProducts();
         this.closeProductModal();
       },
       error: (err) => {

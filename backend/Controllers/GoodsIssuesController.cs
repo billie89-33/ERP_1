@@ -33,10 +33,12 @@ public class GoodsIssueItemDto
 public class GoodsIssuesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public GoodsIssuesController(AppDbContext context)
+    public GoodsIssuesController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     [HttpGet]
@@ -143,6 +145,8 @@ public class GoodsIssuesController : ControllerBase
             _context.GoodsIssues.Add(gi);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
 
             return Ok(new { message = "ตัดสินค้าออกจากคลังสำเร็จ", giId = gi.Id, giNumber = gi.GiNumber });
         }

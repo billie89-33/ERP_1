@@ -1,8 +1,53 @@
-<div class="mb-6 flex justify-between items-center">
+<div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
   <h1 class="text-2xl font-bold text-slate-800">Products Inventory</h1>
-  <a routerLink="/admin/products/create" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md shadow-sm">
-    + Add Product
-  </a>
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      (click)="syncAllEmbeddings(false)"
+      [disabled]="isSyncingEmbeddings"
+      class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-400 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm transition flex items-center gap-2">
+      <span>{{ isSyncingEmbeddings ? '⏳ กำลังซิงค์ Vector...' : '⚡ Sync AI Embeddings (All ERP)' }}</span>
+    </button>
+    <a routerLink="/admin/products/create" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm">
+      + Add Product
+    </a>
+  </div>
+</div>
+
+<!-- AI Vector Coverage Banner -->
+<div *ngIf="aiStatus" class="mb-6 bg-slate-900 text-slate-100 rounded-lg p-4 shadow border border-slate-700">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-2.5">
+      <span class="h-2.5 w-2.5 rounded-full" [ngClass]="aiStatus.apiKeyConfigured ? 'bg-emerald-400' : 'bg-rose-400'"></span>
+      <span class="text-sm font-bold">
+        AI Vector Engine ({{ aiStatus.embeddingModel }})
+      </span>
+      <span class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+        {{ aiStatus.apiKeyConfigured ? 'API Key Ready' : 'Missing GEMINI_API_KEY' }}
+      </span>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3 text-xs">
+      <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+        📦 Products: <strong class="text-emerald-400">{{ aiStatus.products.embedded }}/{{ aiStatus.products.total }}</strong>
+      </span>
+      <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+        💰 SO (รายรับ): <strong class="text-emerald-400">{{ aiStatus.salesOrders.embedded }}/{{ aiStatus.salesOrders.total }}</strong>
+      </span>
+      <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+        🛒 PO (รายจ่าย): <strong class="text-emerald-400">{{ aiStatus.purchaseOrders.embedded }}/{{ aiStatus.purchaseOrders.total }}</strong>
+      </span>
+      <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+        🏢 Suppliers: <strong class="text-emerald-400">{{ aiStatus.suppliers.embedded }}/{{ aiStatus.suppliers.total }}</strong>
+      </span>
+      <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">
+        👥 Customers: <strong class="text-emerald-400">{{ aiStatus.customers.embedded }}/{{ aiStatus.customers.total }}</strong>
+      </span>
+    </div>
+  </div>
+  <div *ngIf="syncResultMessage" class="mt-2.5 text-xs text-emerald-300 bg-emerald-950/60 border border-emerald-700/50 rounded px-3 py-1.5">
+    {{ syncResultMessage }}
+  </div>
 </div>
 
 <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -63,7 +108,7 @@
             {{ p.status }}
           </span>
         </td>
-                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+        <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
           <button (click)="toggleFeatured(p)" class="focus:outline-none transition-transform hover:scale-125" [title]="p.isFeatured ? 'Unfeature Product' : 'Feature Product'">
             <svg class="w-6 h-6 mx-auto" [ngClass]="p.isFeatured ? 'text-yellow-400 fill-current' : 'text-slate-300'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
           </button>
@@ -74,7 +119,7 @@
         </td>
       </tr>
       <tr *ngIf="products.length === 0">
-        <td colspan="6" class="px-6 py-8 text-center text-slate-500">No products found.</td>
+        <td colspan="7" class="px-6 py-8 text-center text-slate-500">No products found.</td>
       </tr>
     </tbody>
   </table>

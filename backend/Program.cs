@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using JamineERP.Backend.Data;
 using JamineERP.Backend.Middlewares;
+using JamineERP.Backend.Services;
 
 // Load .env file from the parent directory (root of the workspace)
 Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
@@ -12,13 +13,14 @@ Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.Configure<JamineERP.Backend.Services.CloudinarySettings>(options => 
+builder.Services.Configure<CloudinarySettings>(options => 
 {
     options.CloudName = Environment.GetEnvironmentVariable("Cloudinary__CloudName") ?? builder.Configuration["CloudinarySettings:CloudName"] ?? "";
     options.ApiKey = Environment.GetEnvironmentVariable("Cloudinary__ApiKey") ?? builder.Configuration["CloudinarySettings:ApiKey"] ?? "";
     options.ApiSecret = Environment.GetEnvironmentVariable("Cloudinary__ApiSecret") ?? builder.Configuration["CloudinarySettings:ApiSecret"] ?? "";
 });
-builder.Services.AddScoped<JamineERP.Backend.Services.IPhotoService, JamineERP.Backend.Services.PhotoService>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
+builder.Services.AddHttpClient<IGeminiAiService, GeminiAiService>();
 
 // 1. Database Configuration (PostgreSQL)
 var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection") 
@@ -101,13 +103,39 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 // Register Background Worker
-builder.Services.AddHostedService<JamineERP.Backend.Services.OrderExpiryWorker>();
+builder.Services.AddHostedService<OrderExpiryWorker>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Ensure AI Vector Embedding columns exist in PostgreSQL (Idempotent Auto-Migration)
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
+            ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
+            ALTER TABLE ""SalesOrders"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
+            ALTER TABLE ""SalesOrders"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
+            ALTER TABLE ""Suppliers"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
+            ALTER TABLE ""Suppliers"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
+            ALTER TABLE ""Customers"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
+            ALTER TABLE ""Customers"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
+        ");
+        Console.WriteLine("[AI] Verified Vector Embedding columns across all 5 ERP tables.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[AI] Warning verifying Vector Embedding columns: {ex.Message}");
+    }
+}
 
 // Configure the HTTP request pipeline.
 app.UseMiddleware<ExceptionMiddleware>(); // <-- เสียบปลั๊กตัวดัก Error ตรงนี้ (ด่านแรกสุด)

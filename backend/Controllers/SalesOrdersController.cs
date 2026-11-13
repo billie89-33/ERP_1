@@ -17,10 +17,12 @@ namespace JamineERP.Backend.Controllers;
 public class SalesOrdersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public SalesOrdersController(AppDbContext context)
+    public SalesOrdersController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     // GET: api/SalesOrders
@@ -191,6 +193,9 @@ public class SalesOrdersController : ControllerBase
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
+            await _aiService.TryEmbedCustomerAsync(_context, so.CustomerId);
+
             return Ok(new { message = "สร้างบิลขายสำเร็จ สต๊อกถูกตัดเรียบร้อย", soId = so.Id, OrderNumber = so.OrderNumber });
         }
         catch (Exception ex)
@@ -238,6 +243,8 @@ public class SalesOrdersController : ControllerBase
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
+            await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
+
             return Ok(new { message = "ยกเลิกบิลขายและคืนสต๊อกสำเร็จ" });
         }
         catch (Exception ex)
@@ -257,6 +264,7 @@ public class SalesOrdersController : ControllerBase
         so.PaymentStatus = "Paid";
         so.Status = "Pending"; // Ensure it is ready for goods issue
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
         return Ok(new { message = "ตรวจสอบสลิปและยืนยันการชำระเงินเรียบร้อยแล้ว" });
     }
 
@@ -274,6 +282,7 @@ public class SalesOrdersController : ControllerBase
         so.PaymentSlipUrl = "";
 
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
         return Ok(new { message = "ปฏิเสธสลิปเรียบร้อยแล้ว ลูกค้าจะต้องอัปโหลดใหม่" });
     }
 

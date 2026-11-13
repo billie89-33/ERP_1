@@ -16,10 +16,12 @@ namespace JamineERP.Backend.Controllers;
 public class CustomersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public CustomersController(AppDbContext context)
+    public CustomersController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     [HttpGet]
@@ -119,6 +121,7 @@ public class CustomersController : ControllerBase
 
         _context.Customers.Add(customer);
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedCustomerAsync(_context, customer.Id);
 
         return Ok(new { message = "Customer created successfully.", id = customer.Id });
     }
@@ -158,6 +161,7 @@ public class CustomersController : ControllerBase
         customer.UserId = dto.UserId;
 
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedCustomerAsync(_context, customer.Id);
         return Ok(new { message = "Customer updated successfully." });
     }
 

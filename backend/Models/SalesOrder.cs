@@ -28,5 +28,10 @@ public class SalesOrder : BaseEntity
     public string? Courier { get; set; }
     public string? TrackingNumber { get; set; }
 
+    // AI Vector Embedding (Revenue / Sales Order Semantic Search)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public float[]? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
+
     public ICollection<SalesOrderItem> SalesOrderItems { get; set; } = new List<SalesOrderItem>();
 }

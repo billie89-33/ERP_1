@@ -15,11 +15,16 @@ public class ProductsController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly JamineERP.Backend.Services.IPhotoService _photoService;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public ProductsController(AppDbContext context, JamineERP.Backend.Services.IPhotoService photoService)
+    public ProductsController(
+        AppDbContext context,
+        JamineERP.Backend.Services.IPhotoService photoService,
+        JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
         _photoService = photoService;
+        _aiService = aiService;
     }
 
     [HttpPatch("{id}/toggle-featured")]
@@ -43,7 +48,6 @@ public class ProductsController : ControllerBase
         var products = await _context.Products
             .Include(p => p.Category)
             .Where(p => !p.IsDeleted && p.Status.ToLower() == "active" && p.IsFeatured)
-            
             .Take(12)
             .Select(p => new
             {
@@ -89,7 +93,7 @@ public class ProductsController : ControllerBase
         if (minPrice.HasValue) query = query.Where(p => p.Price >= minPrice.Value);
         if (maxPrice.HasValue) query = query.Where(p => p.Price <= maxPrice.Value);
 
-        // Fetch to memory for complex JSONB filtering (brands and dynamic specs)
+        // Fetch to memory for complex JSONB filtering (brands and dynamic specs) without pulling Embedding vector
         var productsList = await query.AsNoTracking().OrderByDescending(p => p.Id).Select(p => new Product { Id = p.Id, Sku = p.Sku, Name = p.Name, Brand = p.Brand, ModelName = p.ModelName, Description = p.Description, Price = p.Price, Cost = p.Cost, OnHandQuantity = p.OnHandQuantity, ReservedQuantity = p.ReservedQuantity, Tags = p.Tags, Status = p.Status, IsFeatured = p.IsFeatured, SoldCount = p.SoldCount, ViewCount = p.ViewCount, Specifications = p.Specifications, CategoryId = p.CategoryId, Category = p.Category, Image = p.Image }).ToListAsync();
 
         // 1. Filter Brands
@@ -351,6 +355,7 @@ public class ProductsController : ControllerBase
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedProductAsync(_context, product.Id);
 
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, new { message = "สร้างข้อมูลสินค้าสำเร็จ!" });
     }
@@ -408,6 +413,7 @@ public class ProductsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedProductAsync(_context, product.Id);
 
         return Ok(new { message = "อัปเดตข้อมูลสำเร็จ" });
     }
@@ -424,6 +430,7 @@ public class ProductsController : ControllerBase
         product.Cost = dto.Cost;
 
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedProductAsync(_context, product.Id);
         return Ok(new { message = "อัปเดตราคาต้นทุนและราคาขายสำเร็จ" });
     }
 

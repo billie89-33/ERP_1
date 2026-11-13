@@ -15,6 +15,11 @@ public class Customer : BaseEntity
     public string? Email { get; set; } = string.Empty;
     public Guid? UserId { get; set; }
 
+    // AI Vector Embedding (Customer CRM Semantic Search)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public float[]? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
+
     public ICollection<Quotation> Quotations { get; set; } = new List<Quotation>();
     public ICollection<SalesOrder> SalesOrders { get; set; } = new List<SalesOrder>();
 }

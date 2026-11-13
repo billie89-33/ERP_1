@@ -13,5 +13,10 @@ public class Supplier : BaseEntity
     public string? TaxId { get; set; }
     public string? PaymentTerms { get; set; }
 
+    // AI Vector Embedding (Supplier Master Data Semantic Search)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public float[]? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
+
     public ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
 }

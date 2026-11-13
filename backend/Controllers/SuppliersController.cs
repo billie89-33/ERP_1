@@ -12,10 +12,12 @@ namespace JamineERP.Backend.Controllers;
 public class SuppliersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public SuppliersController(AppDbContext context)
+    public SuppliersController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     [HttpGet]
@@ -87,6 +89,7 @@ public class SuppliersController : ControllerBase
 
         _context.Suppliers.Add(supplier);
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedSupplierAsync(_context, supplier.Id);
 
         return CreatedAtAction(nameof(GetSupplier), new { id = supplier.Id }, new { success = true, data = supplier });
     }

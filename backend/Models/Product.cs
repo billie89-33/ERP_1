@@ -41,6 +41,11 @@ public class Product : BaseEntity
     public int ReservedQuantity { get; set; } = 0;
     
     public JsonDocument? Specifications { get; set; }
+
+    // AI Vector Embedding (768 dimensions from gemini-embedding-001)
+    [System.Text.Json.Serialization.JsonIgnore]
+    public float[]? Embedding { get; set; }
+    public DateTime? EmbeddingUpdatedAt { get; set; }
     
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;

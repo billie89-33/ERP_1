@@ -32,10 +32,12 @@ public class StorefrontCheckoutItemDto
 public class StorefrontController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public StorefrontController(AppDbContext context)
+    public StorefrontController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     [HttpPost("checkout")]
@@ -126,6 +128,9 @@ public class StorefrontController : ControllerBase
             _context.SalesOrders.Add(so);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            await _aiService.TryEmbedSalesOrderAsync(_context, so.Id);
+            await _aiService.TryEmbedCustomerAsync(_context, customer.Id);
 
             return Ok(new { 
                 message = "Checkout successful! Your order has been placed.", 
@@ -238,6 +243,7 @@ public class StorefrontController : ControllerBase
         order.PaymentStatus = "Checking";
 
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedSalesOrderAsync(_context, order.Id);
         return Ok(new { message = "Slip uploaded successfully." });
     }
 }

@@ -4,6 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { DashboardStatsDto, DashboardChartPointDto } from '../../core/models/erp.model';
+import { AiService } from '../../core/services/ai.service';
+import { DashboardAiBriefDto } from '../../core/models/ai.model';
 
 Chart.register(...registerables);
 
@@ -15,9 +17,15 @@ Chart.register(...registerables);
 })
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  private aiService = inject(AiService);
+
   stats: DashboardStatsDto | null = null;
   isLoading = true;
   chart: Chart | null = null;
+
+  aiBrief: DashboardAiBriefDto | null = null;
+  isGeneratingBrief = false;
+  briefError = '';
 
   @ViewChild('salesChart') salesChartRef!: ElementRef<HTMLCanvasElement>;
 
@@ -33,6 +41,23 @@ export class DashboardComponent implements OnInit {
       error: (err) => {
         console.error('Failed to load stats', err);
         this.isLoading = false;
+      }
+    });
+  }
+
+  generateAiBrief() {
+    if (this.isGeneratingBrief) return;
+    this.isGeneratingBrief = true;
+    this.briefError = '';
+
+    this.aiService.generateDashboardBrief().subscribe({
+      next: (res) => {
+        this.isGeneratingBrief = false;
+        this.aiBrief = res;
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.isGeneratingBrief = false;
+        this.briefError = err?.error?.message || 'ไม่สามารถสร้างบทวิเคราะห์ AI ได้ในขณะนี้ กรุณาตรวจสอบ GEMINI_API_KEY';
       }
     });
   }

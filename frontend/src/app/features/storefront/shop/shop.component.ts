@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
+import { AiService } from '../../../core/services/ai.service';
 import { ProductDto, CategoryDto, FilterOptionsDto, FilterState } from '../../../core/models/product.model';
 
 @Component({
@@ -16,6 +17,7 @@ import { ProductDto, CategoryDto, FilterOptionsDto, FilterState } from '../../..
 export class ShopComponent implements OnInit {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private aiService = inject(AiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -26,6 +28,7 @@ export class ShopComponent implements OnInit {
   
   isLoading = signal<boolean>(false);
   isMobileFilterOpen = signal<boolean>(false);
+  isAiSemanticMode = signal<boolean>(false);
   totalPages = signal<number>(1);
   totalProducts = signal<number>(0);
 
@@ -59,23 +62,23 @@ export class ShopComponent implements OnInit {
 
     const allowed = this.allowedSpecsConfig[catName];
     if (!allowed) {
-      // If we don't have a specific config for this category, just return a limited default (or nothing)
       return allKeys.filter(k => k.toLowerCase() === 'color' || k.toLowerCase() === 'brand');
     }
 
-    // Filter and return only the keys that are in the allowed list (case-insensitive)
     return allKeys.filter(key => allowed.includes(key.toLowerCase()));
   });
   hasActiveFilters = computed(() => {
     const s = this.filterState();
-    return !!s.categoryName || s.brands.length > 0 || Object.keys(s.selectedSpecs).length > 0;
+    return !!s.categoryName || s.brands.length > 0 || Object.keys(s.selectedSpecs).length > 0 || this.isAiSemanticMode();
   });
 
   constructor() {
     // Reactive: Whenever filterState changes, fetch products
     effect(() => {
       const state = this.filterState();
-      this.fetchProducts(state);
+      if (!this.isAiSemanticMode()) {
+        this.fetchProducts(state);
+      }
     }, { allowSignalWrites: true });
   }
 
@@ -108,6 +111,52 @@ export class ShopComponent implements OnInit {
     });
   }
 
+  runAiSemanticSearch() {
+    const q = this.filterState().searchQuery.trim();
+    if (!q) {
+      this.isAiSemanticMode.set(false);
+      this.fetchProducts(this.filterState());
+      return;
+    }
+
+    this.isAiSemanticMode.set(true);
+    this.isLoading.set(true);
+    this.aiService.semanticSearch({ query: q, topK: 12, onlyInStock: false }).subscribe({
+      next: (matches) => {
+        const mapped: ProductDto[] = matches.map(m => ({
+          id: m.id,
+          sku: m.sku,
+          name: m.name,
+          brand: m.brand,
+          modelName: m.modelName,
+          description: m.description,
+          price: m.price,
+          cost: m.cost,
+          onHandQuantity: m.onHandQuantity,
+          reservedQuantity: m.reservedQuantity,
+          availableQuantity: m.availableQuantity,
+          tags: m.tags || [],
+          status: 'ACTIVE',
+          isFeatured: false,
+          soldCount: 0,
+          viewCount: 0,
+          specifications: m.specifications,
+          categoryId: m.categoryId,
+          categoryName: m.categoryName,
+          image: m.imageUrl ? { url: m.imageUrl, publicId: '' } : undefined
+        }));
+        this.products.set(mapped);
+        this.totalProducts.set(mapped.length);
+        this.totalPages.set(1);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isAiSemanticMode.set(false);
+        this.fetchProducts(this.filterState());
+      }
+    });
+  }
+
   private loadCategories() {
     this.productService.getCategories().subscribe(res => this.categories.set(res));
   }
@@ -115,16 +164,19 @@ export class ShopComponent implements OnInit {
   private loadFilterOptions(categoryName: string | null) {
     this.productService.getFilterOptions(categoryName).subscribe(res => {
       this.filterOptions.set(res);
-      // Optional: Auto set min/max slider limits based on res.minPrice and res.maxPrice
     });
   }
 
   // --- Actions ---
   onSearchChange(query: string) {
+    if (this.isAiSemanticMode() && !query.trim()) {
+      this.isAiSemanticMode.set(false);
+    }
     this.filterState.update(s => ({ ...s, searchQuery: query, page: 1 }));
   }
 
   selectCategoryByName(catName: string | null) {
+    this.isAiSemanticMode.set(false);
     this.filterState.update(s => ({ 
       ...s, 
       categoryName: catName, 
@@ -145,6 +197,7 @@ export class ShopComponent implements OnInit {
   }
 
   toggleBrand(brand: string) {
+    this.isAiSemanticMode.set(false);
     this.filterState.update(s => {
       const newBrands = s.brands.includes(brand) 
         ? s.brands.filter(b => b !== brand) 
@@ -154,6 +207,7 @@ export class ShopComponent implements OnInit {
   }
 
   toggleSpec(specKey: string, value: string) {
+    this.isAiSemanticMode.set(false);
     this.filterState.update(s => {
       const currentSelected = s.selectedSpecs[specKey] || [];
       const newSelected = currentSelected.includes(value)
@@ -171,10 +225,12 @@ export class ShopComponent implements OnInit {
   }
 
   applyPriceRange(min: number | null, max: number | null) {
+    this.isAiSemanticMode.set(false);
     this.filterState.update(s => ({ ...s, minPrice: min, maxPrice: max, page: 1 }));
   }
 
   clearFilters() {
+    this.isAiSemanticMode.set(false);
     this.selectCategoryByName(null);
   }
 
@@ -193,7 +249,6 @@ export class ShopComponent implements OnInit {
   getSpecPreview(specs: Record<string, unknown> | null | undefined): string[] {
     if (!specs) return [];
     
-    // บางสินค้าจาก Mongo มี object ย่อยชื่อ specifications ซ้อนอยู่ข้างใน
     const targetSpecs = (specs['specifications'] as Record<string, unknown>) || specs;
     
     const ignoredKeys = ['__v', 'tags', 'brand', 'brands', 'image', 'status', 'createdAt', 'updatedAt', 'category', 'description', 'modelName', 'isFeatured', 'soldCount', 'viewCount'];

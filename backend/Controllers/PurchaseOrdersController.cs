@@ -17,10 +17,12 @@ namespace JamineERP.Backend.Controllers;
 public class PurchaseOrdersController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public PurchaseOrdersController(AppDbContext context)
+    public PurchaseOrdersController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     // GET: api/PurchaseOrders
@@ -169,6 +171,8 @@ public class PurchaseOrdersController : ControllerBase
 
         _context.PurchaseOrders.Add(po);
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedPurchaseOrderAsync(_context, po.Id);
+        await _aiService.TryEmbedSupplierAsync(_context, po.SupplierId);
 
         return Ok(new { message = "สร้างใบสั่งซื้อ (PO) สำเร็จ", poId = po.Id, poNumber = po.PoNumber });
     }
@@ -185,6 +189,7 @@ public class PurchaseOrdersController : ControllerBase
 
         po.Status = "Cancelled";
         await _context.SaveChangesAsync();
+        await _aiService.TryEmbedPurchaseOrderAsync(_context, po.Id);
 
         return Ok(new { message = "ยกเลิกใบสั่งซื้อสำเร็จ" });
     }

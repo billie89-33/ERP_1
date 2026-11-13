@@ -100,16 +100,32 @@
   <main class="flex-1 w-full pb-20 md:pb-0">
     <!-- Header & Search -->
     <div class="bg-slate-800 p-4 rounded-2xl shadow-lg mb-8 flex flex-col sm:flex-row gap-4 justify-between items-center border border-slate-700">
-      <div class="w-full sm:w-1/2 relative">
-        <input type="text" [ngModel]="filterState().searchQuery" (ngModelChange)="onSearchChange($event)"
-          placeholder="Search components..." 
-          class="w-full bg-slate-900 border border-slate-600 text-white rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-        <div class="absolute right-3 top-2.5 text-slate-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <div class="w-full sm:w-2/3 flex gap-2">
+        <div class="relative flex-1">
+          <input type="text" [ngModel]="filterState().searchQuery" (ngModelChange)="onSearchChange($event)"
+            (keyup.enter)="runAiSemanticSearch()"
+            placeholder="ค้นหาชื่อรุ่น หรือพิมพ์ความต้องการ เช่น 'โน้ตบุ๊กตัดต่อวิดีโอ'..." 
+            class="w-full bg-slate-900 border border-slate-600 text-white rounded-xl pl-4 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+          <div class="absolute right-3 top-2.5 text-slate-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
         </div>
+        <button
+          type="button"
+          (click)="runAiSemanticSearch()"
+          [disabled]="!filterState().searchQuery.trim() || isLoading()"
+          class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm whitespace-nowrap transition flex items-center gap-1.5 border"
+          [ngClass]="
+            isAiSemanticMode()
+              ? 'bg-emerald-600 text-white border-emerald-400 shadow-lg shadow-emerald-950/50'
+              : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-400/30 disabled:opacity-40'
+          ">
+          <span>✨ AI ค้นหาความหมาย</span>
+        </button>
       </div>
       
-      <div class="text-slate-400 text-sm">
+      <div class="text-slate-400 text-sm whitespace-nowrap">
+        <span *ngIf="isAiSemanticMode()" class="text-emerald-400 font-bold mr-2">[AI Vector Mode]</span>
         Showing <span class="text-white font-bold">{{ totalProducts() }}</span> Results
       </div>
     </div>

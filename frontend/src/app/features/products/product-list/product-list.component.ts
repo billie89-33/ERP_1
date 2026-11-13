@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
+import { AiService } from '../../../core/services/ai.service';
 import { ProductDto } from '../../../core/models/product.model';
+import { AiStatusDto } from '../../../core/models/ai.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
@@ -15,6 +17,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 })
 export class ProductListComponent implements OnInit {
   products: ProductDto[] = [];
+  aiStatus: AiStatusDto | null = null;
+  isSyncingEmbeddings = false;
+  syncResultMessage = '';
   
   // Pagination State
   page = 1;
@@ -24,9 +29,40 @@ export class ProductListComponent implements OnInit {
   searchTimeout: ReturnType<typeof setTimeout> | null = null;
   
   private productService = inject(ProductService);
+  private aiService = inject(AiService);
 
   ngOnInit() {
     this.loadProducts();
+    this.loadAiStatus();
+  }
+
+  loadAiStatus() {
+    this.aiService.getStatus().subscribe({
+      next: (status) => {
+        this.aiStatus = status;
+      },
+      error: () => {
+        this.aiStatus = null;
+      }
+    });
+  }
+
+  syncAllEmbeddings(forceRebuildAll = false) {
+    if (this.isSyncingEmbeddings) return;
+    this.isSyncingEmbeddings = true;
+    this.syncResultMessage = '';
+
+    this.aiService.syncEmbeddings({ forceRebuildAll }).subscribe({
+      next: (res) => {
+        this.isSyncingEmbeddings = false;
+        this.syncResultMessage = res.message;
+        this.loadAiStatus();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.isSyncingEmbeddings = false;
+        this.syncResultMessage = err?.error?.message || 'ไม่สามารถซิงค์ Vector Embeddings ได้ กรุณาตรวจสอบ GEMINI_API_KEY';
+      }
+    });
   }
 
   loadProducts() {
@@ -69,6 +105,7 @@ export class ProductListComponent implements OnInit {
     if (confirm('Are you sure you want to delete this product?')) {
       this.productService.deleteProduct(id).subscribe(() => {
         this.loadProducts();
+        this.loadAiStatus();
       });
     }
   }

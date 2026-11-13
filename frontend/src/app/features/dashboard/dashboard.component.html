@@ -46,6 +46,55 @@
       
     </div>
 
+    <!-- AI Executive Business Brief Card -->
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-lg p-5 shadow-lg mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3 mb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="text-emerald-400 text-lg">✨</span>
+          <div>
+            <h3 class="text-sm text-emerald-400 font-black tracking-widest uppercase">AI_EXECUTIVE_BUSINESS_BRIEF</h3>
+            <p class="text-[11px] text-slate-400 font-sans font-normal">
+              วิเคราะห์รายรับ (SO) • รายจ่าย (PO) • สต๊อกวิกฤต • งานคลังสินค้า (GR/GI) ด้วย Gemini 2.5 Flash
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="generateAiBrief()"
+          [disabled]="isGeneratingBrief"
+          class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white text-xs font-bold tracking-wider uppercase transition">
+          {{ isGeneratingBrief ? '[ ANALYZING ERP... ]' : '⚡ GENERATE AI BRIEF' }}
+        </button>
+      </div>
+
+      <div *ngIf="!aiBrief && !isGeneratingBrief && !briefError" class="text-xs text-slate-400 font-sans font-normal py-2">
+        กดปุ่ม <strong>GENERATE AI BRIEF</strong> เพื่อให้ AI สรุปสถานะธุรกิจและงานด่วนประจำวันจากข้อมูลจริงในฐานข้อมูล
+      </div>
+
+      <div *ngIf="briefError" class="text-xs text-rose-400 bg-rose-950/40 border border-rose-700/50 rounded p-3 font-sans font-normal">
+        {{ briefError }}
+      </div>
+
+      <div *ngIf="aiBrief" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-200 font-sans font-normal">
+        <div class="bg-slate-950/70 p-3.5 rounded border border-slate-800">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-400 mb-1">💰 Financial Summary</div>
+          <p class="leading-relaxed">{{ aiBrief.financialSummary }}</p>
+        </div>
+        <div class="bg-slate-950/70 p-3.5 rounded border border-slate-800">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-1">🚨 Urgent Actions</div>
+          <p class="leading-relaxed">{{ aiBrief.urgentActions }}</p>
+        </div>
+        <div class="bg-slate-950/70 p-3.5 rounded border border-slate-800">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400 mb-1">📦 Restock Recommendations</div>
+          <p class="leading-relaxed">{{ aiBrief.restockRecommendations }}</p>
+        </div>
+        <div class="bg-slate-950/70 p-3.5 rounded border border-slate-800">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-400 mb-1">🎯 Executive Takeaway</div>
+          <p class="leading-relaxed">{{ aiBrief.executiveTakeaway }}</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Glowing Chart Section -->
     <div class="bg-slate-900 border border-slate-800 rounded-lg p-5 shadow-lg mb-6">
       <h3 class="text-sm text-slate-400 font-bold mb-4 tracking-widest border-b border-slate-800 pb-2">SALES_TREND (LAST_7_DAYS)</h3>

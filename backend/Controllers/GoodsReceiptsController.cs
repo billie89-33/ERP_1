@@ -31,10 +31,12 @@ public class GoodsReceiptItemDto
 public class GoodsReceiptsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly JamineERP.Backend.Services.IGeminiAiService _aiService;
 
-    public GoodsReceiptsController(AppDbContext context)
+    public GoodsReceiptsController(AppDbContext context, JamineERP.Backend.Services.IGeminiAiService aiService)
     {
         _context = context;
+        _aiService = aiService;
     }
 
     [HttpGet]
@@ -135,6 +137,8 @@ public class GoodsReceiptsController : ControllerBase
             _context.GoodsReceipts.Add(gr);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            await _aiService.TryEmbedPurchaseOrderAsync(_context, po.Id);
 
             return Ok(new { message = "รับสินค้าเข้าคลังสำเร็จ", grId = gr.Id, grNumber = gr.GrNumber });
         }
