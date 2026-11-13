@@ -147,7 +147,7 @@ public class GeminiAiService : IGeminiAiService
                     generationConfig = new
                     {
                         temperature = 0.25,
-                        maxOutputTokens = 1500
+                        maxOutputTokens = 4096
                     }
                 };
 

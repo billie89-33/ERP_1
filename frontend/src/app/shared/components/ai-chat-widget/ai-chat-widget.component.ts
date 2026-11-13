@@ -170,6 +170,17 @@ export class AiChatWidgetComponent {
     return ['/admin/dashboard'];
   }
 
+  formatMessage(content: string): string {
+    if (!content) return '';
+    const escaped = content
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+    return escaped.replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+  }
+
   private getCurrentTime(): string {
     const now = new Date();
     return now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });

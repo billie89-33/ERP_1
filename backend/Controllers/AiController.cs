@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using JamineERP.Backend.Data;
 using JamineERP.Backend.DTOs;
@@ -176,7 +178,8 @@ public class AiController : ControllerBase
             return Ok(new List<SemanticProductMatchDto>());
 
         var queryVector = await _aiService.GenerateEmbeddingAsync(dto.Query);
-        var queryLower = dto.Query.Trim().ToLowerInvariant();
+        var tokens = ExpandQueryTokens(dto.Query);
+        var (minBudget, maxBudget) = ExtractBudgetRange(dto.Query);
 
         var productsQuery = _context.Products
             .AsNoTracking()
@@ -201,13 +204,15 @@ public class AiController : ControllerBase
                 ? _aiService.ComputeCosineSimilarity(queryVector, p.Embedding)
                 : 0.0;
 
-            // Hybrid keyword boost for exact SKU/Brand/Model/Name matches
-            if (p.Name.ToLowerInvariant().Contains(queryLower) ||
-                p.Brand.ToLowerInvariant().Contains(queryLower) ||
-                p.ModelName.ToLowerInvariant().Contains(queryLower) ||
-                p.Sku.ToLowerInvariant().Contains(queryLower))
+            double tokenBoost = ComputeProductTokenMatchScore(p, tokens, _aiService.ExtractSpecificationsText(p.Specifications));
+            if (tokenBoost > 0)
             {
-                sim = Math.Min(0.99, Math.Max(sim + 0.12, 0.78));
+                sim = Math.Min(0.99, Math.Max(sim + tokenBoost * 0.25, 0.72 + Math.Min(0.25, tokenBoost * 0.1)));
+            }
+
+            if (IsWithinBudget(p.Price, minBudget, maxBudget))
+            {
+                sim = Math.Min(0.99, sim + 0.08);
             }
 
             return MapToSemanticMatch(p, sim, includeCost: false);
@@ -218,6 +223,111 @@ public class AiController : ControllerBase
         .ToList();
 
         return Ok(scored);
+    }
+
+    private static readonly Dictionary<string, string[]> ThaiHardwareSynonyms = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["เมาส์"] = new[] { "mouse", "gaming mouse" },
+        ["เม้าส์"] = new[] { "mouse", "gaming mouse" },
+        ["คีย์บอร์ด"] = new[] { "keyboard", "mechanical keyboard" },
+        ["แป้นพิมพ์"] = new[] { "keyboard" },
+        ["จอ"] = new[] { "monitor", "display" },
+        ["มอนิเตอร์"] = new[] { "monitor", "display" },
+        ["หน้าจอ"] = new[] { "monitor", "display" },
+        ["โน้ตบุ๊ก"] = new[] { "notebook", "laptop" },
+        ["โน๊ตบุ๊ค"] = new[] { "notebook", "laptop" },
+        ["โน้ตบุ๊ค"] = new[] { "notebook", "laptop" },
+        ["แล็ปท็อป"] = new[] { "notebook", "laptop" },
+        ["การ์ดจอ"] = new[] { "graphics card", "gpu", "vga", "rtx", "gtx", "radeon" },
+        ["ซีพียู"] = new[] { "cpu", "processor", "ryzen", "intel", "core" },
+        ["แรม"] = new[] { "ram", "memory", "ddr4", "ddr5" },
+        ["เอสเอสดี"] = new[] { "ssd", "nvme", "storage" },
+        ["ฮาร์ดดิสก์"] = new[] { "hdd", "ssd", "storage" },
+        ["หูฟัง"] = new[] { "headset", "headphone", "earphone" },
+        ["ไมโครโฟน"] = new[] { "microphone", "mic" },
+        ["เมนบอร์ด"] = new[] { "motherboard", "mainboard" },
+        ["เพาเวอร์ซัพพลาย"] = new[] { "power supply", "psu" },
+        ["พาวเวอร์ซัพพลาย"] = new[] { "power supply", "psu" },
+        ["เคส"] = new[] { "case", "chassis" },
+        ["พัดลม"] = new[] { "cooler", "fan", "aio" },
+        ["ชุดระบายความร้อน"] = new[] { "cooler", "liquid", "aio" },
+        ["เล่นเกม"] = new[] { "gaming", "rtx", "hz", "rgb", "geforce" },
+        ["เกมมิ่ง"] = new[] { "gaming", "rtx", "hz", "rgb" },
+        ["กราฟิก"] = new[] { "rtx", "graphics", "quadro", "ips", "oled", "16gb", "32gb" },
+        ["ตัดต่อ"] = new[] { "rtx", "16gb", "32gb", "ssd", "ips" },
+        ["ทำงาน"] = new[] { "office", "business", "laptop", "notebook", "monitor" }
+    };
+
+    private static List<string> ExpandQueryTokens(string query)
+    {
+        var lower = (query ?? string.Empty).Trim().ToLowerInvariant();
+        var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (Match m in Regex.Matches(lower, @"[a-z0-9\-_]+"))
+        {
+            if (m.Value.Length >= 2)
+                tokens.Add(m.Value);
+        }
+
+        foreach (var kv in ThaiHardwareSynonyms)
+        {
+            if (lower.Contains(kv.Key))
+            {
+                foreach (var mapped in kv.Value)
+                    tokens.Add(mapped);
+            }
+        }
+
+        return tokens.ToList();
+    }
+
+    private static (decimal? Min, decimal? Max) ExtractBudgetRange(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query)) return (null, null);
+        var normalized = query.Replace(",", "");
+        var numbers = new List<decimal>();
+
+        foreach (Match m in Regex.Matches(normalized, @"\b\d{3,7}\b"))
+        {
+            if (decimal.TryParse(m.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var val) && val >= 100)
+                numbers.Add(val);
+        }
+
+        if (numbers.Count >= 2)
+        {
+            var min = Math.Min(numbers[0], numbers[1]);
+            var max = Math.Max(numbers[0], numbers[1]);
+            return (min, max);
+        }
+        if (numbers.Count == 1)
+        {
+            var single = numbers[0];
+            if (normalized.Contains("ไม่เกิน") || normalized.Contains("ต่ำกว่า") || normalized.Contains("under"))
+                return (0, single);
+            return (single * 0.7m, single * 1.25m);
+        }
+        return (null, null);
+    }
+
+    private static bool IsWithinBudget(decimal price, decimal? minBudget, decimal? maxBudget)
+    {
+        if (!minBudget.HasValue && !maxBudget.HasValue) return false;
+        if (minBudget.HasValue && price < minBudget.Value) return false;
+        if (maxBudget.HasValue && price > maxBudget.Value) return false;
+        return true;
+    }
+
+    private static double ComputeProductTokenMatchScore(Models.Product p, List<string> tokens, string specsText)
+    {
+        if (tokens.Count == 0) return 0.0;
+        var haystack = $"{p.Sku} {p.Name} {p.Brand} {p.ModelName} {p.Category?.Name} {p.Description} {specsText}".ToLowerInvariant();
+        int matched = 0;
+        foreach (var token in tokens)
+        {
+            if (haystack.Contains(token.ToLowerInvariant()))
+                matched++;
+        }
+        return (double)matched / Math.Min(tokens.Count, 3);
     }
 
     private static SemanticProductMatchDto MapToSemanticMatch(Models.Product p, double score, bool includeCost)
@@ -314,57 +424,96 @@ public class AiController : ControllerBase
             return BadRequest(new { message = "กรุณาพิมพ์ข้อความคำถาม" });
 
         var queryVector = await _aiService.GenerateEmbeddingAsync(dto.Message);
-        var msgLower = dto.Message.Trim().ToLowerInvariant();
+        var tokens = ExpandQueryTokens(dto.Message);
+        var (minBudget, maxBudget) = ExtractBudgetRange(dto.Message);
+        var hasBudgetQuery = minBudget.HasValue || maxBudget.HasValue;
 
         var activeProducts = await _context.Products
             .AsNoTracking()
             .Include(p => p.Category)
-            .Where(p => p.Status == "ACTIVE")
+            .Where(p => p.Status == "ACTIVE" && !p.IsDeleted)
             .ToListAsync();
 
-        var rankedProducts = activeProducts
+        var categorySummary = activeProducts
+            .GroupBy(p => p.Category?.Name ?? "อื่นๆ")
+            .Select(g => $"{g.Key} ({g.Count()} รุ่น)")
+            .ToList();
+
+        var scoredProducts = activeProducts
             .Select(p =>
             {
-                double sim = queryVector != null && p.Embedding != null
+                var specsText = _aiService.ExtractSpecificationsText(p.Specifications);
+                double vectorSim = queryVector != null && p.Embedding != null
                     ? _aiService.ComputeCosineSimilarity(queryVector, p.Embedding)
                     : 0.0;
 
-                if (p.Name.ToLowerInvariant().Contains(msgLower) ||
-                    p.Brand.ToLowerInvariant().Contains(msgLower) ||
-                    (p.Category?.Name?.ToLowerInvariant().Contains(msgLower) ?? false))
+                double tokenScore = ComputeProductTokenMatchScore(p, tokens, specsText);
+                bool inBudget = IsWithinBudget(p.Price, minBudget, maxBudget);
+
+                double finalScore = vectorSim;
+                if (tokenScore > 0)
                 {
-                    sim = Math.Max(sim + 0.15, 0.75);
+                    finalScore = Math.Min(0.99, Math.Max(finalScore + tokenScore * 0.25, 0.72 + Math.Min(0.25, tokenScore * 0.1)));
+                }
+                if (inBudget)
+                {
+                    finalScore = Math.Min(0.99, Math.Max(finalScore + 0.15, 0.65));
                 }
 
-                return new { Product = p, Score = sim };
+                var avail = Math.Max(0, p.OnHandQuantity - p.ReservedQuantity);
+                return new
+                {
+                    Product = p,
+                    SpecsText = specsText,
+                    Score = finalScore,
+                    IsRelevant = tokenScore > 0 || inBudget || vectorSim >= 0.56,
+                    InStock = avail > 0
+                };
             })
-            .OrderByDescending(x => x.Score)
-            .ThenByDescending(x => x.Product.IsFeatured)
-            .Take(6)
+            .ToList();
+
+        var isBestSellerQuery = dto.Message.Contains("ขายดี") || dto.Message.Contains("แนะนำ") && !hasBudgetQuery && tokens.Count == 0;
+        var matchedProducts = scoredProducts
+            .Where(x => x.IsRelevant || isBestSellerQuery)
+            .OrderByDescending(x => x.InStock)
+            .ThenByDescending(x => x.Score)
+            .ThenByDescending(x => x.Product.SoldCount)
+            .Take(8)
             .ToList();
 
         var contextBuilder = new StringBuilder();
-        contextBuilder.AppendLine("=== รายการสินค้าในร้าน JAMiNE IT ที่เกี่ยวข้องกับคำถามลูกค้า (Real-Time Stock & Price) ===");
-        foreach (var item in rankedProducts)
+        contextBuilder.AppendLine($"=== หมวดหมู่สินค้าที่มีจำหน่ายจริงในร้าน Jamine IT: {string.Join(", ", categorySummary)} ===");
+        if (hasBudgetQuery)
         {
-            var p = item.Product;
-            var avail = Math.Max(0, p.OnHandQuantity - p.ReservedQuantity);
-            var specsText = _aiService.ExtractSpecificationsText(p.Specifications);
-            contextBuilder.AppendLine($"- สินค้า: {p.Name} | แบรนด์: {p.Brand} | หมวดหมู่: {p.Category?.Name} | ราคาขาย: {p.Price:N2} บาท | สถานะสต็อกพร้อมส่งทันที: {(avail > 0 ? $"มีของพร้อมส่ง {avail} ชิ้น" : "สินค้าหมดชั่วคราว")} | สเปค: {(string.IsNullOrWhiteSpace(specsText) ? "-" : specsText)} | รายละเอียด: {p.Description}");
+            contextBuilder.AppendLine($"=== งบประมาณที่ลูกค้าสนใจ: {(minBudget ?? 0):N0} - {(maxBudget ?? 9999999):N0} บาท ===");
+        }
+
+        if (matchedProducts.Count > 0)
+        {
+            contextBuilder.AppendLine("=== รายการสินค้าจริงในร้านที่ตรงกับคำถามลูกค้า (Real-Time Stock & Price) ===");
+            foreach (var item in matchedProducts)
+            {
+                var p = item.Product;
+                var avail = Math.Max(0, p.OnHandQuantity - p.ReservedQuantity);
+                contextBuilder.AppendLine($"- สินค้า: {p.Name} | แบรนด์: {p.Brand} | หมวดหมู่: {p.Category?.Name} | ราคาขาย: {p.Price:N2} บาท | สถานะสต็อก: {(avail > 0 ? $"พร้อมส่ง {avail} ชิ้น" : "สินค้าหมดชั่วคราว")} | สเปค: {(string.IsNullOrWhiteSpace(item.SpecsText) ? "-" : item.SpecsText)} | รายละเอียด: {p.Description}");
+            }
+        }
+        else
+        {
+            contextBuilder.AppendLine("=== ผลการค้นหาในฐานข้อมูล: [ไม่พบสินค้าหรือหมวดหมู่ที่ตรงกับคำถามของลูกค้าในร้านขณะนี้] ===");
         }
 
         var systemInstruction = @"คุณคือ 'JAMiNE AI Assistant' ผู้เชี่ยวชาญแนะนำอุปกรณ์คอมพิวเตอร์และไอทีประจำหน้าร้าน Jamine IT
 กฎเหล็ก:
-1. ตอบคำถามลูกค้าด้วยภาษาไทยที่สุภาพ เป็นกันเอง กระชับ อ่านง่าย (ใช้ Bullet points)
-2. อ้างอิงชื่อสินค้า ราคาขาย สเปคสินค้า และจำนวนสต็อกพร้อมส่งจากข้อมูลที่ระบบส่งให้เท่านั้น ห้ามแต่งชื่อสินค้าหรือราคาขึ้นเองเด็ดขาด
-3. ห้ามเปิดเผยข้อมูลต้นทุน (Cost) หรือข้อมูลภายในบริษัทโดยเด็ดขาด
-4. หากลูกค้าถามหาสเปกหรือมีงบประมาณ ให้ช่วยคัดเลือกตัวที่คุ้มค่าและมีสต็อกพร้อมส่งให้ทันที";
+1. ตอบคำถามลูกค้าด้วยภาษาไทยที่สุภาพ เป็นกันเอง กระชับ อ่านง่าย ใช้เครื่องหมายขีด (-) แทน bullet และหลีกเลี่ยงการใช้ดอกจัน (**)
+2. หากมีรายการสินค้าจริงที่ระบบส่งให้: ให้แสดงรายชื่อรุ่น ราคาขาย สเปคเด่น และจำนวนสต็อกพร้อมส่งทันทีในคำตอบแรก ห้ามถามย้อนลูกค้าโดยไม่แสดงรายการสินค้า
+3. หากผลการค้นหาระบุว่า [ไม่พบสินค้าหรือหมวดหมู่ที่ตรงกับคำถามของลูกค้าในร้านขณะนี้] หรือลูกค้าถามหาสินค้าที่ร้านไม่มีขาย: ให้แจ้งอย่างสุภาพและชัดเจนว่า 'ขออภัยครับ ขณะนี้ทางร้าน Jamine IT ยังไม่มีสินค้าประเภท/รุ่นดังกล่าวจำหน่าย' พร้อมแนะนำหมวดหมู่สินค้าไอทีที่มีจำหน่ายจริงในร้านให้ลูกค้าเลือกดูแทน ห้ามแนะนำสินค้าคนละหมวดหรือแต่งชื่อสินค้าเองเด็ดขาด
+4. ห้ามเปิดเผยข้อมูลต้นทุน (Cost) หรือข้อมูลภายในบริษัทโดยเด็ดขาด";
 
         var userPrompt = $"{contextBuilder}\n\nคำถามจากลูกค้า: {dto.Message}";
         var reply = await _aiService.GenerateChatResponseAsync(systemInstruction, userPrompt, dto.History);
 
-        var suggestions = rankedProducts
-            .Where(x => x.Score >= 0.45 || rankedProducts.IndexOf(x) < 3)
+        var suggestions = matchedProducts
             .Take(4)
             .Select(x => MapToSemanticMatch(x.Product, x.Score, includeCost: false))
             .ToList();
