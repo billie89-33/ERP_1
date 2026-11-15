@@ -184,7 +184,7 @@ public class AiController : ControllerBase
         var productsQuery = _context.Products
             .AsNoTracking()
             .Include(p => p.Category)
-            .Where(p => p.Status == "ACTIVE");
+            .Where(p => !p.IsDeleted && p.Status != null && p.Status.ToLower() == "active");
 
         if (!string.IsNullOrWhiteSpace(dto.CategoryName) && dto.CategoryName != "All")
         {
@@ -317,17 +317,30 @@ public class AiController : ControllerBase
         return true;
     }
 
+    private static readonly HashSet<string> EnglishStopWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "do", "you", "have", "any", "the", "for", "is", "are", "can", "what", "with",
+        "and", "or", "want", "need", "looking", "buy", "sell", "price", "under", "over",
+        "around", "in", "of", "to", "my", "me", "please", "some", "good", "best", "recommend"
+    };
+
     private static double ComputeProductTokenMatchScore(Models.Product p, List<string> tokens, string specsText)
     {
         if (tokens.Count == 0) return 0.0;
-        var haystack = $"{p.Sku} {p.Name} {p.Brand} {p.ModelName} {p.Category?.Name} {p.Description} {specsText}".ToLowerInvariant();
+        var meaningfulTokens = tokens.Where(t => !EnglishStopWords.Contains(t)).ToList();
+        if (meaningfulTokens.Count == 0) return 0.0;
+
+        var tagsText = p.Tags != null && p.Tags.Length > 0 ? string.Join(" ", p.Tags) : string.Empty;
+        var haystack = $"{p.Sku} {p.Name} {p.Brand} {p.ModelName} {p.Category?.Name} {tagsText} {p.Description} {specsText}".ToLowerInvariant();
         int matched = 0;
-        foreach (var token in tokens)
+        foreach (var rawToken in meaningfulTokens)
         {
-            if (haystack.Contains(token.ToLowerInvariant()))
+            var token = rawToken.ToLowerInvariant();
+            var singular = token == "mice" ? "mouse" : (token.EndsWith("s") && token.Length > 3 ? token[..^1] : token);
+            if (haystack.Contains(token) || (singular != token && haystack.Contains(singular)))
                 matched++;
         }
-        return (double)matched / Math.Min(tokens.Count, 3);
+        return (double)matched / Math.Min(meaningfulTokens.Count, 3);
     }
 
     private static SemanticProductMatchDto MapToSemanticMatch(Models.Product p, double score, bool includeCost)
@@ -431,7 +444,7 @@ public class AiController : ControllerBase
         var activeProducts = await _context.Products
             .AsNoTracking()
             .Include(p => p.Category)
-            .Where(p => p.Status == "ACTIVE" && !p.IsDeleted)
+            .Where(p => !p.IsDeleted && p.Status != null && p.Status.ToLower() == "active")
             .ToListAsync();
 
         var categorySummary = activeProducts
@@ -490,7 +503,7 @@ public class AiController : ControllerBase
 
         if (matchedProducts.Count > 0)
         {
-            contextBuilder.AppendLine("=== รายการสินค้าจริงในร้านที่ตรงกับคำถามลูกค้า (Real-Time Stock & Price) ===");
+            contextBuilder.AppendLine("=== รายการสินค้าจริงในร้านที่ตรงกับคำถามลูกค้ามากที่สุด (Real-Time Stock & Price) ===");
             foreach (var item in matchedProducts)
             {
                 var p = item.Product;
@@ -498,29 +511,69 @@ public class AiController : ControllerBase
                 contextBuilder.AppendLine($"- สินค้า: {p.Name} | แบรนด์: {p.Brand} | หมวดหมู่: {p.Category?.Name} | ราคาขาย: {p.Price:N2} บาท | สถานะสต็อก: {(avail > 0 ? $"พร้อมส่ง {avail} ชิ้น" : "สินค้าหมดชั่วคราว")} | สเปค: {(string.IsNullOrWhiteSpace(item.SpecsText) ? "-" : item.SpecsText)} | รายละเอียด: {p.Description}");
             }
         }
-        else
+
+        // แนบรายการสินค้าในร้านเพิ่มเติม (Catalog Overview) เพื่อให้ AI ค้นหาข้ามภาษาไทย-อังกฤษได้เองโดยไม่ต้องพึ่ง Dictionary ตายตัว
+        var matchedIds = matchedProducts.Select(m => m.Product.Id).ToHashSet();
+        var remainingCatalog = scoredProducts
+            .Where(x => !matchedIds.Contains(x.Product.Id))
+            .OrderByDescending(x => x.InStock)
+            .ThenByDescending(x => x.Score)
+            .ThenByDescending(x => x.Product.SoldCount)
+            .Take(100)
+            .ToList();
+
+        if (remainingCatalog.Count > 0)
         {
-            contextBuilder.AppendLine("=== ผลการค้นหาในฐานข้อมูล: [ไม่พบสินค้าหรือหมวดหมู่ที่ตรงกับคำถามของลูกค้าในร้านขณะนี้] ===");
+            contextBuilder.AppendLine("=== รายการสินค้าทั้งหมดเพิ่มเติมในร้าน Jamine IT (สำหรับตรวจสอบว่ามีขายหรือไม่และแนะนำสินค้าใกล้เคียง) ===");
+            foreach (var item in remainingCatalog)
+            {
+                var p = item.Product;
+                var avail = Math.Max(0, p.OnHandQuantity - p.ReservedQuantity);
+                contextBuilder.AppendLine($"- {p.Name} | หมวด: {p.Category?.Name} | แบรนด์: {p.Brand} | ราคา: {p.Price:N2} บาท | สต็อก: {(avail > 0 ? $"พร้อมส่ง {avail} ชิ้น" : "หมดชั่วคราว")} | สเปค: {(string.IsNullOrWhiteSpace(item.SpecsText) ? "-" : item.SpecsText)}");
+            }
+        }
+        else if (matchedProducts.Count == 0)
+        {
+            contextBuilder.AppendLine("=== ผลการค้นหาในฐานข้อมูล: [ไม่พบสินค้าในร้านขณะนี้] ===");
         }
 
         var systemInstruction = @"คุณคือ 'JAMiNE AI Assistant' ผู้เชี่ยวชาญแนะนำอุปกรณ์คอมพิวเตอร์และไอทีประจำหน้าร้าน Jamine IT
 กฎเหล็ก:
-1. ตอบคำถามลูกค้าด้วยภาษาไทยที่สุภาพ เป็นกันเอง กระชับ อ่านง่าย ใช้เครื่องหมายขีด (-) แทน bullet และหลีกเลี่ยงการใช้ดอกจัน (**)
-2. หากมีรายการสินค้าจริงที่ระบบส่งให้: ให้แสดงรายชื่อรุ่น ราคาขาย สเปคเด่น และจำนวนสต็อกพร้อมส่งทันทีในคำตอบแรก ห้ามถามย้อนลูกค้าโดยไม่แสดงรายการสินค้า
-3. หากผลการค้นหาระบุว่า [ไม่พบสินค้าหรือหมวดหมู่ที่ตรงกับคำถามของลูกค้าในร้านขณะนี้] หรือลูกค้าถามหาสินค้าที่ร้านไม่มีขาย: ให้แจ้งอย่างสุภาพและชัดเจนว่า 'ขออภัยครับ ขณะนี้ทางร้าน Jamine IT ยังไม่มีสินค้าประเภท/รุ่นดังกล่าวจำหน่าย' พร้อมแนะนำหมวดหมู่สินค้าไอทีที่มีจำหน่ายจริงในร้านให้ลูกค้าเลือกดูแทน ห้ามแนะนำสินค้าคนละหมวดหรือแต่งชื่อสินค้าเองเด็ดขาด
-4. ห้ามเปิดเผยข้อมูลต้นทุน (Cost) หรือข้อมูลภายในบริษัทโดยเด็ดขาด";
+1. รองรับทั้งภาษาไทยและภาษาอังกฤษ: ให้ตอบกลับเป็นภาษาเดียวกับที่ลูกค้าถามมา (หากลูกค้าถามภาษาไทย ตอบภาษาไทยอย่างสุภาพ เป็นกันเอง; หากลูกค้าถามภาษาอังกฤษ ตอบภาษาอังกฤษอย่างสุภาพและเป็นมืออาชีพ)
+2. รูปแบบการตอบ: กระชับ อ่านง่าย ใช้เครื่องหมายขีด (-) แทน bullet และหลีกเลี่ยงการใช้ดอกจัน (**)
+3. เน้นสินค้าจริงของร้านก่อนเสมอ: ตรวจสอบทั้งรายการที่ตรงกับคำถามและรายการสินค้าทั้งหมดของร้านที่ระบบส่งให้ หากมีสินค้าที่ตรงหรือเกี่ยวข้อง (รวมถึงคำถามภาษาอังกฤษ/ภาษาไทยหรือคำเรียกต่างกัน) ให้แสดงชื่อรุ่น ราคาขาย สเปคเด่น และสถานะสต็อก (พร้อมส่งกี่ชิ้น หรือหมดชั่วคราว) ทันทีในคำตอบแรก ห้ามถามย้อนลูกค้าโดยไม่แสดงรายการสินค้า
+4. กรณีไม่มีสินค้าที่ถาม: หากตรวจสอบรายการสินค้าและหมวดหมู่ทั้งหมดที่ระบบส่งให้แล้วพบว่าไม่มีสินค้าประเภทหรือรุ่นนั้นจำหน่ายจริง ให้แจ้งอย่างสุภาพและชัดเจนว่ายังไม่มีสินค้าดังกล่าวจำหน่าย (ภาษาไทย: 'ขออภัยครับ ขณะนี้ทางร้าน Jamine IT ยังไม่มีสินค้าประเภท/รุ่นดังกล่าวจำหน่าย' | ภาษาอังกฤษ: 'Sorry, Jamine IT currently does not carry that product or category.') พร้อมแนะนำหมวดหมู่สินค้าที่มีจำหน่ายจริงในร้านให้ลูกค้าเลือกดูแทน ห้ามแนะนำสินค้าคนละหมวดหรือแต่งชื่อรุ่น/ราคาเองเด็ดขาด
+5. ห้ามเปิดเผยข้อมูลต้นทุน (Cost) หรือข้อมูลภายในบริษัทโดยเด็ดขาด";
 
         var userPrompt = $"{contextBuilder}\n\nคำถามจากลูกค้า: {dto.Message}";
         var reply = await _aiService.GenerateChatResponseAsync(systemInstruction, userPrompt, dto.History);
 
-        var suggestions = matchedProducts
-            .Take(4)
-            .Select(x => MapToSemanticMatch(x.Product, x.Score, includeCost: false))
-            .ToList();
+        var normalizedReply = Regex.Replace(reply ?? string.Empty, @"\s+", " ");
+        var mentionedInReply = !string.IsNullOrWhiteSpace(normalizedReply)
+            ? scoredProducts
+                .Where(x => !string.IsNullOrWhiteSpace(x.Product.Name))
+                .Select(x => new
+                {
+                    Item = x,
+                    Index = normalizedReply.IndexOf(Regex.Replace(x.Product.Name, @"\s+", " "), StringComparison.OrdinalIgnoreCase)
+                })
+                .Where(x => x.Index >= 0)
+                .OrderBy(x => x.Index)
+                .Take(4)
+                .Select(x => MapToSemanticMatch(x.Item.Product, Math.Max(x.Item.Score, 0.8), includeCost: false))
+                .ToList()
+            : new List<SemanticProductMatchDto>();
+
+        var suggestions = mentionedInReply.Count > 0
+            ? mentionedInReply
+            : matchedProducts
+                .Take(4)
+                .Select(x => MapToSemanticMatch(x.Product, x.Score, includeCost: false))
+                .ToList();
 
         return Ok(new ChatResponseDto
         {
-            Reply = reply,
+            Reply = reply ?? string.Empty,
             SuggestedProducts = suggestions,
             Timestamp = DateTime.UtcNow
         });
