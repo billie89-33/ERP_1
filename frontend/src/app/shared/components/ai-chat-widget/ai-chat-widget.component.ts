@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -27,6 +27,7 @@ export interface ChatUiMessage {
 })
 export class AiChatWidgetComponent {
   @Input() mode: 'storefront' | 'admin' = 'storefront';
+  @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
 
   private aiService = inject(AiService);
   private cartService = inject(CartService);
@@ -71,6 +72,10 @@ export class AiChatWidgetComponent {
         }
       ]);
     }
+
+    if (nextState) {
+      this.scrollToBottom();
+    }
   }
 
   sendPrompt(promptText: string): void {
@@ -98,6 +103,7 @@ export class AiChatWidgetComponent {
     this.messages.update((prev) => [...prev, userMsg]);
     this.inputMessage = '';
     this.isSending.set(true);
+    this.scrollToBottom();
 
     const request$ =
       this.mode === 'admin'
@@ -115,6 +121,7 @@ export class AiChatWidgetComponent {
           referencedDocuments: res.referencedDocuments || []
         };
         this.messages.update((prev) => [...prev, assistantMsg]);
+        this.scrollToBottom();
       },
       error: (err: { error?: { message?: string } }) => {
         this.isSending.set(false);
@@ -131,8 +138,18 @@ export class AiChatWidgetComponent {
             timestamp: this.getCurrentTime()
           }
         ]);
+        this.scrollToBottom();
       }
     });
+  }
+
+  private scrollToBottom(): void {
+    setTimeout(() => {
+      const el = this.messagesContainer?.nativeElement;
+      if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+      }
+    }, 30);
   }
 
   addRecommendedToCart(item: SemanticProductMatchDto): void {
