@@ -594,6 +594,7 @@ public class AiController : ControllerBase
         // --- A. Real-Time Global ERP Summary ---
         var allSalesOrders = await _context.SalesOrders
             .AsNoTracking()
+            .Where(so => !so.IsDeleted)
             .Include(so => so.Customer)
             .Include(so => so.SalesOrderItems)
             .ThenInclude(i => i.Product)
@@ -602,27 +603,40 @@ public class AiController : ControllerBase
 
         var allPurchaseOrders = await _context.PurchaseOrders
             .AsNoTracking()
+            .Where(po => !po.IsDeleted)
             .Include(po => po.Supplier)
             .Include(po => po.PurchaseOrderItems)
             .ThenInclude(i => i.Product)
             .OrderByDescending(po => po.OrderDate)
             .ToListAsync();
 
+        var allQuotations = await _context.Quotations
+            .AsNoTracking()
+            .Where(q => !q.IsDeleted)
+            .Include(q => q.Customer)
+            .OrderByDescending(q => q.QuoteDate)
+            .Take(15)
+            .ToListAsync();
+
         var allProducts = await _context.Products
             .AsNoTracking()
+            .Where(p => !p.IsDeleted)
             .Include(p => p.Category)
             .ToListAsync();
 
         var allSuppliers = await _context.Suppliers
             .AsNoTracking()
+            .Where(s => !s.IsDeleted)
             .ToListAsync();
 
         var allCustomers = await _context.Customers
             .AsNoTracking()
+            .Where(c => !c.IsDeleted)
             .ToListAsync();
 
         var recentGRs = await _context.GoodsReceipts
             .AsNoTracking()
+            .Where(gr => !gr.IsDeleted)
             .Include(gr => gr.PurchaseOrder)
             .Include(gr => gr.ReceivedByUser)
             .OrderByDescending(gr => gr.ReceiptDate)
@@ -631,20 +645,27 @@ public class AiController : ControllerBase
 
         var recentGIs = await _context.GoodsIssues
             .AsNoTracking()
+            .Where(gi => !gi.IsDeleted)
             .Include(gi => gi.SalesOrder)
             .Include(gi => gi.IssuedByUser)
             .OrderByDescending(gi => gi.IssueDate)
             .Take(8)
             .ToListAsync();
 
-        var validSOs = allSalesOrders.Where(s => s.Status != "Cancelled").ToList();
-        var validPOs = allPurchaseOrders.Where(p => p.Status != "Cancelled").ToList();
+        var validSOs = allSalesOrders.Where(s => !string.Equals(s.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)).ToList();
+        var validPOs = allPurchaseOrders.Where(p => !string.Equals(p.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)).ToList();
 
         var totalRevenue = validSOs.Sum(s => s.TotalAmount);
         var totalExpense = validPOs.Sum(p => p.TotalAmount);
-        var pendingSlips = allSalesOrders.Count(s => s.PaymentStatus == "Checking");
-        var pendingInboundPOs = allPurchaseOrders.Where(p => p.Status == "Pending" || p.Status == "Approved").ToList();
-        var pendingOutboundSOs = allSalesOrders.Where(s => s.Status == "Pending" && s.PaymentStatus == "Paid").ToList();
+        var pendingSlips = validSOs.Count(s => string.Equals(s.PaymentStatus, "Checking", StringComparison.OrdinalIgnoreCase));
+        var pendingInboundPOs = validPOs.Where(p => string.Equals(p.Status, "Pending", StringComparison.OrdinalIgnoreCase) || string.Equals(p.Status, "Approved", StringComparison.OrdinalIgnoreCase)).ToList();
+        var pendingOutboundSOs = validSOs.Where(s => string.Equals(s.Status, "Pending", StringComparison.OrdinalIgnoreCase) && string.Equals(s.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase)).ToList();
+        var inventoryCostValue = allProducts.Sum(p => p.Cost * Math.Max(0, p.OnHandQuantity));
+        var inventoryRetailValue = allProducts.Sum(p => p.Price * Math.Max(0, p.OnHandQuantity));
+        var channelBreakdown = validSOs
+            .GroupBy(s => string.IsNullOrWhiteSpace(s.OrderChannel) ? "Unknown" : s.OrderChannel)
+            .Select(g => $"{g.Key}: {g.Count()} บิล (฿{g.Sum(x => x.TotalAmount):N2})")
+            .ToList();
 
         // --- B. Vector Ranking across 5 Modules ---
         var topProducts = allProducts
@@ -655,7 +676,8 @@ public class AiController : ControllerBase
                         + (p.Name.ToLowerInvariant().Contains(msgLower) || p.Sku.ToLowerInvariant().Contains(msgLower) ? 0.25 : 0.0)
             })
             .OrderByDescending(x => x.Score)
-            .Take(5)
+            .ThenByDescending(x => x.Item.SoldCount)
+            .Take(50)
             .ToList();
 
         var topSOs = allSalesOrders
@@ -667,7 +689,7 @@ public class AiController : ControllerBase
             })
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.Item.OrderDate)
-            .Take(6)
+            .Take(15)
             .ToList();
 
         var topPOs = allPurchaseOrders
@@ -679,7 +701,7 @@ public class AiController : ControllerBase
             })
             .OrderByDescending(x => x.Score)
             .ThenByDescending(x => x.Item.OrderDate)
-            .Take(6)
+            .Take(15)
             .ToList();
 
         var topSuppliers = allSuppliers
@@ -690,7 +712,7 @@ public class AiController : ControllerBase
                         + (s.CompanyName.ToLowerInvariant().Contains(msgLower) ? 0.3 : 0.0)
             })
             .OrderByDescending(x => x.Score)
-            .Take(4)
+            .Take(15)
             .ToList();
 
         var topCustomers = allCustomers
@@ -701,35 +723,8 @@ public class AiController : ControllerBase
                         + (c.CompanyName.ToLowerInvariant().Contains(msgLower) ? 0.3 : 0.0)
             })
             .OrderByDescending(x => x.Score)
-            .Take(4)
+            .Take(15)
             .ToList();
-
-        // Populate clickable document references
-        foreach (var so in topSOs.Take(3))
-        {
-            referencedDocs.Add(new ChatDocumentRefDto
-            {
-                Type = "SO",
-                Id = so.Item.Id,
-                Code = so.Item.OrderNumber,
-                Label = $"{so.Item.OrderNumber} ({so.Item.Customer?.CompanyName ?? "ลูกค้า"} - ฿{so.Item.TotalAmount:N2})",
-                Route = $"/admin/sales-orders/{so.Item.Id}",
-                SimilarityScore = Math.Round(so.Score, 3)
-            });
-        }
-
-        foreach (var po in topPOs.Take(3))
-        {
-            referencedDocs.Add(new ChatDocumentRefDto
-            {
-                Type = "PO",
-                Id = po.Item.Id,
-                Code = po.Item.PoNumber,
-                Label = $"{po.Item.PoNumber} ({po.Item.Supplier?.CompanyName ?? "ซัพพลายเออร์"} - ฿{po.Item.TotalAmount:N2})",
-                Route = $"/admin/purchase-orders/{po.Item.Id}",
-                SimilarityScore = Math.Round(po.Score, 3)
-            });
-        }
 
         // Build comprehensive RAG Context for Gemini
         var ctx = new StringBuilder();
@@ -737,11 +732,14 @@ public class AiController : ControllerBase
         ctx.AppendLine($"- รายได้รวมสะสมทั้งหมด (Sales Orders ที่ไม่ยกเลิก {validSOs.Count} บิล): {totalRevenue:N2} บาท");
         ctx.AppendLine($"- รายจ่ายสั่งซื้อรวมสะสมทั้งหมด (Purchase Orders ที่ไม่ยกเลิก {validPOs.Count} บิล): {totalExpense:N2} บาท");
         ctx.AppendLine($"- ส่วนต่างกระแสเงินสดสุทธิ (Revenue - Expense): {(totalRevenue - totalExpense):N2} บาท");
+        ctx.AppendLine($"- มูลค่าสต็อกคงเหลือปัจจุบัน: ราคาทุน {inventoryCostValue:N2} บาท | ราคาขายปลีก {inventoryRetailValue:N2} บาท");
+        ctx.AppendLine($"- ยอดขายแยกตามช่องทาง: {(channelBreakdown.Any() ? string.Join(" | ", channelBreakdown) : "ยังไม่มีข้อมูล")}");
         ctx.AppendLine($"- สลิปโอนเงินรอตรวจสอบ (PaymentStatus = Checking): {pendingSlips} รายการ");
         ctx.AppendLine($"- งานค้างคลังขาเข้า (Inbound POs รอรับของเข้าคลัง): {pendingInboundPOs.Count} ใบ ({string.Join(", ", pendingInboundPOs.Take(5).Select(p => $"{p.PoNumber} จาก {p.Supplier?.CompanyName} ยอด {p.TotalAmount:N2} บาท"))})");
         ctx.AppendLine($"- งานค้างคลังขาออก (Outbound SOs จ่ายเงินแล้วรอแพ็คจัดส่ง): {pendingOutboundSOs.Count} ใบ ({string.Join(", ", pendingOutboundSOs.Take(5).Select(s => $"{s.OrderNumber} ลูกค้า {s.Customer?.CompanyName} ยอด {s.TotalAmount:N2} บาท"))})");
 
-        ctx.AppendLine("\n=== 2. บิลขาย / รายได้แต่ละครั้ง (Sales Orders - Revenue) ที่เกี่ยวข้องสูงสุด ===");
+        ctx.AppendLine("\n=== 2. บิลขาย / รายได้แต่ละครั้ง (Sales Orders - Revenue) ===");
+        if (topSOs.Count == 0) ctx.AppendLine("- ยังไม่มีบิลขาย (Sales Orders) ในระบบ");
         foreach (var x in topSOs)
         {
             var so = x.Item;
@@ -749,7 +747,8 @@ public class AiController : ControllerBase
             ctx.AppendLine($"- เลขบิลขาย: {so.OrderNumber} | วันที่: {so.OrderDate:yyyy-MM-dd HH:mm} | ลูกค้า: {so.Customer?.CompanyName} | ช่องทาง: {so.OrderChannel} | สถานะบิล: {so.Status} | การชำระเงิน: {so.PaymentStatus} | ยอดรายได้: {so.TotalAmount:N2} บาท | สินค้าในบิล: [{itemsStr}]");
         }
 
-        ctx.AppendLine("\n=== 3. ใบสั่งซื้อ / รายจ่ายแต่ละครั้ง (Purchase Orders - Expense) ที่เกี่ยวข้องสูงสุด ===");
+        ctx.AppendLine("\n=== 3. ใบสั่งซื้อ / รายจ่ายแต่ละครั้ง (Purchase Orders - Expense) ===");
+        if (topPOs.Count == 0) ctx.AppendLine("- ยังไม่มีใบสั่งซื้อ (Purchase Orders) ในระบบ");
         foreach (var x in topPOs)
         {
             var po = x.Item;
@@ -757,22 +756,29 @@ public class AiController : ControllerBase
             ctx.AppendLine($"- เลขใบสั่งซื้อ: {po.PoNumber} | วันที่: {po.OrderDate:yyyy-MM-dd} | ซัพพลายเออร์: {po.Supplier?.CompanyName} | เครดิต: {po.PaymentTerms ?? "-"} | หมายเหตุ: {po.Remarks ?? "-"} | สถานะ: {po.Status} | ยอดรายจ่ายรวมภาษี: {po.TotalAmount:N2} บาท | สินค้าที่สั่งซื้อ: [{itemsStr}]");
         }
 
-        ctx.AppendLine("\n=== 4. ข้อมูลสินค้า สต็อก และราคาทุน-ราคาขาย (Products & Inventory) ===");
+        ctx.AppendLine("\n=== 4. ใบเสนอราคา (Quotations ล่าสุด) ===");
+        if (allQuotations.Count == 0) ctx.AppendLine("- ยังไม่มีใบเสนอราคาในระบบ");
+        foreach (var q in allQuotations)
+        {
+            ctx.AppendLine($"- เลขใบเสนอราคา: {q.QuoteNumber} | วันที่: {q.QuoteDate:yyyy-MM-dd} | ลูกค้า: {q.Customer?.CompanyName ?? "-"} | สถานะ: {q.Status} | ยอดรวม: {q.TotalAmount:N2} บาท | ใช้ได้ถึง: {q.ValidUntil:yyyy-MM-dd}");
+        }
+
+        ctx.AppendLine("\n=== 5. ข้อมูลสินค้า สต็อก และราคาทุน-ราคาขาย (Products & Inventory) ===");
         foreach (var x in topProducts)
         {
             var p = x.Item;
             var avail = Math.Max(0, p.OnHandQuantity - p.ReservedQuantity);
             var specsText = _aiService.ExtractSpecificationsText(p.Specifications);
-            ctx.AppendLine($"- SKU: {p.Sku} | ชื่อ: {p.Name} | ราคาทุน: {p.Cost:N2} บาท | ราคาขาย: {p.Price:N2} บาท | กำไรต่อชิ้น: {(p.Price - p.Cost):N2} บาท | สต็อกจริง (OnHand): {p.OnHandQuantity} | จองแล้ว (Reserved): {p.ReservedQuantity} | พร้อมขาย (Available): {avail} | ขายไปแล้ว: {p.SoldCount} ชิ้น | สเปค: {(string.IsNullOrWhiteSpace(specsText) ? "-" : specsText)}");
+            ctx.AppendLine($"- SKU: {p.Sku} | ชื่อ: {p.Name} | หมวด: {p.Category?.Name} | ราคาทุน: {p.Cost:N2} บาท | ราคาขาย: {p.Price:N2} บาท | กำไรต่อชิ้น: {(p.Price - p.Cost):N2} บาท | สต็อกจริง (OnHand): {p.OnHandQuantity} | จองแล้ว (Reserved): {p.ReservedQuantity} | พร้อมขาย (Available): {avail} | ขายไปแล้ว: {p.SoldCount} ชิ้น | สเปค: {(string.IsNullOrWhiteSpace(specsText) ? "-" : specsText)}");
         }
 
-        var lowStockList = allProducts.Where(p => p.OnHandQuantity <= 5).OrderBy(p => p.OnHandQuantity).Take(6).ToList();
+        var lowStockList = allProducts.Where(p => p.OnHandQuantity <= 5).OrderBy(p => p.OnHandQuantity).Take(10).ToList();
         if (lowStockList.Any())
         {
             ctx.AppendLine($"- สินค้าสต็อกต่ำกว่าเกณฑ์ (<= 5 ชิ้น): {string.Join(", ", lowStockList.Select(p => $"{p.Name} (SKU: {p.Sku}, เหลือ {p.OnHandQuantity} ชิ้น)"))}");
         }
 
-        ctx.AppendLine("\n=== 5. ข้อมูลคู่ค้าซัพพลายเออร์ (Suppliers) และลูกค้า (Customers) ===");
+        ctx.AppendLine("\n=== 6. ข้อมูลคู่ค้าซัพพลายเออร์ (Suppliers) และลูกค้า (Customers) ===");
         foreach (var s in topSuppliers)
         {
             ctx.AppendLine($"- ซัพพลายเออร์: {s.Item.CompanyName} | ผู้ติดต่อ: {s.Item.ContactName ?? "-"} | โทร: {s.Item.Phone ?? "-"} | เครดิต: {s.Item.PaymentTerms ?? "-"} | TaxID: {s.Item.TaxId ?? "-"}");
@@ -783,29 +789,65 @@ public class AiController : ControllerBase
             ctx.AppendLine($"- ลูกค้า: {c.Item.CompanyName} ({c.Item.CustomerType}) | โทร: {c.Item.Phone ?? "-"} | เครดิต: {c.Item.CreditTermDays} วัน (วงเงิน {c.Item.CreditLimit:N2} บาท) | ซื้อสะสม: {custOrders.Count} บิล รวม {custOrders.Sum(o => o.TotalAmount):N2} บาท");
         }
 
-        ctx.AppendLine("\n=== 6. ประวัติการรับของเข้าคลัง (GR) และเบิกส่งของ (GI) ล่าสุด ===");
-        foreach (var gr in recentGRs.Take(4))
+        ctx.AppendLine("\n=== 7. ประวัติการรับของเข้าคลัง (GR) และเบิกส่งของ (GI) ล่าสุด ===");
+        if (recentGRs.Count == 0) ctx.AppendLine("- ยังไม่มีใบรับของเข้าคลัง (GR)");
+        foreach (var gr in recentGRs.Take(6))
         {
             ctx.AppendLine($"- ใบรับของเข้า GR: {gr.GrNumber} | อ้างอิง PO: {gr.PurchaseOrder?.PoNumber} | วันที่รับ: {gr.ReceiptDate:yyyy-MM-dd} | ผู้รับ: {gr.ReceivedByUser?.Username} | หมายเหตุ: {gr.Remarks}");
         }
-        foreach (var gi in recentGIs.Take(4))
+        if (recentGIs.Count == 0) ctx.AppendLine("- ยังไม่มีใบเบิกส่งของ (GI)");
+        foreach (var gi in recentGIs.Take(6))
         {
             ctx.AppendLine($"- ใบเบิกส่งของ GI: {gi.GiNumber} | อ้างอิง SO: {gi.SalesOrder?.OrderNumber} | วันที่ส่ง: {gi.IssueDate:yyyy-MM-dd} | ผู้เบิก: {gi.IssuedByUser?.Username} | หมายเหตุ: {gi.Remarks}");
         }
 
         var systemInstruction = @"คุณคือ 'Jamine ERP AI Copilot' ผู้ช่วยวิเคราะห์ข้อมูลธุรกิจอัจฉริยะระดับผู้บริหารและแอดมินของระบบ Jamine ERP
-หน้าที่ของคุณ:
-1. ตอบคำถามเกี่ยวกับรายได้ (Sales Orders / SO), รายจ่ายแต่ละครั้ง (Purchase Orders / PO), สินค้า/สต็อก/กำไร, ซัพพลายเออร์, ลูกค้า และสถานะคลังสินค้า (Inbound GR / Outbound GI) อย่างแม่นยำ
-2. อ้างอิงเลขที่เอกสารจริงเสมอ (เช่น SO2026..., PO2026..., GR..., GI..., SKU) พร้อมระบุวันที่และตัวเลขจำนวนเงินให้ชัดเจน
-3. จัดรูปแบบคำตอบให้อ่านง่ายด้วยหัวข้อและ Bullet points กระชับ ชัดเจน และเป็นมืออาชีพ";
+หน้าที่และกฎเหล็ก:
+1. รองรับทั้งภาษาไทยและภาษาอังกฤษ: ตอบกลับเป็นภาษาเดียวกับคำถามของผู้ดูแลระบบ
+2. ตอบคำถามเกี่ยวกับรายได้ (Sales Orders / SO), รายจ่าย (Purchase Orders / PO), ใบเสนอราคา (Quotations), สินค้า/สต็อก/กำไร, ซัพพลายเออร์, ลูกค้า และสถานะคลังสินค้า (Inbound GR / Outbound GI) อย่างแม่นยำจากข้อมูลจริงที่ระบบส่งให้เท่านั้น ห้ามแต่งตัวเลขหรือเลขที่เอกสารเองเด็ดขาด
+3. อ้างอิงเลขที่เอกสารจริงเสมอ (เช่น SO..., PO..., QT..., GR..., GI..., SKU) พร้อมระบุวันที่และตัวเลขจำนวนเงินให้ชัดเจน หากหมวดใดยังไม่มีข้อมูลในระบบให้ระบุตรงๆ ว่ายังไม่มีรายการ
+4. จัดรูปแบบคำตอบให้อ่านง่าย ใช้ขีด (-) แทน bullet และหลีกเลี่ยงการใช้ดอกจัน (**)";
 
         var userPrompt = $"{ctx}\n\nคำถามจากผู้ดูแลระบบ: {dto.Message}";
-        var reply = await _aiService.GenerateChatResponseAsync(systemInstruction, userPrompt, dto.History);
+        var reply = await _aiService.GenerateChatResponseAsync(systemInstruction, userPrompt, dto.History) ?? string.Empty;
+
+        // Populate clickable document references only for documents actually mentioned in the reply (or high-confidence vector matches)
+        foreach (var so in topSOs)
+        {
+            if (reply.Contains(so.Item.OrderNumber, StringComparison.OrdinalIgnoreCase) || so.Score >= 0.65)
+            {
+                referencedDocs.Add(new ChatDocumentRefDto
+                {
+                    Type = "SO",
+                    Id = so.Item.Id,
+                    Code = so.Item.OrderNumber,
+                    Label = $"{so.Item.OrderNumber} ({so.Item.Customer?.CompanyName ?? "ลูกค้า"} - ฿{so.Item.TotalAmount:N2})",
+                    Route = $"/admin/sales-orders/{so.Item.Id}",
+                    SimilarityScore = Math.Round(so.Score, 3)
+                });
+            }
+        }
+
+        foreach (var po in topPOs)
+        {
+            if (reply.Contains(po.Item.PoNumber, StringComparison.OrdinalIgnoreCase) || po.Score >= 0.65)
+            {
+                referencedDocs.Add(new ChatDocumentRefDto
+                {
+                    Type = "PO",
+                    Id = po.Item.Id,
+                    Code = po.Item.PoNumber,
+                    Label = $"{po.Item.PoNumber} ({po.Item.Supplier?.CompanyName ?? "ซัพพลายเออร์"} - ฿{po.Item.TotalAmount:N2})",
+                    Route = $"/admin/purchase-orders/{po.Item.Id}",
+                    SimilarityScore = Math.Round(po.Score, 3)
+                });
+            }
+        }
 
         return Ok(new ChatResponseDto
         {
             Reply = reply,
-            ReferencedDocuments = referencedDocs,
+            ReferencedDocuments = referencedDocs.Take(6).ToList(),
             Timestamp = DateTime.UtcNow
         });
     }
@@ -817,7 +859,7 @@ public class AiController : ControllerBase
     {
         var validSOs = await _context.SalesOrders
             .AsNoTracking()
-            .Where(s => s.Status != "Cancelled")
+            .Where(s => !s.IsDeleted && s.Status != "Cancelled")
             .ToListAsync();
 
         var validPOs = await _context.PurchaseOrders
@@ -825,7 +867,7 @@ public class AiController : ControllerBase
             .Include(p => p.Supplier)
             .Include(p => p.PurchaseOrderItems)
             .ThenInclude(i => i.Product)
-            .Where(p => p.Status != "Cancelled")
+            .Where(p => !p.IsDeleted && p.Status != "Cancelled")
             .ToListAsync();
 
         var totalRevenue = validSOs.Sum(s => s.TotalAmount);
@@ -836,7 +878,7 @@ public class AiController : ControllerBase
 
         var lowStockProducts = await _context.Products
             .AsNoTracking()
-            .Where(p => p.OnHandQuantity <= 5)
+            .Where(p => !p.IsDeleted && p.OnHandQuantity <= 5)
             .OrderBy(p => p.OnHandQuantity)
             .Take(6)
             .ToListAsync();

@@ -122,6 +122,13 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""ExpectedDeliveryDate"" timestamp with time zone;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""PaymentTerms"" text;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""ReferenceNumber"" text;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""Remarks"" text;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""SubTotal"" numeric NOT NULL DEFAULT 0;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""TaxAmount"" numeric NOT NULL DEFAULT 0;
+            ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""VatRate"" numeric NOT NULL DEFAULT 0;
             ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
             ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
             ALTER TABLE ""SalesOrders"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
