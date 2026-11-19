@@ -129,6 +129,11 @@ using (var scope = app.Services.CreateScope())
             ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""SubTotal"" numeric NOT NULL DEFAULT 0;
             ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""TaxAmount"" numeric NOT NULL DEFAULT 0;
             ALTER TABLE ""PurchaseOrders"" ADD COLUMN IF NOT EXISTS ""VatRate"" numeric NOT NULL DEFAULT 0;
+            ALTER TABLE ""CompanySettings"" ADD COLUMN IF NOT EXISTS ""HeroBadge"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""CompanySettings"" ADD COLUMN IF NOT EXISTS ""HeroTitle"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""CompanySettings"" ADD COLUMN IF NOT EXISTS ""HeroSubtitle"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""CompanySettings"" ADD COLUMN IF NOT EXISTS ""HeroImageUrl"" text NOT NULL DEFAULT '';
+            ALTER TABLE ""CompanySettings"" ADD COLUMN IF NOT EXISTS ""HeroCtaText"" text NOT NULL DEFAULT '';
             ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];
             ALTER TABLE ""Products"" ADD COLUMN IF NOT EXISTS ""EmbeddingUpdatedAt"" timestamp with time zone;
             ALTER TABLE ""SalesOrders"" ADD COLUMN IF NOT EXISTS ""Embedding"" real[];

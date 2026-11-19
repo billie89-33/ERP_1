@@ -16,6 +16,7 @@ export class SettingsComponent implements OnInit {
   isSaving = false;
   successMessage = '';
   logoPreview = '';
+  heroPreview = '';
 
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
@@ -27,7 +28,12 @@ export class SettingsComponent implements OnInit {
       address: ['', Validators.required],
       phone: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      logoUrl: ['']
+      logoUrl: [''],
+      heroBadge: ['New Generation Components'],
+      heroTitle: ['Jamine CPU คอมพิวเตอร์เซตสเปกแรง ตอบโจทย์ทุกการใช้งาน'],
+      heroSubtitle: ['คัดสรรอุปกรณ์ไอทีคุณภาพ ประกันศูนย์แท้ 100% ประกอบและเทสระบบก่อนจัดส่ง พร้อมผู้ช่วย AI แนะนำสเปคตามงบประมาณ'],
+      heroImageUrl: [''],
+      heroCtaText: ['เลือกซื้อสินค้าเลย']
     });
 
     this.loadSettings();
@@ -43,9 +49,15 @@ export class SettingsComponent implements OnInit {
           address: data.address,
           phone: data.phone,
           email: data.email,
-          logoUrl: data.logoUrl
+          logoUrl: data.logoUrl,
+          heroBadge: data.heroBadge || 'New Generation Components',
+          heroTitle: data.heroTitle || 'Jamine CPU คอมพิวเตอร์เซตสเปกแรง ตอบโจทย์ทุกการใช้งาน',
+          heroSubtitle: data.heroSubtitle || 'คัดสรรอุปกรณ์ไอทีคุณภาพ ประกันศูนย์แท้ 100% ประกอบและเทสระบบก่อนจัดส่ง พร้อมผู้ช่วย AI แนะนำสเปคตามงบประมาณ',
+          heroImageUrl: data.heroImageUrl || '',
+          heroCtaText: data.heroCtaText || 'เลือกซื้อสินค้าเลย'
         });
         this.logoPreview = data.logoUrl || '';
+        this.heroPreview = data.heroImageUrl || '';
         this.isLoading = false;
       },
       error: () => {
@@ -70,6 +82,33 @@ export class SettingsComponent implements OnInit {
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  onHeroFileChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Hero image size must be less than 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.heroPreview = reader.result as string;
+        this.settingsForm.patchValue({ heroImageUrl: this.heroPreview });
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  onHeroUrlInput(event: Event) {
+    const val = (event.target as HTMLInputElement).value;
+    this.heroPreview = val;
+  }
+
+  resetHeroImage() {
+    this.heroPreview = '';
+    this.settingsForm.patchValue({ heroImageUrl: '' });
   }
 
   onSubmit() {

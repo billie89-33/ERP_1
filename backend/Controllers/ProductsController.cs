@@ -73,12 +73,19 @@ public class ProductsController : ControllerBase
         [FromQuery] decimal? minPrice = null,
         [FromQuery] decimal? maxPrice = null,
         [FromQuery] string[]? brands = null,
-        [FromQuery] string? specs = null) // JSON string format: {"Resolution":["FHD"],"Color":["BLACK"]}
+        [FromQuery] string? specs = null, // JSON string format: {"Resolution":["FHD"],"Color":["BLACK"]}
+        [FromQuery] string? sortBy = null,
+        [FromQuery] bool onlyActive = false)
     {
         var query = _context.Products
             .Include(p => p.Category)
             .Where(p => !p.IsDeleted)
             .AsQueryable();
+
+        if (onlyActive)
+        {
+            query = query.Where(p => p.Status != null && p.Status.ToLower() == "active");
+        }
 
         if (!string.IsNullOrEmpty(search))
         {
@@ -150,10 +157,24 @@ public class ProductsController : ControllerBase
             catch { /* Ignore invalid JSON */ }
         }
 
-        var total = productsList.Count;
+        var sortedProducts = sortBy?.ToLowerInvariant() switch
+        {
+            "newest" => productsList.OrderByDescending(p => p.IsFeatured).ThenByDescending(p => p.Id).ToList(),
+            "popular" => productsList
+                .OrderByDescending(p => (p.OnHandQuantity - p.ReservedQuantity) > 0)
+                .ThenByDescending(p => p.SoldCount)
+                .ThenByDescending(p => p.ViewCount)
+                .ThenByDescending(p => p.Id)
+                .ToList(),
+            "price_asc" => productsList.OrderBy(p => p.Price).ToList(),
+            "price_desc" => productsList.OrderByDescending(p => p.Price).ToList(),
+            _ => productsList
+        };
+
+        var total = sortedProducts.Count;
         var totalPages = (int)Math.Ceiling(total / (double)limit);
 
-        var pagedProducts = productsList
+        var pagedProducts = sortedProducts
             .Skip((page - 1) * limit)
             .Take(limit)
             .Select(p => new ProductDto

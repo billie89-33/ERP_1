@@ -155,6 +155,11 @@ export interface CompanySettingsDto {
   bankAccountName?: string;
   bankAccountNumber?: string;
   promptPayQrUrl?: string;
+  heroBadge?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroImageUrl?: string;
+  heroCtaText?: string;
 }
 
 export interface PurchaseOrderItemDto {

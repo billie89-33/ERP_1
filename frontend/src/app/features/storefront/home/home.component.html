@@ -1,120 +1,345 @@
-<div class="relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border border-slate-700">
-  <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 to-slate-900/80 z-10"></div>
-  
-  <div class="relative z-20 px-6 py-16 md:py-24 text-center md:text-left md:px-16 flex flex-col md:flex-row items-center justify-between">
-    <div class="max-w-2xl">
-      <span class="inline-block py-1 px-3 rounded-full bg-blue-500/20 text-blue-400 text-sm font-semibold mb-4 border border-blue-500/30">
-        New Generation Components
+<!-- 1. Hero Banner (Responsive: Mobile / iPad / Desktop) -->
+<section class="relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border border-slate-700/80">
+  <div class="absolute inset-0 bg-gradient-to-br from-blue-950/90 via-slate-900/90 to-indigo-950/80 z-10"></div>
+
+  <div class="relative z-20 px-5 py-8 sm:px-8 sm:py-12 md:px-12 md:py-16 lg:px-16 lg:py-20 flex flex-col-reverse md:flex-row items-center justify-between gap-8">
+    <!-- Left Text & CTA -->
+    <div class="w-full md:w-3/5 text-center md:text-left">
+      <span class="inline-block py-1 px-3 rounded-full bg-blue-500/20 text-blue-300 text-xs sm:text-sm font-semibold mb-4 border border-blue-500/30">
+        {{ heroBadge }}
       </span>
-      <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
-        <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Jamine CPU</span> 
-        <br />คอมพิวเตอร์เซตสเปกแรง ตอบโจทย์ทุกการใช้งาน
+
+      <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-white mb-4 leading-tight">
+        {{ heroTitle }}
       </h1>
-      <p class="text-base text-slate-300 mb-8 max-w-xl leading-relaxed">
-        Jamine CPU ใส่ใจทุกรายละเอียดในการประกอบคอมพิวเตอร์ ไม่ว่าจะเป็นการคัดสรรอะไหล่คุณภาพจากแบรนด์ชั้นนำ การติดตั้งและประกอบอย่างพิถีพิถัน รวมถึงการตรวจสอบระบบอย่างเคร่งครัดเพื่อให้มั่นใจว่าลูกค้าจะได้รับคอมพิวเตอร์เซตที่พร้อมใช้งานในทันที นอกจากนี้ยังมีบริการหลังการขายครบวงจร เช่น การรับประกันสินค้า การซ่อมบำรุง และการให้คำปรึกษาด้านอัปเกรดหรือเปลี่ยนชิ้นส่วนตามความต้องการของผู้ใช้งาน มั่นใจได้ว่าเลือกซื้อคอมพิวเตอร์เซตจาก Jamine CPU แล้ว จะสามารถใช้งานได้อย่างอุ่นใจในระยะยาว
+
+      <p class="text-sm sm:text-base text-slate-300 mb-6 sm:mb-8 max-w-xl mx-auto md:mx-0 leading-relaxed">
+        {{ heroSubtitle }}
       </p>
-      
-      <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-        <a routerLink="/shop" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-1">
-          เลือกซื้อสินค้าเลย (Shop Now)
+
+      <div class="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
+        <a
+          routerLink="/shop"
+          class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-7 rounded-xl shadow-lg shadow-blue-500/30 transition transform hover:-translate-y-0.5 text-sm sm:text-base text-center">
+          {{ heroCtaText }}
+        </a>
+        <a
+          routerLink="/shop"
+          [queryParams]="{ category: 'All' }"
+          class="bg-slate-700/70 hover:bg-slate-700 text-slate-100 font-semibold py-3 px-6 rounded-xl border border-slate-600 transition text-sm sm:text-base text-center">
+          ดูสินค้าทั้งหมด
         </a>
       </div>
+
+      <!-- Quick Trust Indicators -->
+      <div class="mt-6 pt-5 border-t border-slate-700/60 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-300 max-w-lg mx-auto md:mx-0">
+        <div class="flex items-center justify-center md:justify-start gap-1.5">
+          <span class="text-emerald-400">✓</span> ประกันศูนย์แท้ 100%
+        </div>
+        <div class="flex items-center justify-center md:justify-start gap-1.5">
+          <span class="text-blue-400">✓</span> เช็คสต็อกเรียลไทม์
+        </div>
+        <div class="col-span-2 sm:col-span-1 flex items-center justify-center md:justify-start gap-1.5">
+          <span class="text-amber-400">✓</span> มี AI ช่วยแนะนำสเปค
+        </div>
+      </div>
     </div>
-    
-    <div class="hidden md:block w-1/3">
-      
-      <img src="hero-computer.png" alt="Dream PC" class="w-full h-auto drop-shadow-2xl hover:scale-105 transition-transform duration-500">
+
+    <!-- Right Hero Image (Visible on Mobile, iPad, and Desktop) -->
+    <div class="w-3/4 sm:w-1/2 md:w-2/5 max-w-[280px] sm:max-w-[340px] md:max-w-none flex justify-center">
+      <img
+        [src]="heroImageUrl"
+        alt="Jamine IT Hero"
+        class="w-full h-auto max-h-56 sm:max-h-64 md:max-h-80 object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-500" />
     </div>
   </div>
-</div>
+</section>
 
-<!-- New Arrivals Carousel -->
-<div class="mt-16 md:mt-24 relative">
-  <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-[10px] font-black tracking-tighter">
-        NEW
-      </div>
-      <h2 class="text-xl md:text-2xl font-bold text-white">สินค้ามาใหม่</h2>
+<!-- 2. Shop by Category (Dynamic from Database) -->
+<section *ngIf="categories.length > 0" class="mt-10 sm:mt-14">
+  <div class="flex items-center justify-between mb-5">
+    <div>
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">เลือกช้อปตามหมวดหมู่</h2>
+      <p class="text-xs sm:text-sm text-slate-400 mt-0.5">เลือกหมวดสินค้าไอทีที่ตรงกับการใช้งานของคุณ</p>
     </div>
-    <a routerLink="/shop" class="text-sm text-slate-400 hover:text-white transition flex items-center">
-      ดูทั้งหมด
-      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    <a routerLink="/shop" class="text-xs sm:text-sm text-blue-400 hover:text-blue-300 transition font-medium">
+      ดูทั้งหมด &rarr;
     </a>
   </div>
 
-  <!-- Carousel Wrapper -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <a
+      *ngFor="let cat of categories"
+      [routerLink]="['/shop']"
+      [queryParams]="{ category: cat.name }"
+      class="group rounded-2xl p-4 sm:p-5 bg-gradient-to-br border transition-all duration-200 hover:-translate-y-1 hover:shadow-lg flex items-center gap-3 sm:gap-4"
+      [ngClass]="getCategoryMeta(cat.name).badgeColor">
+      <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-slate-900/70 border border-white/10 flex items-center justify-center text-xl sm:text-2xl shrink-0 group-hover:scale-110 transition-transform">
+        {{ getCategoryMeta(cat.name).icon }}
+      </div>
+      <div class="min-w-0">
+        <h3 class="text-sm sm:text-base font-bold text-white truncate group-hover:text-blue-300 transition-colors">
+          {{ cat.name }}
+        </h3>
+        <p class="text-[11px] sm:text-xs text-slate-300/80 truncate mt-0.5">
+          {{ getCategoryMeta(cat.name).subtitle }}
+        </p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- 3. New Arrivals Carousel (สินค้ามาใหม่) -->
+<section class="mt-12 sm:mt-16 relative">
+  <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center gap-2.5 sm:gap-3">
+      <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white text-[10px] font-black tracking-tighter shrink-0">
+        NEW
+      </div>
+      <div>
+        <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">สินค้ามาใหม่</h2>
+      </div>
+    </div>
+    <a routerLink="/shop" class="text-xs sm:text-sm text-slate-400 hover:text-white transition flex items-center">
+      ดูทั้งหมด
+      <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+    </a>
+  </div>
+
   <div class="relative group">
-    
-    <!-- Left Arrow Button -->
-    <button (click)="scrollLeft()" class="absolute left-1 md:-ml-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-slate-700 hover:bg-blue-600 border border-slate-500 rounded-full flex items-center justify-center text-white shadow-2xl transition-all">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+    <!-- Left Arrow (Hidden on small mobile for smooth swipe, shown on tablet/desktop) -->
+    <button
+      type="button"
+      (click)="scrollLeft()"
+      class="hidden sm:flex absolute left-1 md:-ml-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-slate-700/90 hover:bg-blue-600 border border-slate-500 rounded-full items-center justify-center text-white shadow-2xl transition-all cursor-pointer">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+      </svg>
     </button>
 
-    <!-- Loading State -->
-    <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <div *ngIf="isLoadingNew" class="flex justify-center items-center py-12">
       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
     </div>
 
-    <!-- Empty State -->
-    <div *ngIf="!isLoading && newProducts.length === 0" class="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700 border-dashed">
-      <p class="text-slate-400">ยังไม่มีสินค้าแนะนำในขณะนี้</p>
+    <div
+      *ngIf="!isLoadingNew && newProducts.length === 0"
+      class="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700 border-dashed">
+      <p class="text-slate-400">ยังไม่มีสินค้ามาใหม่ในขณะนี้</p>
     </div>
 
-    <!-- Scroll Container -->
-    <div *ngIf="!isLoading && newProducts.length > 0" #scrollContainer class="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      
-      <!-- Product Card -->
-      <a *ngFor="let product of newProducts" [routerLink]="['/product', product.id]" class="snap-start shrink-0 w-[85vw] sm:w-[320px] md:w-[280px] bg-slate-800/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700 hover:border-blue-500 hover:shadow-[0_8px_30px_rgba(59,130,246,0.2)] transition-all duration-300 group/card flex flex-col cursor-pointer relative">
-        
-        <!-- Badge -->
-        <div class="absolute top-3 left-3 z-10 bg-gradient-to-r from-blue-500 to-cyan-400 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg border border-white/20">
-          พร้อมส่ง
+    <div
+      *ngIf="!isLoadingNew && newProducts.length > 0"
+      #scrollContainer
+      class="flex gap-3 sm:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <a
+        *ngFor="let product of newProducts"
+        [routerLink]="['/product', product.id]"
+        class="snap-start shrink-0 w-[76vw] sm:w-[270px] md:w-[260px] lg:w-[275px] bg-slate-800/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700 hover:border-blue-500 hover:shadow-[0_8px_30px_rgba(59,130,246,0.2)] transition-all duration-300 group/card flex flex-col cursor-pointer relative">
+        <div
+          class="absolute top-3 left-3 z-10 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg border border-white/20"
+          [ngClass]="product.availableQuantity > 0 ? 'bg-gradient-to-r from-blue-500 to-cyan-400' : 'bg-slate-600'">
+          {{ product.availableQuantity > 0 ? 'มาใหม่ • พร้อมส่ง' : 'สินค้าหมด' }}
         </div>
 
-        <!-- Image Area -->
-        <div class="aspect-[4/3] bg-white p-6 flex items-center justify-center relative overflow-hidden">
-          <img [src]="product.imageUrl || 'https://placehold.co/400x300/ffffff/cccccc?text=No+Image'" [alt]="product.name" class="max-w-full max-h-full object-contain group-hover/card:scale-110 transition-transform duration-500">
+        <div class="aspect-[4/3] bg-white p-5 flex items-center justify-center relative overflow-hidden">
+          <img
+            [src]="product.image?.url || 'https://placehold.co/400x300/ffffff/cccccc?text=No+Image'"
+            [alt]="product.name"
+            class="max-w-full max-h-full object-contain group-hover/card:scale-110 transition-transform duration-500" />
         </div>
-        
-        <!-- Details Area -->
-        <div class="p-5 flex flex-col flex-1 relative">
-          
-          <!-- Category & Rating -->
-          <div class="flex justify-between items-center mb-2.5">
-            <span class="text-xs font-semibold text-blue-400 uppercase tracking-wider">{{ product.categoryName || 'อุปกรณ์ไอที' }}</span>
-            <div class="flex items-center text-amber-400 text-[10px]">
-              <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-              <span class="ml-1 font-medium text-slate-300 mt-0.5">5.0</span>
-            </div>
+
+        <div class="p-4 sm:p-5 flex flex-col flex-1">
+          <div class="flex justify-between items-center mb-2">
+            <span class="text-[11px] font-semibold text-blue-400 uppercase tracking-wider truncate">
+              {{ product.categoryName || 'อุปกรณ์ไอที' }}
+            </span>
+            <span class="text-[11px] text-slate-400" *ngIf="product.availableQuantity > 0">
+              คงเหลือ {{ product.availableQuantity }}
+            </span>
           </div>
 
-          <!-- Title -->
-          <h3 class="text-sm md:text-base text-slate-100 font-medium line-clamp-2 mb-4 group-hover/card:text-blue-300 transition-colors leading-snug" [title]="product.name">
+          <h3
+            class="text-sm sm:text-base text-slate-100 font-medium line-clamp-2 mb-4 group-hover/card:text-blue-300 transition-colors leading-snug"
+            [title]="product.name">
             {{ product.name }}
           </h3>
-          
-          <!-- Price & Cart Button -->
-          <div class="mt-auto flex justify-between items-end">
-            <div>
-              <p class="text-xs text-slate-500 line-through mb-0.5 decoration-slate-500/50">฿{{ (product.price * 1.12) | number:'1.2-2' }}</p>
-              <span class="text-lg md:text-xl font-bold text-white tracking-tight">฿{{ product.price | number:'1.2-2' }}</span>
-            </div>
-            
-            <!-- Cart Icon Button -->
-            <button (click)="addToCart($event, product)" class="w-10 h-10 rounded-full bg-slate-700/50 group-hover/card:bg-blue-600 flex items-center justify-center text-slate-300 group-hover/card:text-white transition-colors duration-300 border border-slate-600 group-hover/card:border-blue-500">
-              <svg class="w-5 h-5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+
+          <div class="mt-auto flex justify-between items-center gap-2">
+            <span class="text-base sm:text-lg font-bold text-white tracking-tight">
+              ฿{{ product.price | number:'1.0-0' }}
+            </span>
+
+            <button
+              type="button"
+              (click)="addToCart($event, product)"
+              [disabled]="product.availableQuantity <= 0"
+              class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-700/60 group-hover/card:bg-blue-600 flex items-center justify-center text-slate-300 group-hover/card:text-white transition-colors duration-300 border border-slate-600 group-hover/card:border-blue-500 disabled:opacity-40 cursor-pointer">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
             </button>
           </div>
         </div>
       </a>
-      
     </div>
 
-    <!-- Right Arrow Button -->
-    <button (click)="scrollRight()" class="absolute right-1 md:-mr-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-slate-700 hover:bg-blue-600 border border-slate-500 rounded-full flex items-center justify-center text-white shadow-2xl transition-all">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+    <!-- Right Arrow -->
+    <button
+      type="button"
+      (click)="scrollRight()"
+      class="hidden sm:flex absolute right-1 md:-mr-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-slate-700/90 hover:bg-blue-600 border border-slate-500 rounded-full items-center justify-center text-white shadow-2xl transition-all cursor-pointer">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
     </button>
   </div>
-</div>
+</section>
+
+<!-- 4. Popular Products Grid (สินค้ายอดนิยม: Mobile 2 cols / iPad 2 cols / Desktop 4 cols) -->
+<section class="mt-12 sm:mt-16">
+  <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center gap-2.5 sm:gap-3">
+      <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-slate-950 text-xs font-black shrink-0">
+        HOT
+      </div>
+      <div>
+        <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">สินค้ายอดนิยมพร้อมส่ง</h2>
+      </div>
+    </div>
+    <a routerLink="/shop" class="text-xs sm:text-sm text-blue-400 hover:text-blue-300 transition font-medium">
+      ช้อปทั้งหมด &rarr;
+    </a>
+  </div>
+
+  <div *ngIf="isLoadingPopular" class="flex justify-center items-center py-12">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+  </div>
+
+  <div
+    *ngIf="!isLoadingPopular && popularProducts.length > 0"
+    class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+    <a
+      *ngFor="let product of popularProducts"
+      [routerLink]="['/product', product.id]"
+      class="bg-slate-800/80 backdrop-blur-sm rounded-2xl overflow-hidden border border-slate-700 hover:border-blue-500 hover:shadow-[0_8px_30px_rgba(59,130,246,0.2)] transition-all duration-300 group/card flex flex-col cursor-pointer relative">
+      <div
+        class="absolute top-2.5 left-2.5 z-10 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow border border-white/10"
+        [ngClass]="product.availableQuantity > 0 ? 'bg-emerald-600/90' : 'bg-slate-600/90'">
+        {{ product.availableQuantity > 0 ? 'พร้อมส่ง' : 'หมดชั่วคราว' }}
+      </div>
+
+      <div class="aspect-[4/3] bg-white p-3 sm:p-5 flex items-center justify-center relative overflow-hidden">
+        <img
+          [src]="product.image?.url || 'https://placehold.co/400x300/ffffff/cccccc?text=No+Image'"
+          [alt]="product.name"
+          class="max-w-full max-h-full object-contain group-hover/card:scale-105 transition-transform duration-500" />
+      </div>
+
+      <div class="p-3 sm:p-4 flex flex-col flex-1">
+        <span class="text-[10px] sm:text-xs font-semibold text-blue-400 uppercase tracking-wider truncate mb-1">
+          {{ product.categoryName || 'IT' }}
+        </span>
+
+        <h3
+          class="text-xs sm:text-sm md:text-base text-slate-100 font-medium line-clamp-2 mb-3 group-hover/card:text-blue-300 transition-colors leading-snug"
+          [title]="product.name">
+          {{ product.name }}
+        </h3>
+
+        <div class="mt-auto flex justify-between items-center gap-2">
+          <div>
+            <span class="text-sm sm:text-lg font-bold text-white tracking-tight block">
+              ฿{{ product.price | number:'1.0-0' }}
+            </span>
+            <span *ngIf="product.soldCount > 0" class="text-[10px] text-slate-400">
+              ขายแล้ว {{ product.soldCount }} ชิ้น
+            </span>
+          </div>
+
+          <button
+            type="button"
+            (click)="addToCart($event, product)"
+            [disabled]="product.availableQuantity <= 0"
+            class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-700/60 group-hover/card:bg-blue-600 flex items-center justify-center text-slate-300 group-hover/card:text-white transition-colors duration-300 border border-slate-600 group-hover/card:border-blue-500 disabled:opacity-40 shrink-0 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- 5. Why Choose Jamine IT -->
+<section class="mt-14 sm:mt-20">
+  <div class="text-center mb-6 sm:mb-8">
+    <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">ทำไมต้องเลือก Jamine IT</h2>
+    <p class="text-xs sm:text-sm text-slate-400 mt-1">มั่นใจทุกการสั่งซื้อด้วยมาตรฐานร้านไอทีมืออาชีพ</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 flex sm:flex-col items-start gap-4 sm:gap-3">
+      <div class="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-xl shrink-0">
+        🛡️
+      </div>
+      <div>
+        <h3 class="text-sm sm:text-base font-bold text-white">สินค้าแท้ประกันศูนย์</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">คัดสรรเฉพาะอุปกรณ์ไอทีของแท้ มีรับประกันศูนย์ไทยครบทุกรุ่น</p>
+      </div>
+    </div>
+
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 flex sm:flex-col items-start gap-4 sm:gap-3">
+      <div class="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+        ⚙️
+      </div>
+      <div>
+        <h3 class="text-sm sm:text-base font-bold text-white">เทสระบบก่อนจัดส่ง</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">ตรวจสอบความเรียบร้อยและทดสอบการทำงานทุกชิ้นก่อนแพ็คส่งถึงมือ</p>
+      </div>
+    </div>
+
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 flex sm:flex-col items-start gap-4 sm:gap-3">
+      <div class="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
+        🚚
+      </div>
+      <div>
+        <h3 class="text-sm sm:text-base font-bold text-white">จัดส่งไวทั่วไทย</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">เช็คสต็อกพร้อมส่งแบบเรียลไทม์ แพ็คกันกระแทกอย่างดีพร้อมเลขพัสดุ</p>
+      </div>
+    </div>
+
+    <div class="bg-slate-800/60 border border-slate-700/80 rounded-2xl p-5 flex sm:flex-col items-start gap-4 sm:gap-3">
+      <div class="w-11 h-11 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-xl shrink-0">
+        🤖
+      </div>
+      <div>
+        <h3 class="text-sm sm:text-base font-bold text-white">AI ช่วยเลือกสเปค 24/7</h3>
+        <p class="text-xs text-slate-400 mt-1 leading-relaxed">ถามสเปค เทียบรุ่น หรือระบุงบประมาณกับ JAMiNE AI ได้ทั้งไทยและอังกฤษ</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. AI Shopping Assistant Callout Banner -->
+<section class="mt-12 sm:mt-16 mb-6 rounded-2xl bg-gradient-to-r from-indigo-900/80 via-slate-800 to-blue-900/80 border border-indigo-500/30 p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+  <div>
+    <span class="inline-block text-xs font-bold uppercase tracking-wider text-indigo-300 mb-1">
+      ✨ JAMiNE AI Shopping Assistant
+    </span>
+    <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">
+      ยังไม่แน่ใจว่าควรเลือกรุ่นไหน? ให้ AI ช่วยแนะนำให้ได้เลย
+    </h2>
+    <p class="text-xs sm:text-sm text-slate-300 mt-1.5 max-w-2xl">
+      ลองกดปุ่ม <strong class="text-white">"✨ AI ช่วยเลือกสินค้า"</strong> ที่มุมขวาล่าง แล้วพิมพ์ถามเช่น "มีจอคอมไหมครับ", "แนะนำโน้ตบุ๊กงบ 15,000 - 25,000" หรือ "Do you have gaming monitors?"
+    </p>
+  </div>
+
+  <a
+    routerLink="/shop"
+    class="shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-indigo-950/50 transition text-sm">
+    ไปหน้าเลือกซื้อสินค้า
+  </a>
+</section>

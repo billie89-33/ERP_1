@@ -19,6 +19,7 @@ public class SettingsController : ControllerBase
     }
 
     [HttpGet("company")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCompanySettings()
     {
         var settings = await _context.CompanySettings.FirstOrDefaultAsync();
@@ -32,7 +33,12 @@ public class SettingsController : ControllerBase
                 Address = "123 Business Road, Bangkok 10110",
                 Phone = "02-XXX-XXXX",
                 Email = "contact@jamine.com",
-                LogoUrl = ""
+                LogoUrl = "",
+                HeroBadge = "New Generation Components",
+                HeroTitle = "Jamine CPU คอมพิวเตอร์เซตสเปกแรง ตอบโจทย์ทุกการใช้งาน",
+                HeroSubtitle = "คัดสรรอุปกรณ์ไอทีคุณภาพ ประกันศูนย์แท้ 100% ประกอบและเทสระบบก่อนจัดส่ง พร้อมผู้ช่วย AI แนะนำสเปคตามงบประมาณ",
+                HeroImageUrl = "",
+                HeroCtaText = "เลือกซื้อสินค้าเลย"
             };
             _context.CompanySettings.Add(settings);
             await _context.SaveChangesAsync();
@@ -59,6 +65,11 @@ public class SettingsController : ControllerBase
         settings.Phone = dto.Phone;
         settings.Email = dto.Email;
         settings.LogoUrl = dto.LogoUrl;
+        settings.HeroBadge = dto.HeroBadge ?? string.Empty;
+        settings.HeroTitle = dto.HeroTitle ?? string.Empty;
+        settings.HeroSubtitle = dto.HeroSubtitle ?? string.Empty;
+        settings.HeroImageUrl = dto.HeroImageUrl ?? string.Empty;
+        settings.HeroCtaText = dto.HeroCtaText ?? string.Empty;
         settings.UpdatedAt = System.DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

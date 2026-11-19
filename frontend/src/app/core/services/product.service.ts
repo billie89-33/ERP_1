@@ -16,7 +16,7 @@ export class ProductService {
     return this.http.get<FeaturedProductDto[]>(`${this.apiUrl}/featured`);
   }
 
-  getProducts(state: Partial<FilterState>): Observable<PaginatedResponse<ProductDto>> {
+  getProducts(state: Partial<FilterState> & { sortBy?: 'newest' | 'popular' | 'price_asc' | 'price_desc'; onlyActive?: boolean }): Observable<PaginatedResponse<ProductDto>> {
     let params = new HttpParams()
       .set('page', (state.page || 1).toString())
       .set('limit', (state.limit || 12).toString());
@@ -25,6 +25,8 @@ export class ProductService {
     if (state.categoryName && state.categoryName !== 'All') params = params.set('categoryName', state.categoryName);
     if (state.minPrice !== null && state.minPrice !== undefined) params = params.set('minPrice', state.minPrice.toString());
     if (state.maxPrice !== null && state.maxPrice !== undefined) params = params.set('maxPrice', state.maxPrice.toString());
+    if (state.sortBy) params = params.set('sortBy', state.sortBy);
+    if (state.onlyActive) params = params.set('onlyActive', 'true');
     
     if (state.brands && state.brands.length > 0) {
       state.brands.forEach(brand => {
